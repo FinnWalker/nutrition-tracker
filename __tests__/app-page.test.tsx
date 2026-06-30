@@ -1,7 +1,5 @@
-import { render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
-import Home from "@/app/page";
+import { vi } from "vitest";
 
 vi.mock("next/image", () => ({
   // This mock intentionally uses a plain img for a lightweight unit test.
