@@ -36,6 +36,8 @@ describe("RootLayout", () => {
 
     expect(aside).toHaveClass("hidden", "md:flex");
     expect(aside).toContainElement(nav);
-    expect(within(main).queryByRole("navigation", { name: "Primary" })).toBeNull();
+    expect(
+      within(main).queryByRole("navigation", { name: "Primary" }),
+    ).toBeNull();
   });
 });
