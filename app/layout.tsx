@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AuthSessionProvider from "./ui/auth-session-provider";
@@ -56,7 +57,7 @@ export default function RootLayout(props: RootLayoutProps) {
                 {props.children}
               </main>
             </div>
-            {props.auth}
+            <Suspense fallback={null}>{props.auth}</Suspense>
           </AuthSessionProvider>
         </ThemeProvider>
       </body>

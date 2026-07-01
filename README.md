@@ -20,6 +20,40 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Local Postgres
+
+Start the local development database with:
+
+```bash
+npm run db:start
+```
+
+The app's local database settings live in `.env`:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nutrition_tracker?schema=public
+DIRECT_URL=postgresql://postgres:postgres@localhost:5432/nutrition_tracker?schema=public
+```
+
+`DATABASE_URL` is used by the app at runtime. `DIRECT_URL` is used by Prisma CLI commands like migrations.
+
+For production, set `DATABASE_URL` to your Neon pooled connection string and `DIRECT_URL` to your Neon direct connection string for Prisma migrations.
+
+Useful local database commands:
+
+```bash
+npm run db:ps
+npm run db:logs
+npm run db:stop
+npm run db:down
+npm run db:generate
+npm run db:migrate
+npm run db:migrate:deploy
+npm run db:studio
+```
+
+`npm run db:migrate` starts Prisma's development migration flow and will prompt for a migration name when you have schema changes.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
