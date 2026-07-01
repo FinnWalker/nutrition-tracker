@@ -26,9 +26,7 @@ describe("ThemeToggle", () => {
     expect(serverMarkup).toContain('aria-hidden="true"');
 
     render(<ThemeToggle />);
-    expect(
-      await screen.findByRole("button"),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("button")).toBeInTheDocument();
   });
 
   it("toggles the theme through next-themes", async () => {
