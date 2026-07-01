@@ -2,8 +2,8 @@ import HomeCta from "./ui/home-cta";
 
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-5 py-12 md:px-10">
-      <section className="w-full rounded-[2rem] border border-border bg-surface/90 p-8 shadow-soft md:p-12">
+    <section className="mx-auto flex w-full max-w-5xl flex-1 items-center">
+      <div className="w-full rounded-[2rem] border border-border bg-surface/90 p-8 shadow-soft md:p-12">
         <p className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground-muted">
           Wellness
         </p>
@@ -15,7 +15,7 @@ export default function Home() {
           in one place.
         </p>
         <HomeCta />
-      </section>
-    </main>
+      </div>
+    </section>
   );
 }
