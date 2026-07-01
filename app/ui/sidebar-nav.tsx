@@ -3,6 +3,7 @@
 import { CalendarDays, House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ThemeToggle from "./theme-toggle";
 
 const navigationItems = [
   {
@@ -22,10 +23,16 @@ export default function SidebarNav() {
 
   return (
     <>
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold tracking-tight text-center">
-          Nutrition Tracker
-        </h1>
+      <div className="mb-8 space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground-muted">
+            Wellness
+          </p>
+          <h1 className="mt-2 text-center text-xl font-semibold tracking-tight">
+            Nutrition Tracker
+          </h1>
+        </div>
+        <ThemeToggle />
       </div>
       <nav aria-label="Primary" className="flex flex-col gap-1">
         {navigationItems.map((item) => {
@@ -37,13 +44,13 @@ export default function SidebarNav() {
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex items-center h-14 gap-3 rounded-xl px-3 py-2.5 text-md font-medium transition-colors ${
+              className={`flex h-14 items-center gap-3 rounded-2xl border px-4 py-2.5 text-md font-medium transition-colors ${
                 isActive
-                  ? "bg-green-50 text-green-700"
-                  : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  ? "border-border-strong bg-brand-muted text-brand-foreground shadow-accent"
+                  : "border-transparent text-foreground-muted hover:bg-surface-elevated hover:text-foreground"
               }`}
             >
-              <span className="shrink-0 bg-red">
+              <span className="shrink-0">
                 <Icon className="h-5 w-5" aria-hidden="true" />
               </span>
               <span>{item.label}</span>

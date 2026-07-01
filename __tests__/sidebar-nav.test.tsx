@@ -13,12 +13,15 @@ describe("SidebarNav", () => {
     mockUsePathname.mockReset();
   });
 
-  it("renders the primary navigation links", () => {
+  it("renders the primary navigation links", async () => {
     mockUsePathname.mockReturnValue("/");
 
     render(<SidebarNav />);
 
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeVisible();
+    expect(
+      await screen.findByRole("button", { name: /Switch to .* mode/ }),
+    ).toBeVisible();
     expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "href",
       "/",
@@ -37,6 +40,9 @@ describe("SidebarNav", () => {
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
       "aria-current",
       "page",
+    );
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveClass(
+      "bg-brand-muted",
     );
     expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute(
       "aria-current",
