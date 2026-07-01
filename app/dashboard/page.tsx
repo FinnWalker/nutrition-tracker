@@ -4,10 +4,6 @@ import { getSafeCallbackPath } from "@/app/lib/auth-redirect";
 import { getCachedUserRecord } from "@/app/lib/get-cached-user-record";
 import { redirect } from "next/navigation";
 
-export const unstable_instant = {
-  prefetch: "static",
-};
-
 export default function DashboardPage() {
   return (
     <section className="mx-auto w-full max-w-5xl">
