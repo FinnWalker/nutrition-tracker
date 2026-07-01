@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "prebuild": "prisma generate",
     "start": "next start",
     "postinstall": "prisma generate",
     "db:start": "docker compose up -d postgres",
