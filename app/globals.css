@@ -1,20 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f8fb;
-  --foreground: #142132;
-  --panel: #ffffff;
-  --panel-strong: #f8fafc;
-  --muted: #607086;
-  --border: #dbe4ee;
-  --accent: #2d6cdf;
-  --accent-soft: #e8f0ff;
-  --accent-foreground: #1847a3;
+  --background: #f4f7fb;
+  --background-subtle: #edf3fb;
+  --surface: #ffffff;
+  --surface-elevated: #f7fafd;
+  --foreground: #122033;
+  --foreground-muted: #607086;
+  --foreground-subtle: #7d8ca1;
+  --border: #d7e1ec;
+  --border-strong: #bfd4ea;
+  --brand: #0f9cc4;
+  --brand-foreground: #0f5a77;
+  --brand-muted: #ccefff;
+  --focus-ring: color-mix(in srgb, var(--brand) 38%, white);
+  --shadow-soft: 0 10px 30px color-mix(in srgb, #0f172a 8%, transparent);
+  --shadow-accent: 0 12px 32px color-mix(in srgb, var(--brand) 22%, transparent);
+}
+
+html[data-theme="dark"] {
+  --background: #09111d;
+  --background-subtle: #0f1b2d;
+  --surface: #101b2c;
+  --surface-elevated: #162338;
+  --foreground: #edf4ff;
+  --foreground-muted: #9eb0c5;
+  --foreground-subtle: #7f96b2;
+  --border: #243247;
+  --border-strong: #31506c;
+  --brand: #67d5ff;
+  --brand-foreground: #b8efff;
+  --brand-muted: rgba(103, 213, 255, 0.24);
+  --focus-ring: color-mix(in srgb, var(--brand) 44%, black);
+  --shadow-soft: 0 10px 30px color-mix(in srgb, #020817 28%, transparent);
+  --shadow-accent: 0 12px 32px color-mix(in srgb, var(--brand) 28%, transparent);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-focus-ring: var(--focus-ring);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-accent: var(--shadow-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -23,16 +60,27 @@ html {
   background:
     radial-gradient(
       circle at top left,
-      rgba(139, 180, 255, 0.16),
+      color-mix(in srgb, var(--brand) 18%, transparent),
       transparent 24%
     ),
-    linear-gradient(180deg, #ffffff 0%, var(--background) 100%);
+    radial-gradient(
+      circle at top right,
+      color-mix(in srgb, var(--brand) 10%, transparent),
+      transparent 22%
+    ),
+    linear-gradient(180deg, var(--surface) 0%, var(--background) 100%);
   color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
-  background: var(--background);
+  background:
+    linear-gradient(180deg, transparent 0%, var(--background-subtle) 100%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
 }
