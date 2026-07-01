@@ -1,5 +1,8 @@
 import { auth } from "@/auth";
-import { DEFAULT_AUTH_REDIRECT, getSafeCallbackPath } from "@/app/lib/auth-redirect";
+import {
+  DEFAULT_AUTH_REDIRECT,
+  getSafeCallbackPath,
+} from "@/app/lib/auth-redirect";
 import LoginPanel from "@/app/ui/login-panel";
 import { redirect } from "next/navigation";
 

@@ -47,7 +47,9 @@ describe("SidebarNav", () => {
       "href",
       "/dashboard",
     );
-    expect(screen.getByRole("button", { name: "Sign in with Google" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Sign in with Google" }),
+    ).toBeVisible();
   });
 
   it("marks the current page link", () => {
@@ -87,7 +89,9 @@ describe("SidebarNav", () => {
     expect(screen.getByText("ava@example.com")).toBeVisible();
     expect(screen.getByRole("img", { name: "Ava Green" })).toHaveAttribute(
       "src",
-      expect.stringContaining(encodeURIComponent("https://example.com/avatar.png")),
+      expect.stringContaining(
+        encodeURIComponent("https://example.com/avatar.png"),
+      ),
     );
     expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
   });

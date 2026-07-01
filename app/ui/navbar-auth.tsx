@@ -50,7 +50,9 @@ export default function NavbarAuth() {
             {displayName}
           </p>
           {user.email ? (
-            <p className="truncate text-xs text-foreground-muted">{user.email}</p>
+            <p className="truncate text-xs text-foreground-muted">
+              {user.email}
+            </p>
           ) : null}
         </div>
       </div>

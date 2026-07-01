@@ -41,7 +41,9 @@ describe("Home page", () => {
     expect(
       screen.getByRole("button", { name: "Continue with Google" }),
     ).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Open dashboard" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open dashboard" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the dashboard CTA when signed in", async () => {
@@ -57,10 +59,11 @@ describe("Home page", () => {
 
     render(<Home />);
 
-    expect(screen.queryByRole("link", { name: "Continue with Google" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open dashboard" })).toHaveAttribute(
-      "href",
-      "/dashboard",
-    );
+    expect(
+      screen.queryByRole("link", { name: "Continue with Google" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open dashboard" }),
+    ).toHaveAttribute("href", "/dashboard");
   });
 });
