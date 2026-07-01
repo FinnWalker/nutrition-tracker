@@ -3,6 +3,7 @@
 import { CalendarDays, House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import NavbarAuth from "./navbar-auth";
 import ThemeToggle from "./theme-toggle";
 
 const navigationItems = [
@@ -24,15 +25,21 @@ export default function SidebarNav() {
   return (
     <>
       <div className="mb-8 space-y-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground-muted">
-            Wellness
-          </p>
-          <h1 className="mt-2 text-center text-xl font-semibold tracking-tight">
-            Nutrition Tracker
-          </h1>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground-muted">
+              Wellness
+            </p>
+            <h1 className="mt-2 text-xl font-semibold tracking-tight">
+              Nutrition Tracker
+            </h1>
+          </div>
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
         </div>
-        <ThemeToggle />
+
+        <NavbarAuth />
       </div>
       <nav aria-label="Primary" className="flex flex-col gap-1">
         {navigationItems.map((item) => {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import AuthSessionProvider from "./ui/auth-session-provider";
 import SidebarNav from "./ui/sidebar-nav";
 import ThemeProvider from "./ui/theme-provider";
 import ThemeToggle from "./ui/theme-toggle";
@@ -20,11 +21,7 @@ export const metadata: Metadata = {
   description: "An app to track your nutrition and macros.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout(props: LayoutProps<"/">) {
   return (
     <html
       lang="en"
@@ -33,26 +30,32 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>
-          <div className="min-h-screen md:grid md:grid-cols-[18rem_minmax(0,1fr)]">
-            <aside className="hidden border-r border-border bg-surface px-5 py-6 md:flex md:flex-col">
-              <SidebarNav />
-            </aside>
+          <AuthSessionProvider>
+            <div className="min-h-screen md:grid md:grid-cols-[18rem_minmax(0,1fr)]">
+              <aside className="hidden border-r border-border bg-surface px-5 py-6 md:flex md:flex-col">
+                <SidebarNav />
+              </aside>
 
-            <main className="min-h-screen px-5 py-8 md:px-10 md:py-10">
-              <div className="mb-8 flex items-center justify-between gap-4 md:hidden">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground-muted">
-                    Wellness
-                  </p>
-                  <p className="mt-2 text-lg font-semibold tracking-tight">
-                    Nutrition Tracker
-                  </p>
+              <main className="min-h-screen px-5 py-8 md:px-10 md:py-10">
+                <div className="mb-8 flex items-center justify-between gap-4 md:hidden">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground-muted">
+                      Wellness
+                    </p>
+                    <p className="mt-2 text-lg font-semibold tracking-tight">
+                      Nutrition Tracker
+                    </p>
+                  </div>
+                  <ThemeToggle />
                 </div>
-                <ThemeToggle />
-              </div>
-              {children}
-            </main>
-          </div>
+                <div className="mb-8 md:hidden">
+                  <SidebarNav />
+                </div>
+                {props.children}
+              </main>
+            </div>
+            {props.auth}
+          </AuthSessionProvider>
         </ThemeProvider>
       </body>
     </html>
