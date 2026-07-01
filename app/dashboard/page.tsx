@@ -60,7 +60,10 @@ function DashboardContentFallback() {
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
           Database user ID
         </p>
-        <div className="mt-3 h-7 w-56 rounded-full bg-surface" aria-hidden="true" />
+        <div
+          className="mt-3 h-7 w-56 rounded-full bg-surface"
+          aria-hidden="true"
+        />
       </div>
     </>
   );
