@@ -21,7 +21,12 @@ export const metadata: Metadata = {
   description: "An app to track your nutrition and macros.",
 };
 
-export default function RootLayout(props: LayoutProps<"/">) {
+type RootLayoutProps = {
+  auth: React.ReactNode;
+  children: React.ReactNode;
+};
+
+export default function RootLayout(props: RootLayoutProps) {
   return (
     <html
       lang="en"

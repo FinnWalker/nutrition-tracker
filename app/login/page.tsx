@@ -6,7 +6,11 @@ import {
 import LoginPanel from "@/app/ui/login-panel";
 import { redirect } from "next/navigation";
 
-export default async function LoginPage(props: PageProps<"/login">) {
+type LoginPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function LoginPage(props: LoginPageProps) {
   const session = await auth();
   const query = await props.searchParams;
   const callbackUrl = getSafeCallbackPath(
