@@ -7,18 +7,17 @@ export const unstable_instant = false;
 export default async function DashboardPage() {
   const session = await auth();
   const viewerLabel = session?.user?.name ?? session?.user?.email ?? "there";
-  const initialEntries =
-    session?.user?.email
-      ? (await getCachedDailyEntries(session.user.email)).map((entry) => ({
-          id: entry.id,
-          entryDate: entry.entryDate.toISOString().slice(0, 10),
-          foodName: entry.foodName,
-          calories: entry.calories,
-          protein: entry.protein,
-          carbs: entry.carbs,
-          fat: entry.fat,
-        }))
-      : [];
+  const initialEntries = session?.user?.email
+    ? (await getCachedDailyEntries(session.user.email)).map((entry) => ({
+        id: entry.id,
+        entryDate: entry.entryDate.toISOString().slice(0, 10),
+        foodName: entry.foodName,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+      }))
+    : [];
 
   return (
     <section className="mx-auto w-full max-w-5xl">

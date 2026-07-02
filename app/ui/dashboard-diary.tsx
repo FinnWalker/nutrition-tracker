@@ -1,7 +1,7 @@
 "use client";
 
-import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import type { Dispatch, FormEvent, SetStateAction } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import {
   addDailyEntry,
@@ -35,15 +35,88 @@ type DraftEntry = {
 };
 
 const STORAGE_KEY = "nutrition-tracker-dashboard-draft";
+const STORAGE_EVENT = "nutrition-tracker-dashboard-storage";
+const EMPTY_ENTRIES: DiaryEntry[] = [];
+let lastStoredEntriesRaw: string | null = null;
+let lastStoredEntriesSnapshot: DiaryEntry[] = EMPTY_ENTRIES;
+
+function getTodayDateInputValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = `${now.getMonth() + 1}`.padStart(2, "0");
+  const day = `${now.getDate()}`.padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 
 const initialDraft = (): DraftEntry => ({
-  entryDate: new Date().toISOString().slice(0, 10),
+  entryDate: getTodayDateInputValue(),
   foodName: "",
   calories: "",
   protein: "",
   carbs: "",
   fat: "",
 });
+
+function readAnonymousEntries() {
+  const savedEntries = window.localStorage.getItem(STORAGE_KEY);
+
+  if (!savedEntries) {
+    lastStoredEntriesRaw = null;
+    lastStoredEntriesSnapshot = EMPTY_ENTRIES;
+    return EMPTY_ENTRIES;
+  }
+
+  if (savedEntries === lastStoredEntriesRaw) {
+    return lastStoredEntriesSnapshot;
+  }
+
+  try {
+    const parsed = JSON.parse(savedEntries) as DiaryEntry[];
+    lastStoredEntriesRaw = savedEntries;
+    lastStoredEntriesSnapshot = Array.isArray(parsed) ? parsed : EMPTY_ENTRIES;
+    return lastStoredEntriesSnapshot;
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    lastStoredEntriesRaw = null;
+    lastStoredEntriesSnapshot = EMPTY_ENTRIES;
+    return EMPTY_ENTRIES;
+  }
+}
+
+function subscribeToAnonymousEntries(onStoreChange: () => void) {
+  const handleStorageChange = (event: Event) => {
+    if (
+      event instanceof StorageEvent &&
+      event.key &&
+      event.key !== STORAGE_KEY
+    ) {
+      return;
+    }
+
+    onStoreChange();
+  };
+
+  window.addEventListener("storage", handleStorageChange);
+  window.addEventListener(STORAGE_EVENT, handleStorageChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+    window.removeEventListener(STORAGE_EVENT, handleStorageChange);
+  };
+}
+
+function writeAnonymousEntries(entries: DiaryEntry[]) {
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  window.dispatchEvent(new Event(STORAGE_EVENT));
+}
+
+function resetDraftKeepingDate(setDraft: Dispatch<SetStateAction<DraftEntry>>) {
+  setDraft((current) => ({
+    ...initialDraft(),
+    entryDate: current.entryDate,
+  }));
+}
 
 function parseNumber(value: string) {
   const trimmed = value.trim();
@@ -67,39 +140,16 @@ export default function DashboardDiary({
 }: DashboardDiaryProps) {
   const router = useRouter();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
-  const [entries, setEntries] = useState<DiaryEntry[]>(initialEntries);
   const [isPersisting, setIsPersisting] = useState(false);
-
-  useEffect(() => {
-    if (canPersist) {
-      setEntries(initialEntries);
-      return;
-    }
-
-    const savedEntries = window.localStorage.getItem(STORAGE_KEY);
-
-    if (!savedEntries) {
-      setEntries([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(savedEntries) as DiaryEntry[];
-      if (Array.isArray(parsed)) {
-        setEntries(parsed);
-      }
-    } catch {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
-  }, [canPersist, initialEntries]);
-
-  useEffect(() => {
-    if (canPersist) {
-      return;
-    }
-
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-  }, [canPersist, entries]);
+  const anonymousEntries = useSyncExternalStore(
+    subscribeToAnonymousEntries,
+    readAnonymousEntries,
+    () => EMPTY_ENTRIES,
+  );
+  const entries = canPersist ? initialEntries : anonymousEntries;
+  const statusCopy = canPersist
+    ? "These entries are loading from your saved diary. Browser-only drafts are ignored until we add an explicit import flow."
+    : "These entries live only in this browser for now. Sign in when you are ready to save your diary to your account.";
 
   const totals = entries.reduce(
     (runningTotals, entry) => ({
@@ -156,10 +206,7 @@ export default function DashboardDiary({
           carbs: nextEntry.carbs,
           fat: nextEntry.fat,
         });
-        setDraft((current) => ({
-          ...initialDraft(),
-          entryDate: current.entryDate,
-        }));
+        resetDraftKeepingDate(setDraft);
         router.refresh();
       } finally {
         setIsPersisting(false);
@@ -168,11 +215,8 @@ export default function DashboardDiary({
       return;
     }
 
-    setEntries((current) => [nextEntry, ...current]);
-    setDraft((current) => ({
-      ...initialDraft(),
-      entryDate: current.entryDate,
-    }));
+    writeAnonymousEntries([nextEntry, ...anonymousEntries]);
+    resetDraftKeepingDate(setDraft);
   }
 
   async function removeEntry(entryId: string) {
@@ -189,7 +233,9 @@ export default function DashboardDiary({
       return;
     }
 
-    setEntries((current) => current.filter((entry) => entry.id !== entryId));
+    writeAnonymousEntries(
+      anonymousEntries.filter((entry) => entry.id !== entryId),
+    );
   }
 
   async function clearEntries() {
@@ -206,7 +252,7 @@ export default function DashboardDiary({
       return;
     }
 
-    setEntries([]);
+    writeAnonymousEntries([]);
   }
 
   return (
@@ -221,9 +267,7 @@ export default function DashboardDiary({
             : "You can log food before creating an account."}
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-foreground-muted">
-          {canPersist
-            ? "These entries are loading from your saved diary. Browser-only drafts are ignored until we add an explicit import flow."
-            : "These entries live only in this browser for now. Sign in when you are ready to save your diary to your account."}
+          {statusCopy}
         </p>
       </div>
 

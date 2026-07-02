@@ -14,30 +14,28 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return (
-      <div
-        aria-hidden="true"
-        className="h-11 w-32 rounded-full border border-border bg-surface"
-      />
-    );
-  }
-
   const activeTheme = resolvedTheme === "dark" ? "dark" : "light";
   const nextTheme = activeTheme === "dark" ? "light" : "dark";
   const Icon = activeTheme === "dark" ? Sun : Moon;
+  const buttonLabel = mounted ? `Switch to ${nextTheme} mode` : "Toggle theme";
 
   return (
     <button
       type="button"
       onClick={() => setTheme(nextTheme)}
-      aria-label={`Switch to ${nextTheme} mode`}
-      className="inline-flex h-11 items-center gap-2 rounded-full 
-      border border-border bg-surface px-4 text-sm font-medium text-foreground 
-      shadow-soft transition-colors hover:border-brand hover:text-brand-foreground"
+      aria-label={buttonLabel}
+      title={buttonLabel}
+      disabled={!mounted}
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-soft transition-colors hover:border-brand hover:text-brand-foreground"
     >
-      <Icon className="h-4 w-4" aria-hidden="true" />
-      <span className="capitalize">{activeTheme} mode</span>
+      {mounted ? (
+        <Icon
+          className="h-4 w-4 opacity-100 transition-opacity duration-200"
+          aria-hidden="true"
+        />
+      ) : (
+        <span aria-hidden="true" className="h-4 w-4" />
+      )}
     </button>
   );
 }
