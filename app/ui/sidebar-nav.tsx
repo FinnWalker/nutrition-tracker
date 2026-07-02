@@ -35,7 +35,14 @@ function NavbarAuthFallback() {
   return (
     <div
       aria-hidden="true"
-      className="h-[4.5rem] rounded-2xl border border-border bg-surface-elevated shadow-soft"
-    />
+      className="flex items-center gap-3 rounded-2xl border border-border bg-surface-elevated px-3 py-3 shadow-soft"
+    >
+      <div className="h-11 w-11 shrink-0 rounded-full bg-surface" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="h-4 w-24 rounded-full bg-surface" />
+        <div className="h-3 w-36 max-w-full rounded-full bg-surface" />
+      </div>
+      <div className="h-9 w-9 shrink-0 rounded-xl border border-border bg-surface" />
+    </div>
   );
 }
