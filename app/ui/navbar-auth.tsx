@@ -8,18 +8,20 @@ export default async function NavbarAuth() {
 
   if (!user) {
     return (
-      <GoogleSignInButton
-        label="Sign in with Google"
-        className="w-full cursor-pointer rounded-2xl bg-brand px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-      />
+      <div className="flex min-h-[4.5rem] items-center">
+        <GoogleSignInButton
+          label="Sign in with Google"
+          className="w-full cursor-pointer rounded-2xl bg-brand px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        />
+      </div>
     );
   }
 
   const displayName = user.name || user.email || "Signed in";
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface-elevated px-3 py-3 shadow-soft">
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface-elevated px-3 py-3 shadow-soft">
+      <div className="shrink-0">
         {user.image ? (
           <Image
             src={user.image}
@@ -33,20 +35,18 @@ export default async function NavbarAuth() {
             {displayName.slice(0, 1).toUpperCase()}
           </div>
         )}
-
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {displayName}
-          </p>
-          {user.email ? (
-            <p className="truncate text-xs text-foreground-muted">
-              {user.email}
-            </p>
-          ) : null}
-        </div>
       </div>
 
-      <SignOutButton />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground">
+          {displayName}
+        </p>
+        {user.email ? (
+          <p className="truncate text-xs text-foreground-muted">{user.email}</p>
+        ) : null}
+      </div>
+
+      <SignOutButton iconOnly className="shrink-0 rounded-xl p-2.5" />
     </div>
   );
 }
