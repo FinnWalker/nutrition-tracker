@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { auth } from "@/auth";
+import { getCurrentSession } from "./get-current-session";
 
 export type CurrentUserProfile = {
   name: string | null;
@@ -8,7 +8,7 @@ export type CurrentUserProfile = {
 };
 
 export const getCurrentUserProfile = cache(async () => {
-  const session = await auth();
+  const session = await getCurrentSession();
   const user = session?.user;
 
   if (!user) {

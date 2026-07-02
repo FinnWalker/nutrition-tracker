@@ -1,11 +1,11 @@
-import { auth } from "@/auth";
 import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
+import { getCurrentSession } from "@/app/lib/get-current-session";
 import DashboardDiary from "@/app/ui/dashboard-diary";
 
 export const unstable_instant = false;
 
 export default async function DashboardPage() {
-  const session = await auth();
+  const session = await getCurrentSession();
   const viewerLabel = session?.user?.name ?? session?.user?.email ?? "there";
   const initialEntries = session?.user?.email
     ? (await getCachedDailyEntries(session.user.email)).map((entry) => ({
