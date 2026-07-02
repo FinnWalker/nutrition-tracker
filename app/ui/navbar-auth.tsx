@@ -1,23 +1,10 @@
-"use client";
-
-import { LogOut } from "lucide-react";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import { getCurrentUserProfile } from "@/app/lib/get-current-user-profile";
 import GoogleSignInButton from "./google-sign-in-button";
+import SignOutButton from "./sign-out-button";
 
-export default function NavbarAuth() {
-  const { data: session, status } = useSession();
-  const user = session?.user ?? null;
-  const displayName = user?.name || user?.email || "Signed in";
-
-  if (status === "loading") {
-    return (
-      <div
-        aria-hidden="true"
-        className="h-[4.5rem] rounded-2xl border border-border bg-surface-elevated shadow-soft"
-      />
-    );
-  }
+export default async function NavbarAuth() {
+  const user = await getCurrentUserProfile();
 
   if (!user) {
     return (
@@ -27,6 +14,8 @@ export default function NavbarAuth() {
       />
     );
   }
+
+  const displayName = user.name || user.email || "Signed in";
 
   return (
     <div className="space-y-4">
@@ -57,14 +46,7 @@ export default function NavbarAuth() {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground-muted transition-colors hover:bg-surface-elevated hover:text-foreground"
-        onClick={() => signOut({ callbackUrl: "/" })}
-      >
-        <LogOut className="h-4 w-4" aria-hidden="true" />
-        <span>Sign out</span>
-      </button>
+      <SignOutButton />
     </div>
   );
 }

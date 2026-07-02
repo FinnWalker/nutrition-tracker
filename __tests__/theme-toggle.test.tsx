@@ -23,10 +23,12 @@ describe("ThemeToggle", () => {
     });
 
     const serverMarkup = renderToStaticMarkup(<ThemeToggle />);
-    expect(serverMarkup).toContain('aria-hidden="true"');
+    expect(serverMarkup).toContain('aria-label="Toggle theme"');
 
     render(<ThemeToggle />);
-    expect(await screen.findByRole("button")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Switch to light mode" }),
+    ).toBeInTheDocument();
   });
 
   it("toggles the theme through next-themes", async () => {
