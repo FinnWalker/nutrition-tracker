@@ -29,7 +29,7 @@ describe("SidebarNav", () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams());
   });
 
-  it("renders the primary navigation links", async () => {
+  it("routes signed-out users to login from the dashboard nav link", async () => {
     mockUsePathname.mockReturnValue("/");
     mockUseSession.mockReturnValue({ data: null, status: "unauthenticated" });
 
@@ -45,7 +45,7 @@ describe("SidebarNav", () => {
     );
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
       "href",
-      "/dashboard",
+      "/login?callbackUrl=%2Fdashboard",
     );
     expect(
       screen.getByRole("button", { name: "Sign in with Google" }),
@@ -85,6 +85,10 @@ describe("SidebarNav", () => {
 
     render(<SidebarNav />);
 
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+      "href",
+      "/dashboard",
+    );
     expect(screen.getByText("Ava Green")).toBeVisible();
     expect(screen.getByText("ava@example.com")).toBeVisible();
     expect(screen.getByRole("img", { name: "Ava Green" })).toHaveAttribute(

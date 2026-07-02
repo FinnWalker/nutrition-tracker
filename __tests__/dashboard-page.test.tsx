@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DashboardContent } from "@/app/dashboard/page";
+import DashboardPage, { DashboardData } from "@/app/dashboard/page";
 
 const mockAuth = vi.fn();
 const mockRedirect = vi.fn();
@@ -38,17 +38,10 @@ describe("DashboardPage", () => {
   });
 
   it("shows the database user id for the signed-in user", async () => {
-    mockAuth.mockResolvedValue({
-      user: {
-        name: "Ava Green",
-        email: "ava@example.com",
-      },
-    });
     mockFindUnique.mockResolvedValue({ id: "user_cuid_123" });
 
-    render(await DashboardContent());
+    render(await DashboardData({ email: "ava@example.com" }));
 
-    expect(screen.getByText("Signed in as Ava Green.")).toBeVisible();
     expect(screen.getByText("user_cuid_123")).toBeVisible();
     expect(mockFindUnique).toHaveBeenCalledWith({
       where: { email: "ava@example.com" },
@@ -59,11 +52,39 @@ describe("DashboardPage", () => {
   it("redirects signed-out visitors to login", async () => {
     mockAuth.mockResolvedValue(null);
 
-    await expect(DashboardContent()).rejects.toThrow("NEXT_REDIRECT");
+    await expect(DashboardPage()).rejects.toThrow("NEXT_REDIRECT");
 
     expect(mockRedirect).toHaveBeenCalledWith(
       "/login?callbackUrl=%2Fdashboard",
     );
     expect(mockFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("renders the signed-in shell before loading dashboard data", async () => {
+    mockAuth.mockResolvedValue({
+      user: {
+        name: "Ava Green",
+        email: "ava@example.com",
+      },
+    });
+    mockFindUnique.mockResolvedValue({ id: "user_cuid_123" });
+
+    render(await DashboardPage());
+
+    expect(screen.getByText("Dashboard")).toBeVisible();
+    expect(screen.getByText("Signed in as Ava Green.")).toBeVisible();
+    expect(screen.getByText("Database user ID")).toBeVisible();
+  });
+
+  it("shows a fallback message when the user has no database record", async () => {
+    mockFindUnique.mockResolvedValue(null);
+
+    render(await DashboardData({ email: "ava@example.com" }));
+
+    expect(screen.getByText("No database record found")).toBeVisible();
+    expect(mockFindUnique).toHaveBeenCalledWith({
+      where: { email: "ava@example.com" },
+      select: { id: true },
+    });
   });
 });
