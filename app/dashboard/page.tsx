@@ -6,18 +6,7 @@ import { redirect } from "next/navigation";
 
 export const unstable_instant = false;
 
-export default function DashboardPage() {
-  return (
-    <section className="mx-auto w-full max-w-5xl">
-      <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
-      <Suspense fallback={<DashboardContentFallback />}>
-        <DashboardContent />
-      </Suspense>
-    </section>
-  );
-}
-
-export async function DashboardContent() {
+export default async function DashboardPage() {
   const session = await auth();
 
   if (!session?.user) {
@@ -26,43 +15,45 @@ export async function DashboardContent() {
     );
   }
 
-  const dbUser = session.user.email
-    ? await getCachedUserRecord(session.user.email)
-    : null;
-
   return (
-    <>
+    <section className="mx-auto w-full max-w-5xl">
+      <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
       <p className="mt-4 text-lg text-foreground-muted">
         Signed in as{" "}
         {session.user.name || session.user.email || "your Google account"}.
       </p>
-      <div className="mt-8 rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
-          Database user ID
-        </p>
-        <p className="mt-3 font-mono text-lg text-foreground">
-          {dbUser?.id ?? "No database record found"}
-        </p>
-      </div>
-    </>
+      <Suspense fallback={<DashboardDataFallback />}>
+        <DashboardData email={session.user.email ?? null} />
+      </Suspense>
+    </section>
   );
 }
 
-function DashboardContentFallback() {
+export async function DashboardData({ email }: { email: string | null }) {
+  const dbUser = email ? await getCachedUserRecord(email) : null;
+
   return (
-    <>
-      <p className="mt-4 text-lg text-foreground-muted">
-        Loading your dashboard...
+    <div className="mt-8 rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft">
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
+        Database user ID
       </p>
-      <div className="mt-8 rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
-          Database user ID
-        </p>
-        <div
-          className="mt-3 h-7 w-56 rounded-full bg-surface"
-          aria-hidden="true"
-        />
-      </div>
-    </>
+      <p className="mt-3 font-mono text-lg text-foreground">
+        {dbUser?.id ?? "No database record found"}
+      </p>
+    </div>
+  );
+}
+
+function DashboardDataFallback() {
+  return (
+    <div className="mt-8 rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft">
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
+        Database user ID
+      </p>
+      <div
+        className="mt-3 h-7 w-56 rounded-full bg-surface"
+        aria-hidden="true"
+      />
+    </div>
   );
 }
