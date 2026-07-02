@@ -1,7 +1,9 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-const isMigrationCommand = process.argv.some((arg) => arg.startsWith("migrate"));
+const isMigrationCommand = process.argv.some((arg) =>
+  arg.startsWith("migrate"),
+);
 
 const datasourceUrl = process.env.DIRECT_URL;
 
