@@ -1,7 +1,12 @@
 "use client";
 
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import { useState, useSyncExternalStore } from "react";
+import {
+  startTransition,
+  useOptimistic,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   addDailyEntry,
@@ -33,6 +38,11 @@ type DraftEntry = {
   carbs: string;
   fat: string;
 };
+
+type OptimisticEntryMutation =
+  | { type: "add"; entry: DiaryEntry }
+  | { type: "remove"; entryId: string }
+  | { type: "clear" };
 
 const STORAGE_KEY = "nutrition-tracker-dashboard-draft";
 const STORAGE_EVENT = "nutrition-tracker-dashboard-storage";
@@ -133,6 +143,22 @@ function formatMacro(value: number) {
   return value % 1 === 0 ? `${value}` : value.toFixed(1);
 }
 
+function applyEntryMutation(
+  currentEntries: DiaryEntry[],
+  mutation: OptimisticEntryMutation,
+) {
+  switch (mutation.type) {
+    case "add":
+      return [mutation.entry, ...currentEntries];
+    case "remove":
+      return currentEntries.filter((entry) => entry.id !== mutation.entryId);
+    case "clear":
+      return [];
+    default:
+      return currentEntries;
+  }
+}
+
 export default function DashboardDiary({
   canPersist,
   initialEntries,
@@ -141,12 +167,18 @@ export default function DashboardDiary({
   const router = useRouter();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
   const [isPersisting, setIsPersisting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const anonymousEntries = useSyncExternalStore(
     subscribeToAnonymousEntries,
     readAnonymousEntries,
     () => EMPTY_ENTRIES,
   );
-  const entries = canPersist ? initialEntries : anonymousEntries;
+  const [optimisticEntries, applyOptimisticMutation] = useOptimistic(
+    initialEntries,
+    applyEntryMutation,
+  );
+
+  const entries = canPersist ? optimisticEntries : anonymousEntries;
   const statusCopy = canPersist
     ? "These entries are loading from your saved diary. Browser-only drafts are ignored until we add an explicit import flow."
     : "These entries live only in this browser for now. Sign in when you are ready to save your diary to your account.";
@@ -195,22 +227,35 @@ export default function DashboardDiary({
     };
 
     if (canPersist) {
-      setIsPersisting(true);
+      const draftSnapshot = draft;
+      const mutation: OptimisticEntryMutation = {
+        type: "add",
+        entry: nextEntry,
+      };
 
-      try {
-        await addDailyEntry({
-          entryDate: nextEntry.entryDate,
-          foodName: nextEntry.foodName,
-          calories: nextEntry.calories,
-          protein: nextEntry.protein,
-          carbs: nextEntry.carbs,
-          fat: nextEntry.fat,
-        });
-        resetDraftKeepingDate(setDraft);
-        router.refresh();
-      } finally {
-        setIsPersisting(false);
-      }
+      setIsPersisting(true);
+      setSaveError(null);
+      resetDraftKeepingDate(setDraft);
+      startTransition(async () => {
+        applyOptimisticMutation(mutation);
+
+        try {
+          await addDailyEntry({
+            entryDate: nextEntry.entryDate,
+            foodName: nextEntry.foodName,
+            calories: nextEntry.calories,
+            protein: nextEntry.protein,
+            carbs: nextEntry.carbs,
+            fat: nextEntry.fat,
+          });
+          router.refresh();
+        } catch {
+          setDraft(draftSnapshot);
+          setSaveError("We couldn't save that entry. Please try again.");
+        } finally {
+          setIsPersisting(false);
+        }
+      });
 
       return;
     }
@@ -221,14 +266,22 @@ export default function DashboardDiary({
 
   async function removeEntry(entryId: string) {
     if (canPersist) {
-      setIsPersisting(true);
+      const mutation: OptimisticEntryMutation = { type: "remove", entryId };
 
-      try {
-        await deleteSavedDailyEntry(entryId);
-        router.refresh();
-      } finally {
-        setIsPersisting(false);
-      }
+      setIsPersisting(true);
+      setSaveError(null);
+      startTransition(async () => {
+        applyOptimisticMutation(mutation);
+
+        try {
+          await deleteSavedDailyEntry(entryId);
+          router.refresh();
+        } catch {
+          setSaveError("We couldn't remove that entry. Please try again.");
+        } finally {
+          setIsPersisting(false);
+        }
+      });
 
       return;
     }
@@ -240,14 +293,22 @@ export default function DashboardDiary({
 
   async function clearEntries() {
     if (canPersist) {
-      setIsPersisting(true);
+      const mutation: OptimisticEntryMutation = { type: "clear" };
 
-      try {
-        await clearSavedDailyEntries();
-        router.refresh();
-      } finally {
-        setIsPersisting(false);
-      }
+      setIsPersisting(true);
+      setSaveError(null);
+      startTransition(async () => {
+        applyOptimisticMutation(mutation);
+
+        try {
+          await clearSavedDailyEntries();
+          router.refresh();
+        } catch {
+          setSaveError("We couldn't clear your diary. Please try again.");
+        } finally {
+          setIsPersisting(false);
+        }
+      });
 
       return;
     }
@@ -307,7 +368,6 @@ export default function DashboardDiary({
                 onChange={(event) =>
                   updateDraft("entryDate", event.target.value)
                 }
-                disabled={isPersisting}
                 className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
                 required
               />
@@ -322,7 +382,6 @@ export default function DashboardDiary({
                 onChange={(event) =>
                   updateDraft("foodName", event.target.value)
                 }
-                disabled={isPersisting}
                 placeholder="Greek yogurt with berries"
                 className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
                 required
@@ -342,7 +401,6 @@ export default function DashboardDiary({
                 onChange={(event) =>
                   updateDraft("calories", event.target.value)
                 }
-                disabled={isPersisting}
                 placeholder="240"
                 className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
               />
@@ -359,7 +417,6 @@ export default function DashboardDiary({
                 name="protein"
                 value={draft.protein}
                 onChange={(event) => updateDraft("protein", event.target.value)}
-                disabled={isPersisting}
                 placeholder="23"
                 className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
               />
@@ -376,7 +433,6 @@ export default function DashboardDiary({
                 name="carbs"
                 value={draft.carbs}
                 onChange={(event) => updateDraft("carbs", event.target.value)}
-                disabled={isPersisting}
                 placeholder="18"
                 className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
               />
@@ -393,12 +449,17 @@ export default function DashboardDiary({
                 name="fat"
                 value={draft.fat}
                 onChange={(event) => updateDraft("fat", event.target.value)}
-                disabled={isPersisting}
                 placeholder="9"
                 className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
               />
             </label>
           </div>
+
+          {saveError ? (
+            <p className="mt-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {saveError}
+            </p>
+          ) : null}
 
           <button
             type="submit"

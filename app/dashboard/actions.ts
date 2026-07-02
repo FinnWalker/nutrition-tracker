@@ -31,7 +31,7 @@ function revalidateDailyEntries(email: string) {
 export async function addDailyEntry(input: DailyEntryInput) {
   const email = await requireSignedInUserEmail();
 
-  await prisma.dailyEntry.create({
+  const createdEntry = await prisma.dailyEntry.create({
     data: {
       user: {
         connect: {
@@ -45,9 +45,20 @@ export async function addDailyEntry(input: DailyEntryInput) {
       carbs: Math.max(0, input.carbs),
       fat: Math.max(0, input.fat),
     },
+    select: {
+      id: true,
+      entryDate: true,
+      foodName: true,
+      calories: true,
+      protein: true,
+      carbs: true,
+      fat: true,
+    },
   });
 
   revalidateDailyEntries(email);
+
+  return createdEntry;
 }
 
 export async function deleteDailyEntry(entryId: string) {
