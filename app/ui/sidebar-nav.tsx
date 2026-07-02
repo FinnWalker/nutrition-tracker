@@ -3,7 +3,6 @@
 import { CalendarDays, House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
 import NavbarAuth from "./navbar-auth";
 import ThemeToggle from "./theme-toggle";
 
@@ -22,11 +21,6 @@ const navigationItems = [
 
 export default function SidebarNav() {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
-  const dashboardHref =
-    status !== "loading" && !session?.user
-      ? "/login?callbackUrl=%2Fdashboard"
-      : "/dashboard";
 
   return (
     <>
@@ -49,14 +43,13 @@ export default function SidebarNav() {
       </div>
       <nav aria-label="Primary" className="flex flex-col gap-1">
         {navigationItems.map((item) => {
-          const href = item.href === "/dashboard" ? dashboardHref : item.href;
           const isActive = pathname === item.href;
           const Icon = item.icon;
 
           return (
             <Link
               key={item.href}
-              href={href}
+              href={item.href}
               aria-current={isActive ? "page" : undefined}
               className={`flex h-14 items-center gap-3 rounded-2xl border px-4 py-2.5 text-md font-medium transition-colors ${
                 isActive

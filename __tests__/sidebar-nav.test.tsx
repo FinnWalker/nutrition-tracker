@@ -29,7 +29,7 @@ describe("SidebarNav", () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams());
   });
 
-  it("routes signed-out users to login from the dashboard nav link", async () => {
+  it("lets signed-out users open the dashboard from primary navigation", async () => {
     mockUsePathname.mockReturnValue("/");
     mockUseSession.mockReturnValue({ data: null, status: "unauthenticated" });
 
@@ -45,7 +45,7 @@ describe("SidebarNav", () => {
     );
     expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
       "href",
-      "/login?callbackUrl=%2Fdashboard",
+      "/dashboard",
     );
     expect(
       screen.getByRole("button", { name: "Sign in with Google" }),
