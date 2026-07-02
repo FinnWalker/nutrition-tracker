@@ -2,15 +2,15 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardPage from "@/app/dashboard/page";
 
-const mockAuth = vi.fn();
+const mockGetCurrentSession = vi.fn();
 const mockGetCachedDailyEntries = vi.fn();
 const mockAddDailyEntry = vi.fn();
 const mockDeleteDailyEntry = vi.fn();
 const mockClearDailyEntries = vi.fn();
 const mockRefresh = vi.fn();
 
-vi.mock("@/auth", () => ({
-  auth: () => mockAuth(),
+vi.mock("@/app/lib/get-current-session", () => ({
+  getCurrentSession: (...args: unknown[]) => mockGetCurrentSession(...args),
 }));
 
 vi.mock("@/app/lib/get-cached-daily-entries", () => ({
@@ -32,7 +32,7 @@ vi.mock("next/navigation", () => ({
 
 describe("DashboardPage", () => {
   beforeEach(() => {
-    mockAuth.mockReset();
+    mockGetCurrentSession.mockReset();
     mockGetCachedDailyEntries.mockReset();
     mockAddDailyEntry.mockReset();
     mockDeleteDailyEntry.mockReset();
@@ -43,7 +43,7 @@ describe("DashboardPage", () => {
   });
 
   it("lets signed-out visitors explore the dashboard", async () => {
-    mockAuth.mockResolvedValue(null);
+    mockGetCurrentSession.mockResolvedValue(null);
 
     render(await DashboardPage());
 
@@ -59,7 +59,7 @@ describe("DashboardPage", () => {
   });
 
   it("personalizes the dashboard when the user is signed in", async () => {
-    mockAuth.mockResolvedValue({
+    mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
         email: "ava@example.com",
@@ -78,7 +78,7 @@ describe("DashboardPage", () => {
   });
 
   it("lets visitors build up local diary entries before signing in", async () => {
-    mockAuth.mockResolvedValue(null);
+    mockGetCurrentSession.mockResolvedValue(null);
 
     render(await DashboardPage());
 
@@ -120,7 +120,7 @@ describe("DashboardPage", () => {
       ]),
     );
 
-    mockAuth.mockResolvedValue({
+    mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
         email: "ava@example.com",
