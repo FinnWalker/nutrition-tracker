@@ -13,6 +13,7 @@ model User {
   emailVerified  DateTime?
   image          String?
   dailyEntries   DailyEntry[]
+  pantryItems    PantryItem[]
   accounts       Account[]
   sessions       Session[]
   authenticators Authenticator[]
@@ -32,6 +33,38 @@ model DailyEntry {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, entryDate])
+}
+
+model PantryItem {
+  id                   String   @id @default(cuid())
+  userId               String
+  name                 String
+  brand                String?
+  servingSize          String?
+  servingsPerContainer Float?
+  calories             Float
+  totalFat             Float    @default(0)
+  saturatedFat         Float    @default(0)
+  transFat             Float    @default(0)
+  polyunsaturatedFat   Float    @default(0)
+  monounsaturatedFat   Float    @default(0)
+  cholesterolMg        Float    @default(0)
+  sodiumMg             Float    @default(0)
+  totalCarbohydrate    Float    @default(0)
+  dietaryFiber         Float    @default(0)
+  totalSugars          Float    @default(0)
+  addedSugars          Float    @default(0)
+  protein              Float    @default(0)
+  vitaminDMcg          Float    @default(0)
+  calciumMg            Float    @default(0)
+  ironMg               Float    @default(0)
+  potassiumMg          Float    @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, name])
+  @@index([userId, updatedAt])
 }
 
 model Account {
