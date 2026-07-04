@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, House } from "lucide-react";
+import { CalendarDays, ChefHat, House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,6 +14,11 @@ const navigationItems = [
     href: "/dashboard",
     label: "Dashboard",
     icon: CalendarDays,
+  },
+  {
+    href: "/my-pantry",
+    label: "My Pantry",
+    icon: ChefHat,
   },
 ] as const;
 
