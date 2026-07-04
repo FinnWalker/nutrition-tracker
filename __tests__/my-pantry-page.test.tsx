@@ -6,6 +6,7 @@ import PantrySection from "@/app/my-pantry/pantry-section";
 const mockGetCurrentSession = vi.fn();
 const mockGetCachedPantryItems = vi.fn();
 const mockAddPantryItem = vi.fn();
+const mockUpdatePantryItem = vi.fn();
 const mockDeletePantryItem = vi.fn();
 const mockRefresh = vi.fn();
 
@@ -20,6 +21,7 @@ vi.mock("@/app/lib/get-cached-pantry-items", () => ({
 
 vi.mock("@/app/my-pantry/actions", () => ({
   addPantryItem: (...args: unknown[]) => mockAddPantryItem(...args),
+  updatePantryItem: (...args: unknown[]) => mockUpdatePantryItem(...args),
   deletePantryItem: (...args: unknown[]) => mockDeletePantryItem(...args),
 }));
 
@@ -34,12 +36,12 @@ describe("MyPantryPage", () => {
     mockGetCurrentSession.mockReset();
     mockGetCachedPantryItems.mockReset();
     mockAddPantryItem.mockReset();
+    mockUpdatePantryItem.mockReset();
     mockDeletePantryItem.mockReset();
     mockRefresh.mockReset();
     mockGetCachedPantryItems.mockResolvedValue([]);
-    mockAddPantryItem.mockResolvedValue({
-      id: "saved-item",
-    });
+    mockAddPantryItem.mockResolvedValue({ id: "saved-item" });
+    mockUpdatePantryItem.mockResolvedValue({ id: "updated-item" });
   });
 
   it("shows the pantry page heading and loading fallback", async () => {
@@ -50,26 +52,27 @@ describe("MyPantryPage", () => {
     expect(screen.getByText("My Pantry")).toBeVisible();
     expect(
       screen.getByText(
-        "Save foods you use often so your diary flow can pull from a personal, nutrition-aware pantry instead of starting from scratch every time.",
+        "Build a personal food catalogue that you can search, maintain, and eventually reuse while logging your diary.",
       ),
     ).toBeVisible();
     expect(screen.getByText("Loading pantry")).toBeVisible();
   });
 
-  it("prompts signed-out visitors to sign in before saving foods", async () => {
+  it("prompts signed-out visitors to sign in before opening the form", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
     render(await PantrySection());
 
+    expect(screen.getByText("Create an account to save pantry foods.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Add food" })).toBeDisabled();
     expect(
-      screen.getByText("Create an account to save pantry foods."),
+      screen.getByText(
+        "Sign in to open the pantry form and start building your own food database.",
+      ),
     ).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Sign in to add foods" }),
-    ).toBeDisabled();
   });
 
-  it("renders saved pantry items for the signed-in user", async () => {
+  it("renders the food catalogue for the signed-in user", async () => {
     mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
@@ -106,13 +109,13 @@ describe("MyPantryPage", () => {
 
     render(await PantrySection());
 
-    expect(screen.getByText("Build a reusable food library.")).toBeVisible();
+    expect(screen.getByText("Search your personal food database.")).toBeVisible();
     expect(screen.getByText("Greek yogurt")).toBeVisible();
     expect(screen.getByText("Fage")).toBeVisible();
     expect(mockGetCachedPantryItems).toHaveBeenCalledWith("ava@example.com");
   });
 
-  it("lets signed-in users add foods to their pantry", async () => {
+  it("opens the form when adding a new food", async () => {
     mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
@@ -122,69 +125,84 @@ describe("MyPantryPage", () => {
 
     render(await PantrySection());
 
-    fireEvent.change(screen.getByLabelText("Name"), {
-      target: { value: "Oats" },
-    });
-    fireEvent.change(screen.getByLabelText("Brand"), {
-      target: { value: "Quaker" },
-    });
-    fireEvent.change(screen.getByLabelText("Serving size"), {
-      target: { value: "40g" },
-    });
-    fireEvent.change(screen.getByLabelText("Servings per container"), {
-      target: { value: "1" },
-    });
-    fireEvent.change(screen.getByLabelText("Calories"), {
-      target: { value: "150" },
-    });
-    fireEvent.change(screen.getByLabelText("Total fat (g)"), {
-      target: { value: "3" },
-    });
-    fireEvent.change(screen.getByLabelText("Saturated fat (g)"), {
-      target: { value: "0.5" },
-    });
-    fireEvent.change(screen.getByLabelText("Total carbohydrate (g)"), {
-      target: { value: "27" },
-    });
-    fireEvent.change(screen.getByLabelText("Total sugars (g)"), {
-      target: { value: "1" },
-    });
-    fireEvent.change(screen.getByLabelText("Protein (g)"), {
-      target: { value: "5" },
-    });
-    fireEvent.change(screen.getByLabelText("Calcium (mg)"), {
-      target: { value: "20" },
-    });
-    fireEvent.change(screen.getByLabelText("Potassium (mg)"), {
-      target: { value: "150" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Add to pantry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add food" }));
 
-    await waitFor(() => {
-      expect(mockAddPantryItem).toHaveBeenCalledWith({
-        name: "Oats",
-        brand: "Quaker",
-        servingSize: "40g",
+    expect(screen.getByText("Add to your catalogue")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Add to pantry" })).toBeVisible();
+  });
+
+  it("lets signed-in users edit an existing pantry item", async () => {
+    mockGetCurrentSession.mockResolvedValue({
+      user: {
+        name: "Ava Green",
+        email: "ava@example.com",
+      },
+    });
+    mockGetCachedPantryItems.mockResolvedValue([
+      {
+        id: "pantry-1",
+        name: "Greek yogurt",
+        brand: "Fage",
+        servingSize: "170g tub",
         servingsPerContainer: 1,
-        calories: 150,
-        totalFat: 3,
-        saturatedFat: 0.5,
+        calories: 140,
+        totalFat: 4,
+        saturatedFat: 2.5,
         transFat: 0,
         polyunsaturatedFat: 0,
         monounsaturatedFat: 0,
-        cholesterolMg: 0,
-        sodiumMg: 0,
-        totalCarbohydrate: 27,
+        cholesterolMg: 15,
+        sodiumMg: 65,
+        totalCarbohydrate: 6,
         dietaryFiber: 0,
-        totalSugars: 1,
+        totalSugars: 5,
         addedSugars: 0,
-        protein: 5,
+        protein: 15,
         vitaminDMcg: 0,
-        calciumMg: 20,
+        calciumMg: 190,
         ironMg: 0,
-        potassiumMg: 150,
+        potassiumMg: 240,
+        updatedAt: new Date("2026-07-03T10:00:00.000Z"),
+      },
+    ]);
+
+    render(await PantrySection());
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Greek yogurt Fage Updated 3 Jul 2026" }),
+    );
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Greek yogurt 0%" },
+    });
+    fireEvent.change(screen.getByLabelText("Calories"), {
+      target: { value: "130" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => {
+      expect(mockUpdatePantryItem).toHaveBeenCalledWith("pantry-1", {
+        name: "Greek yogurt 0%",
+        brand: "Fage",
+        servingSize: "170g tub",
+        servingsPerContainer: 1,
+        calories: 130,
+        totalFat: 4,
+        saturatedFat: 2.5,
+        transFat: 0,
+        polyunsaturatedFat: 0,
+        monounsaturatedFat: 0,
+        cholesterolMg: 15,
+        sodiumMg: 65,
+        totalCarbohydrate: 6,
+        dietaryFiber: 0,
+        totalSugars: 5,
+        addedSugars: 0,
+        protein: 15,
+        vitaminDMcg: 0,
+        calciumMg: 190,
+        ironMg: 0,
+        potassiumMg: 240,
       });
     });
-    expect(screen.getByText("Oats")).toBeVisible();
   });
 });

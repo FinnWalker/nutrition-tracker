@@ -9,8 +9,8 @@ export default function MyPantryPage() {
     <section className="mx-auto w-full max-w-5xl">
       <h1 className="text-4xl font-semibold tracking-tight">My Pantry</h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-foreground-muted">
-        Save foods you use often so your diary flow can pull from a personal,
-        nutrition-aware pantry instead of starting from scratch every time.
+        Build a personal food catalogue that you can search, maintain, and
+        eventually reuse while logging your diary.
       </p>
       <Suspense
         fallback={

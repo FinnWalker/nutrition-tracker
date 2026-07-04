@@ -42,7 +42,7 @@ model PantryItem {
   brand                String?
   servingSize          String?
   servingsPerContainer Float?
-  calories             Int
+  calories             Float
   totalFat             Float    @default(0)
   saturatedFat         Float    @default(0)
   transFat             Float    @default(0)
