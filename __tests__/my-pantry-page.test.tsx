@@ -174,7 +174,7 @@ describe("MyPantryPage", () => {
 
     fireEvent.click(
       screen.getByRole("button", {
-        name: "Greek yogurt Fage Updated 3 Jul 2026",
+        name: "Edit Greek yogurt Fage",
       }),
     );
     fireEvent.change(screen.getByLabelText("Name"), {

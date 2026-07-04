@@ -1001,6 +1001,7 @@ export default function MyPantryManager({
                             type="button"
                             onClick={() => openEditForm(item)}
                             disabled={!canPersist || isLoading}
+                            aria-label={`Edit ${item.name}${item.brand ? ` ${item.brand}` : ""}`}
                             className="min-w-0 text-left transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             <div className="font-medium text-foreground">
