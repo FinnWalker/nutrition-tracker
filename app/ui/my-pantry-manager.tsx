@@ -9,6 +9,12 @@ import {
   deletePantryItem as deleteSavedPantryItem,
   updatePantryItem,
 } from "@/app/my-pantry/actions";
+import {
+  FatBreakdown,
+  formatNutritionNumber,
+  MacroBreakdown,
+  SummaryCard,
+} from "@/app/ui/nutrition-display";
 
 type PantryItem = {
   id: string;
@@ -107,17 +113,13 @@ function parseNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatNumber(value: number) {
-  return value % 1 === 0 ? `${value}` : value.toFixed(1);
-}
-
 function formatServing(item: PantryItem) {
   if (item.servingSize) {
     return item.servingSize;
   }
 
   if (item.servingsPerContainer) {
-    return `${formatNumber(item.servingsPerContainer)} serving(s)`;
+    return `${formatNutritionNumber(item.servingsPerContainer)} serving(s)`;
   }
 
   return "Not set";
@@ -1035,7 +1037,7 @@ export default function MyPantryManager({
                         />
                       </td>
                       <td className="px-4 py-3">
-                        {formatNumber(item.protein)}g
+                        {formatNutritionNumber(item.protein)}g
                       </td>
                     </tr>
                   ))}
@@ -1045,73 +1047,6 @@ export default function MyPantryManager({
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
-        {label}
-      </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
-    </div>
-  );
-}
-
-function MacroBreakdown({
-  total,
-  sugars,
-  addedSugars,
-}: {
-  total: number;
-  sugars: number;
-  addedSugars: number;
-}) {
-  return (
-    <div className="space-y-1">
-      <div className="font-medium text-foreground">{formatNumber(total)}g</div>
-      {sugars > 0 ? (
-        <div className="text-xs text-foreground-muted">
-          sugars
-          <span className="ml-2">{formatNumber(sugars)}g</span>
-        </div>
-      ) : null}
-      {addedSugars > 0 ? (
-        <div className="text-xs text-foreground-muted">
-          added sugars
-          <span className="ml-2">{formatNumber(addedSugars)}g</span>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function FatBreakdown({
-  total,
-  saturatedFat,
-  transFat,
-}: {
-  total: number;
-  saturatedFat: number;
-  transFat: number;
-}) {
-  return (
-    <div className="space-y-1">
-      <div className="font-medium text-foreground">{formatNumber(total)}g</div>
-      {saturatedFat > 0 ? (
-        <div className="text-xs text-foreground-muted">
-          sat fat
-          <span className="ml-2">{formatNumber(saturatedFat)}g</span>
-        </div>
-      ) : null}
-      {transFat > 0 ? (
-        <div className="text-xs text-foreground-muted">
-          trans fat
-          <span className="ml-2">{formatNumber(transFat)}g</span>
-        </div>
-      ) : null}
     </div>
   );
 }
