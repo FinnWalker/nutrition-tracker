@@ -63,7 +63,9 @@ describe("MyPantryPage", () => {
 
     render(await PantrySection());
 
-    expect(screen.getByText("Create an account to save pantry foods.")).toBeVisible();
+    expect(
+      screen.getByText("Create an account to save pantry foods."),
+    ).toBeVisible();
     expect(screen.getByRole("button", { name: "Add food" })).toBeDisabled();
     expect(
       screen.getByText(
@@ -109,7 +111,9 @@ describe("MyPantryPage", () => {
 
     render(await PantrySection());
 
-    expect(screen.getByText("Search your personal food database.")).toBeVisible();
+    expect(
+      screen.getByText("Search your personal food database."),
+    ).toBeVisible();
     expect(screen.getByText("Greek yogurt")).toBeVisible();
     expect(screen.getByText("Fage")).toBeVisible();
     expect(mockGetCachedPantryItems).toHaveBeenCalledWith("ava@example.com");
@@ -169,7 +173,9 @@ describe("MyPantryPage", () => {
     render(await PantrySection());
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Greek yogurt Fage Updated 3 Jul 2026" }),
+      screen.getByRole("button", {
+        name: "Greek yogurt Fage Updated 3 Jul 2026",
+      }),
     );
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Greek yogurt 0%" },
