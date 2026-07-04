@@ -58,7 +58,7 @@ function NutritionNumberRow({
         onChange={(event) => onChange(name, event.target.value)}
         disabled={disabled}
         placeholder={placeholder}
-        className={`w-24 rounded-xl border border-border bg-surface px-3 py-2 text-right text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${inputClassName ?? ""}`}
+        className={`w-24 border border-border bg-surface px-3 py-2 text-right text-sm outline-none ${inputClassName ?? ""}`}
       />
     </label>
   );
@@ -94,7 +94,7 @@ function NutritionTextRow({
         disabled={disabled}
         placeholder={placeholder}
         required={required}
-        className={`w-32 rounded-xl border border-border bg-surface px-3 py-2 text-right text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${inputClassName ?? ""}`}
+        className={`w-32 border border-border bg-surface px-3 py-2 text-right text-sm outline-none ${inputClassName ?? ""}`}
       />
     </label>
   );
@@ -108,7 +108,7 @@ function FormSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-surface p-4">
+    <section className="border border-border bg-surface p-4">
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground-muted">
         {title}
       </p>

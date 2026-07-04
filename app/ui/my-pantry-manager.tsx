@@ -407,7 +407,7 @@ export default function MyPantryManager({
 
   return (
     <div className="mt-8 space-y-6">
-      <div className="rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft">
+      <div className="border border-border bg-surface p-6">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
           {isLoading
             ? "Loading pantry"
@@ -428,7 +428,7 @@ export default function MyPantryManager({
       </div>
 
       <section
-        className={`rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft ${isLoading ? "opacity-60" : ""}`}
+        className={`border border-border bg-surface p-6 ${isLoading ? "opacity-60" : ""}`}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -451,7 +451,7 @@ export default function MyPantryManager({
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Search foods, brands, or calories"
-                  className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand"
+                  className="mt-2 w-full border border-border bg-surface-elevated px-4 py-3 text-sm outline-none"
                 />
               </label>
             </div>
@@ -459,7 +459,7 @@ export default function MyPantryManager({
               type="button"
               onClick={openCreateForm}
               disabled={!canPersist || isLoading}
-              className="rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-brand px-4 py-2 text-sm text-white"
             >
               Add food
             </button>
@@ -475,7 +475,7 @@ export default function MyPantryManager({
         </div>
 
         {isFormOpen ? (
-          <div className="mt-6 rounded-3xl border border-border bg-surface p-6">
+          <div className="mt-6 border border-border bg-background p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
@@ -491,7 +491,7 @@ export default function MyPantryManager({
                 <button
                   type="button"
                   onClick={resetFormState}
-                  className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface"
+                  className="border border-border px-3 py-2 text-xs"
                 >
                   Close
                 </button>
@@ -499,13 +499,11 @@ export default function MyPantryManager({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <div className="rounded-2xl border border-border bg-surface-elevated p-4 md:p-5">
-                <PantryFoodForm
-                  draft={draft}
-                  disabled={isDisabled}
-                  onChange={updateDraft}
-                />
-              </div>
+              <PantryFoodForm
+                draft={draft}
+                disabled={isDisabled}
+                onChange={updateDraft}
+              />
 
               {saveError ? (
                 <p className="rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -517,7 +515,7 @@ export default function MyPantryManager({
                 <button
                   type="submit"
                   disabled={isDisabled}
-                  className="rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-brand px-4 py-2 text-sm text-white"
                 >
                   {isPersisting
                     ? formMode === "edit"
@@ -530,7 +528,7 @@ export default function MyPantryManager({
                 <button
                   type="button"
                   onClick={resetFormState}
-                  className="rounded-2xl border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface"
+                  className="border border-border px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -538,7 +536,7 @@ export default function MyPantryManager({
             </form>
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface p-6 text-sm leading-7 text-foreground-muted">
+          <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
             {canPersist
               ? "Choose Add food to create a new entry, or click any catalogue row to update an existing food."
               : "Sign in to open the pantry form and start building your own food database."}
@@ -546,84 +544,82 @@ export default function MyPantryManager({
         )}
 
         {filteredItems.length === 0 ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface p-6 text-sm leading-7 text-foreground-muted">
+          <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
             {items.length === 0
               ? "No foods in your catalogue yet. Add a new item when you are ready to start building your pantry database."
               : "No foods match that search right now."}
           </div>
         ) : (
-          <div className="mt-6 overflow-hidden rounded-2xl border border-border">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-border text-sm">
-                <thead className="bg-surface">
-                  <tr className="text-left text-foreground-muted">
-                    <th className="px-4 py-3 font-medium">Food</th>
-                    <th className="px-4 py-3 font-medium">Serving</th>
-                    <th className="px-4 py-3 font-medium">Calories</th>
-                    <th className="px-4 py-3 font-medium">Carbs</th>
-                    <th className="px-4 py-3 font-medium">Fat</th>
-                    <th className="px-4 py-3 font-medium">Protein</th>
+          <div className="mt-6 overflow-x-auto border border-border">
+            <table className="min-w-full divide-y divide-border text-sm">
+              <thead className="bg-surface">
+                <tr className="text-left text-foreground-muted">
+                  <th className="px-4 py-3 font-medium">Food</th>
+                  <th className="px-4 py-3 font-medium">Serving</th>
+                  <th className="px-4 py-3 font-medium">Calories</th>
+                  <th className="px-4 py-3 font-medium">Carbs</th>
+                  <th className="px-4 py-3 font-medium">Fat</th>
+                  <th className="px-4 py-3 font-medium">Protein</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border bg-surface">
+                {filteredItems.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-start gap-3">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          disabled={isDisabled}
+                          aria-label={`Delete ${item.name}`}
+                          className="mt-0.5 p-1.5 text-foreground-muted"
+                        >
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditForm(item)}
+                          disabled={!canPersist || isLoading}
+                          aria-label={`Edit ${item.name}${item.brand ? ` ${item.brand}` : ""}`}
+                          className="min-w-0 text-left"
+                        >
+                          <div className="font-medium text-foreground">
+                            {item.name}
+                          </div>
+                          {item.brand ? (
+                            <div className="text-xs text-foreground-muted">
+                              {item.brand}
+                            </div>
+                          ) : null}
+                          <div className="mt-2 text-xs text-foreground-muted">
+                            Updated {formatUpdatedAt(item.updatedAt)}
+                          </div>
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{formatServing(item)}</td>
+                    <td className="px-4 py-3">{item.calories}</td>
+                    <td className="px-4 py-3">
+                      <MacroBreakdown
+                        total={item.totalCarbohydrate}
+                        sugars={item.totalSugars}
+                        addedSugars={item.addedSugars}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <FatBreakdown
+                        total={item.totalFat}
+                        saturatedFat={item.saturatedFat}
+                        transFat={item.transFat}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatNutritionNumber(item.protein)}g
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border bg-surface-elevated">
-                  {filteredItems.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3">
-                        <div className="flex items-start gap-3">
-                          <button
-                            type="button"
-                            onClick={() => removeItem(item.id)}
-                            disabled={isDisabled}
-                            aria-label={`Delete ${item.name}`}
-                            className="mt-0.5 rounded-lg p-1.5 text-foreground-muted transition-colors hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openEditForm(item)}
-                            disabled={!canPersist || isLoading}
-                            aria-label={`Edit ${item.name}${item.brand ? ` ${item.brand}` : ""}`}
-                            className="min-w-0 text-left transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <div className="font-medium text-foreground">
-                              {item.name}
-                            </div>
-                            {item.brand ? (
-                              <div className="text-xs text-foreground-muted">
-                                {item.brand}
-                              </div>
-                            ) : null}
-                            <div className="mt-2 text-xs text-foreground-muted">
-                              Updated {formatUpdatedAt(item.updatedAt)}
-                            </div>
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">{formatServing(item)}</td>
-                      <td className="px-4 py-3">{item.calories}</td>
-                      <td className="px-4 py-3">
-                        <MacroBreakdown
-                          total={item.totalCarbohydrate}
-                          sugars={item.totalSugars}
-                          addedSugars={item.addedSugars}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <FatBreakdown
-                          total={item.totalFat}
-                          saturatedFat={item.saturatedFat}
-                          transFat={item.transFat}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatNutritionNumber(item.protein)}g
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>

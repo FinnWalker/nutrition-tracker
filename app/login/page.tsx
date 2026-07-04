@@ -39,20 +39,17 @@ async function LoginPageContent({ searchParams }: LoginPageProps) {
 
 function LoginPageFallback() {
   return (
-    <section className="w-full rounded-[2rem] border border-border bg-surface/90 p-8 shadow-soft md:p-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground-muted">
+    <section className="w-full border border-border bg-surface p-6 md:p-8">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
         Sign in
       </p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
         Connect your Google account
       </h1>
-      <p className="mt-4 text-lg leading-8 text-foreground-muted">
+      <p className="mt-3 text-base leading-7 text-foreground-muted">
         Preparing your sign-in flow...
       </p>
-      <div
-        className="mt-8 h-12 w-48 rounded-2xl bg-surface"
-        aria-hidden="true"
-      />
+      <div className="mt-6 h-10 w-44 bg-surface-elevated" aria-hidden="true" />
     </section>
   );
 }

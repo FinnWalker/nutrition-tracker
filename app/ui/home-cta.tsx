@@ -5,7 +5,7 @@ export default function HomeCta() {
     <div className="mt-8 flex flex-wrap gap-3">
       <Link
         href="/dashboard"
-        className="rounded-2xl border border-border px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-elevated"
+        className="border border-border px-4 py-2 text-sm"
       >
         Open dashboard
       </Link>

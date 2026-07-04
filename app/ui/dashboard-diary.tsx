@@ -249,56 +249,48 @@ function DiaryTable({
   onRemove: (entryId: string) => void;
 }) {
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl border border-border">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border text-sm">
-          <thead className="bg-surface">
-            <tr className="text-left text-foreground-muted">
-              <th className="px-4 py-3 font-medium">Food</th>
-              <th className="px-4 py-3 font-medium">Servings</th>
-              <th className="px-4 py-3 font-medium">Calories</th>
-              <th className="px-4 py-3 font-medium">Carbs</th>
-              <th className="px-4 py-3 font-medium">Fat</th>
-              <th className="px-4 py-3 font-medium">Protein</th>
+    <div className="mt-6 overflow-x-auto border border-border">
+      <table className="min-w-full divide-y divide-border text-sm">
+        <thead className="bg-surface">
+          <tr className="text-left text-foreground-muted">
+            <th className="px-4 py-3 font-medium">Food</th>
+            <th className="px-4 py-3 font-medium">Servings</th>
+            <th className="px-4 py-3 font-medium">Calories</th>
+            <th className="px-4 py-3 font-medium">Carbs</th>
+            <th className="px-4 py-3 font-medium">Fat</th>
+            <th className="px-4 py-3 font-medium">Protein</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border bg-surface">
+          {entries.map((entry) => (
+            <tr key={entry.id}>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(entry.id)}
+                    disabled={isDisabled}
+                    aria-label={`Delete ${entry.foodName}`}
+                    className="p-1.5 text-foreground-muted"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                  <span className="font-medium text-foreground">
+                    {entry.foodName}
+                  </span>
+                </div>
+              </td>
+              <td className="px-4 py-3">{formatNutritionNumber(entry.servings)}</td>
+              <td className="px-4 py-3">{entry.calories}</td>
+              <td className="px-4 py-3">{formatNutritionNumber(entry.carbs)}g</td>
+              <td className="px-4 py-3">{formatNutritionNumber(entry.fat)}g</td>
+              <td className="px-4 py-3">
+                {formatNutritionNumber(entry.protein)}g
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-border bg-surface-elevated">
-            {entries.map((entry) => (
-              <tr key={entry.id}>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => onRemove(entry.id)}
-                      disabled={isDisabled}
-                      aria-label={`Delete ${entry.foodName}`}
-                      className="rounded-lg p-1.5 text-foreground-muted transition-colors hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                    <span className="font-medium text-foreground">
-                      {entry.foodName}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  {formatNutritionNumber(entry.servings)}
-                </td>
-                <td className="px-4 py-3">{entry.calories}</td>
-                <td className="px-4 py-3">
-                  {formatNutritionNumber(entry.carbs)}g
-                </td>
-                <td className="px-4 py-3">
-                  {formatNutritionNumber(entry.fat)}g
-                </td>
-                <td className="px-4 py-3">
-                  {formatNutritionNumber(entry.protein)}g
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -528,7 +520,7 @@ export default function DashboardDiary({
   return (
     <div className="mt-8 space-y-6">
       <section
-        className={`rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft transition-opacity ${isLoading ? "opacity-60" : "opacity-100"}`}
+        className={`border border-border bg-surface p-6 ${isLoading ? "opacity-60" : "opacity-100"}`}
         aria-busy={isLoading}
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -545,7 +537,7 @@ export default function DashboardDiary({
               type="button"
               onClick={clearEntries}
               disabled={isDisabled}
-              className="rounded-2xl border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
+              className="border border-border px-4 py-2 text-sm"
             >
               Clear all
             </button>
@@ -572,7 +564,7 @@ export default function DashboardDiary({
           initialPantryItems.length > 0 ? (
             <form
               onSubmit={handlePantrySubmit}
-              className="mt-6 rounded-3xl border border-border bg-surface p-6"
+              className="mt-6 border border-border bg-background p-6"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -598,60 +590,58 @@ export default function DashboardDiary({
                       onChange={(event) => setPantryQuery(event.target.value)}
                       disabled={isDisabled}
                       placeholder="Search foods, brands, or serving sizes"
-                      className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                      className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
                     />
                   </label>
 
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface-elevated">
-                    <div className="max-h-72 overflow-y-auto">
-                      {filteredPantryItems.length === 0 ? (
-                        <div className="px-4 py-6 text-sm text-foreground-muted">
-                          No pantry items match that search.
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-border">
-                          {filteredPantryItems.map((item) => {
-                            const isSelected = item.id === selectedPantryItemId;
+                  <div className="mt-4 max-h-72 overflow-y-auto border border-border bg-surface">
+                    {filteredPantryItems.length === 0 ? (
+                      <div className="px-4 py-6 text-sm text-foreground-muted">
+                        No pantry items match that search.
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {filteredPantryItems.map((item) => {
+                          const isSelected = item.id === selectedPantryItemId;
 
-                            return (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => setSelectedPantryItemId(item.id)}
-                                disabled={isDisabled}
-                                className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors ${isSelected ? "bg-brand-muted/60" : "hover:bg-surface"}`}
-                              >
-                                <div className="min-w-0">
-                                  <div className="font-medium text-foreground">
-                                    {item.name}
-                                  </div>
-                                  {item.brand ? (
-                                    <div className="mt-1 text-xs text-foreground-muted">
-                                      {item.brand}
-                                    </div>
-                                  ) : null}
-                                  {item.servingSize ? (
-                                    <div className="mt-1 text-xs text-foreground-muted">
-                                      {item.servingSize}
-                                    </div>
-                                  ) : null}
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setSelectedPantryItemId(item.id)}
+                              disabled={isDisabled}
+                              className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left ${isSelected ? "bg-brand-muted" : ""}`}
+                            >
+                              <div className="min-w-0">
+                                <div className="font-medium text-foreground">
+                                  {item.name}
                                 </div>
-                                <div className="shrink-0 text-right text-xs text-foreground-muted">
-                                  <div>{formatNutritionNumber(item.calories)} cal</div>
-                                  <div className="mt-1">
-                                    P {formatNutritionNumber(item.protein)}g
+                                {item.brand ? (
+                                  <div className="mt-1 text-xs text-foreground-muted">
+                                    {item.brand}
                                   </div>
+                                ) : null}
+                                {item.servingSize ? (
+                                  <div className="mt-1 text-xs text-foreground-muted">
+                                    {item.servingSize}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className="shrink-0 text-right text-xs text-foreground-muted">
+                                <div>{formatNutritionNumber(item.calories)} cal</div>
+                                <div className="mt-1">
+                                  P {formatNutritionNumber(item.protein)}g
                                 </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="rounded-3xl border border-border bg-surface-elevated p-5">
+                <div className="border border-border bg-surface p-5">
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
                     Selection
                   </p>
@@ -683,7 +673,7 @@ export default function DashboardDiary({
                           value={portions}
                           onChange={(event) => setPortions(event.target.value)}
                           disabled={isDisabled}
-                          className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                          className="mt-2 w-full border border-border bg-surface-elevated px-4 py-3 text-sm outline-none"
                           required
                         />
                       </label>
@@ -710,7 +700,7 @@ export default function DashboardDiary({
                       <button
                         type="submit"
                         disabled={isDisabled || !hasValidPortions}
-                        className="mt-5 rounded-2xl bg-[color:color-mix(in_srgb,var(--brand)_65%,var(--surface)_35%)] px-5 py-3 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-[color:color-mix(in_srgb,var(--brand)_58%,var(--surface)_42%)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="mt-5 bg-brand px-4 py-2 text-sm text-white"
                       >
                         {isLoading
                           ? "Loading..."
@@ -720,7 +710,7 @@ export default function DashboardDiary({
                       </button>
                     </>
                   ) : (
-                    <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-sm leading-7 text-foreground-muted">
+                    <div className="mt-3 border border-dashed border-border bg-background px-4 py-6 text-sm leading-7 text-foreground-muted">
                       Choose a pantry item from the results to scale servings and add it to your diary.
                     </div>
                   )}
@@ -734,7 +724,7 @@ export default function DashboardDiary({
               ) : null}
             </form>
           ) : (
-            <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface p-6 text-sm leading-7 text-foreground-muted">
+            <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
               Add foods to{" "}
               <Link
                 href="/my-pantry"
@@ -749,7 +739,7 @@ export default function DashboardDiary({
         ) : (
           <form
             onSubmit={handleManualSubmit}
-            className={`mt-6 rounded-3xl border border-border bg-surface p-6 ${isLoading ? "cursor-wait" : ""}`}
+            className="mt-6 border border-border bg-background p-6"
           >
             <div>
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
@@ -774,7 +764,7 @@ export default function DashboardDiary({
                   }
                   disabled={isDisabled}
                   placeholder="Greek yogurt with berries"
-                  className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
                   required
                 />
               </label>
@@ -794,7 +784,7 @@ export default function DashboardDiary({
                   }
                   disabled={isDisabled}
                   placeholder="240"
-                  className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
                 />
               </label>
 
@@ -813,7 +803,7 @@ export default function DashboardDiary({
                   }
                   disabled={isDisabled}
                   placeholder="23"
-                  className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
                 />
               </label>
 
@@ -830,7 +820,7 @@ export default function DashboardDiary({
                   onChange={(event) => updateDraft("carbs", event.target.value)}
                   disabled={isDisabled}
                   placeholder="18"
-                  className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
                 />
               </label>
 
@@ -847,7 +837,7 @@ export default function DashboardDiary({
                   onChange={(event) => updateDraft("fat", event.target.value)}
                   disabled={isDisabled}
                   placeholder="9"
-                  className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
                 />
               </label>
             </div>
@@ -861,7 +851,7 @@ export default function DashboardDiary({
             <button
               type="submit"
               disabled={isDisabled}
-              className="mt-6 rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 bg-brand px-4 py-2 text-sm text-white"
             >
               {isLoading
                 ? "Loading..."
@@ -881,7 +871,7 @@ export default function DashboardDiary({
           </h2>
 
           {entries.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface p-6 text-sm leading-7 text-foreground-muted">
+            <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
               {isLoading
                 ? "Your diary entries will appear here once we finish loading your session."
                 : canPersist
