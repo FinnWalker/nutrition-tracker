@@ -26,13 +26,10 @@ export default function ThemeToggle() {
       aria-label={buttonLabel}
       title={buttonLabel}
       disabled={!mounted}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-foreground shadow-soft transition-colors hover:border-brand hover:text-brand-foreground"
+      className="inline-flex h-9 w-9 items-center justify-center border border-border bg-surface text-foreground"
     >
       {mounted ? (
-        <Icon
-          className="h-4 w-4 opacity-100 transition-opacity duration-200"
-          aria-hidden="true"
-        />
+        <Icon className="h-4 w-4" aria-hidden="true" />
       ) : (
         <span aria-hidden="true" className="h-4 w-4" />
       )}

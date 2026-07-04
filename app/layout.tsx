@@ -36,12 +36,12 @@ export default function RootLayout(props: RootLayoutProps) {
       <body className="min-h-dvh bg-background text-foreground">
         <ThemeProvider>
           <AuthSessionProvider>
-            <div className="min-h-dvh md:grid md:grid-cols-[18rem_minmax(0,1fr)]">
+            <div className="min-h-dvh md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
               <aside className="hidden border-r border-border bg-surface px-5 py-6 md:flex md:flex-col">
                 <SidebarNav />
               </aside>
 
-              <main className="box-border flex min-h-dvh flex-col px-5 py-8 md:px-10 md:py-10">
+              <main className="flex min-h-dvh flex-col px-4 py-6 md:px-8 md:py-8">
                 {props.children}
               </main>
             </div>

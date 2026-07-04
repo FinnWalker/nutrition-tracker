@@ -10,11 +10,11 @@ export function SummaryCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4">
+    <div className="border border-border bg-surface p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-2 text-xl font-semibold tracking-tight">{value}</p>
     </div>
   );
 }

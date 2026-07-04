@@ -6,28 +6,25 @@ type LoginPanelProps = {
 
 export default function LoginPanel({ callbackUrl }: LoginPanelProps) {
   return (
-    <section className="w-full rounded-[2rem] border border-border bg-surface/90 p-8 shadow-soft md:p-12">
-      <p className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground-muted">
+    <section className="w-full border border-border bg-surface p-6 md:p-8">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
         Sign in
       </p>
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight">
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
         Connect your Google account
       </h1>
-      <p className="mt-4 text-lg leading-8 text-foreground-muted">
+      <p className="mt-3 text-base leading-7 text-foreground-muted">
         Use Google to unlock your private nutrition dashboard.
       </p>
 
       <form
-        className="mt-8"
+        className="mt-6"
         action={async () => {
           "use server";
           await signIn("google", { redirectTo: callbackUrl });
         }}
       >
-        <button
-          type="submit"
-          className="cursor-pointer rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-        >
+        <button type="submit" className="bg-brand px-4 py-2 text-sm text-white">
           Continue with Google
         </button>
       </form>

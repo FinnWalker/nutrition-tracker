@@ -22,7 +22,7 @@ export default function Modal({ children }: ModalProps) {
         <button
           type="button"
           aria-label="Close login modal"
-          className="absolute top-4 right-4 z-20 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-foreground-muted shadow-soft transition-colors hover:bg-surface-elevated hover:text-foreground"
+          className="absolute top-4 right-4 z-20 flex h-10 w-10 items-center justify-center border border-border bg-surface text-foreground-muted"
           onClick={() => router.back()}
         >
           <X className="h-4 w-4" aria-hidden="true" />

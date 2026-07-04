@@ -36,15 +36,13 @@ export default function SidebarNavLinks() {
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
-            className={`flex h-14 items-center gap-3 rounded-2xl border px-4 py-2.5 text-md font-medium transition-colors ${
+            className={`flex items-center gap-3 border px-3 py-2 text-sm ${
               isActive
-                ? "border-border-strong bg-brand-muted text-brand-foreground shadow-accent"
-                : "border-transparent text-foreground-muted hover:bg-surface-elevated hover:text-foreground"
+                ? "border-border bg-brand-muted text-brand-foreground"
+                : "border-transparent text-foreground-muted"
             }`}
           >
-            <span className="shrink-0">
-              <Icon className="h-5 w-5" aria-hidden="true" />
-            </span>
+            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{item.label}</span>
           </Link>
         );

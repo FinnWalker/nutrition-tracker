@@ -19,7 +19,6 @@ export default function DashboardPage() {
             canPersist={false}
             initialEntries={[]}
             initialPantryItems={[]}
-            viewerLabel="there"
             isLoading
           />
         }

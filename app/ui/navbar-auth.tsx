@@ -11,7 +11,7 @@ export default async function NavbarAuth() {
       <div className="flex min-h-[4.5rem] items-center">
         <GoogleSignInButton
           label="Sign in with Google"
-          className="w-full cursor-pointer rounded-2xl bg-brand px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          className="w-full bg-brand px-4 py-2 text-sm text-white"
         />
       </div>
     );
@@ -20,7 +20,7 @@ export default async function NavbarAuth() {
   const displayName = user.name || user.email || "Signed in";
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface-elevated px-3 py-3 shadow-soft">
+    <div className="flex items-center gap-3 border border-border bg-surface px-3 py-3">
       <div className="shrink-0">
         {user.image ? (
           <Image
@@ -28,10 +28,10 @@ export default async function NavbarAuth() {
             alt={displayName}
             width={44}
             height={44}
-            className="h-11 w-11 rounded-full border border-border object-cover"
+            className="h-10 w-10 rounded-full border border-border object-cover"
           />
         ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-muted text-sm font-semibold text-brand-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-muted text-sm font-semibold text-brand-foreground">
             {displayName.slice(0, 1).toUpperCase()}
           </div>
         )}
@@ -46,7 +46,7 @@ export default async function NavbarAuth() {
         ) : null}
       </div>
 
-      <SignOutButton iconOnly className="shrink-0 rounded-xl p-2.5" />
+      <SignOutButton iconOnly className="shrink-0 p-2" />
     </div>
   );
 }
