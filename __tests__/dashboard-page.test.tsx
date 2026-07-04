@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DashboardPage from "@/app/dashboard/page";
+import DashboardDiarySection from "@/app/dashboard/dashboard-diary-section";
 
 const mockGetCurrentSession = vi.fn();
 const mockGetCachedDailyEntries = vi.fn();
@@ -49,8 +50,24 @@ describe("DashboardPage", () => {
 
     expect(screen.getByText("Dashboard")).toBeVisible();
     expect(
-      screen.getByText("Explore the diary flow before you create an account."),
+      screen.getByText(
+        "Explore the diary flow right away. If you are signed in, your saved entries will stream in automatically.",
+      ),
     ).toBeVisible();
+    expect(screen.getByText("Loading diary")).toBeVisible();
+    expect(screen.getByText("Preparing your dashboard.")).toBeVisible();
+    expect(
+      screen.getByText("We are checking whether you have a saved diary.", {
+        exact: false,
+      }),
+    ).toBeVisible();
+  });
+
+  it("lets signed-out visitors explore the resolved dashboard", async () => {
+    mockGetCurrentSession.mockResolvedValue(null);
+
+    render(await DashboardDiarySection());
+
     expect(
       screen.getByText("You can log food before creating an account."),
     ).toBeVisible();
@@ -66,9 +83,8 @@ describe("DashboardPage", () => {
       },
     });
 
-    render(await DashboardPage());
+    render(await DashboardDiarySection());
 
-    expect(screen.getByText("Signed in as Ava Green.")).toBeVisible();
     expect(screen.getByText("Welcome back, Ava Green.")).toBeVisible();
     expect(
       screen.getByText(
@@ -80,7 +96,7 @@ describe("DashboardPage", () => {
   it("lets visitors build up local diary entries before signing in", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await DashboardPage());
+    render(await DashboardDiarySection());
 
     fireEvent.change(screen.getByLabelText("Food"), {
       target: { value: "Greek yogurt" },
@@ -138,7 +154,7 @@ describe("DashboardPage", () => {
       },
     ]);
 
-    render(await DashboardPage());
+    render(await DashboardDiarySection());
 
     expect(screen.getByText("Saved omelette")).toBeVisible();
     expect(screen.queryByText("Local granola")).not.toBeInTheDocument();
