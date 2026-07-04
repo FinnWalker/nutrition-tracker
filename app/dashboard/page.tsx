@@ -1,37 +1,29 @@
-import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
-import { getCurrentSession } from "@/app/lib/get-current-session";
+import { Suspense } from "react";
 import DashboardDiary from "@/app/ui/dashboard-diary";
+import DashboardDiarySection from "./dashboard-diary-section";
 
 export const unstable_instant = false;
 
-export default async function DashboardPage() {
-  const session = await getCurrentSession();
-  const viewerLabel = session?.user?.name ?? session?.user?.email ?? "there";
-  const initialEntries = session?.user?.email
-    ? (await getCachedDailyEntries(session.user.email)).map((entry) => ({
-        id: entry.id,
-        entryDate: entry.entryDate.toISOString().slice(0, 10),
-        foodName: entry.foodName,
-        calories: entry.calories,
-        protein: entry.protein,
-        carbs: entry.carbs,
-        fat: entry.fat,
-      }))
-    : [];
-
+export default function DashboardPage() {
   return (
     <section className="mx-auto w-full max-w-5xl">
       <h1 className="text-4xl font-semibold tracking-tight">Dashboard</h1>
       <p className="mt-4 text-lg text-foreground-muted">
-        {session?.user
-          ? `Signed in as ${viewerLabel}.`
-          : "Explore the diary flow before you create an account."}
+        Explore the diary flow right away. If you are signed in, your saved
+        entries will stream in automatically.
       </p>
-      <DashboardDiary
-        canPersist={Boolean(session?.user)}
-        initialEntries={initialEntries}
-        viewerLabel={viewerLabel}
-      />
+      <Suspense
+        fallback={
+          <DashboardDiary
+            canPersist={false}
+            initialEntries={[]}
+            viewerLabel="there"
+            isLoading
+          />
+        }
+      >
+        <DashboardDiarySection />
+      </Suspense>
     </section>
   );
 }
