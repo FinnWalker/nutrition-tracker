@@ -5,6 +5,7 @@ import {
   getSafeCallbackPath,
 } from "@/app/lib/auth-redirect";
 import LoginPanel from "@/app/ui/login-panel";
+import PageContainer from "@/app/ui/page-container";
 import { redirect } from "next/navigation";
 
 type LoginPageProps = {
@@ -13,11 +14,11 @@ type LoginPageProps = {
 
 export default function LoginPage(props: LoginPageProps) {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-5 py-12 md:px-10">
+    <PageContainer width="narrow" className="flex min-h-full items-center py-4">
       <Suspense fallback={<LoginPageFallback />}>
         <LoginPageContent searchParams={props.searchParams} />
       </Suspense>
-    </main>
+    </PageContainer>
   );
 }
 

@@ -1,8 +1,9 @@
 import HomeCta from "./ui/home-cta";
+import PageContainer from "./ui/page-container";
 
 export default function Home() {
   return (
-    <section className="mx-auto flex w-full max-w-5xl flex-1 items-center">
+    <PageContainer className="flex flex-1 items-center">
       <div className="w-full rounded-[2rem] border border-border bg-surface/90 p-8 shadow-soft md:p-12">
         <p className="text-xs font-semibold uppercase tracking-[0.32em] text-foreground-muted">
           Wellness
@@ -16,6 +17,6 @@ export default function Home() {
         </p>
         <HomeCta />
       </div>
-    </section>
+    </PageContainer>
   );
 }

@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 import PantrySection from "./pantry-section";
 import MyPantryManager from "@/app/ui/my-pantry-manager";
+import PageContainer from "@/app/ui/page-container";
 
 export const unstable_instant = false;
 
 export default function MyPantryPage() {
   return (
-    <section className="mx-auto w-full max-w-5xl">
+    <PageContainer>
       <h1 className="text-4xl font-semibold tracking-tight">My Pantry</h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-foreground-muted">
         Build a personal food catalogue that you can search, maintain, and
@@ -24,6 +25,6 @@ export default function MyPantryPage() {
       >
         <PantrySection />
       </Suspense>
-    </section>
+    </PageContainer>
   );
 }
