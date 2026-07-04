@@ -115,7 +115,9 @@ describe("DashboardPage", () => {
         "Welcome back, Ava Green. Pick a saved pantry item, scale the portions, and add it straight into today's diary.",
       ),
     ).toBeVisible();
-    expect(screen.getByText("Build today's diary from saved foods")).toBeVisible();
+    expect(
+      screen.getByText("Build today's diary from saved foods"),
+    ).toBeVisible();
   });
 
   it("lets visitors build up local diary entries before signing in", async () => {

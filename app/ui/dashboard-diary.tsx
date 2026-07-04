@@ -14,10 +14,7 @@ import {
   clearDailyEntries as clearSavedDailyEntries,
   deleteDailyEntry as deleteSavedDailyEntry,
 } from "@/app/dashboard/actions";
-import {
-  formatNutritionNumber,
-  SummaryCard,
-} from "@/app/ui/nutrition-display";
+import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 
 type DashboardDiaryProps = {
   canPersist: boolean;
@@ -341,7 +338,11 @@ export default function DashboardDiary({
   const parsedPortions = parseNumber(portions);
   const hasValidPortions = parsedPortions > 0;
   const pantryPreview = activePantryItem
-    ? createPantryEntry(activePantryItem, entryDate, Math.max(parsedPortions, 0))
+    ? createPantryEntry(
+        activePantryItem,
+        entryDate,
+        Math.max(parsedPortions, 0),
+      )
     : null;
   const statusCopy = isLoading
     ? "We are checking whether your diary and pantry are ready."
@@ -374,7 +375,10 @@ export default function DashboardDiary({
     }));
   }
 
-  async function persistEntry(nextEntry: DiaryEntry, draftSnapshot?: DraftEntry) {
+  async function persistEntry(
+    nextEntry: DiaryEntry,
+    draftSnapshot?: DraftEntry,
+  ) {
     const mutation: OptimisticEntryMutation = {
       type: "add",
       entry: nextEntry,
@@ -440,7 +444,11 @@ export default function DashboardDiary({
       return;
     }
 
-    const nextEntry = createPantryEntry(activePantryItem, entryDate, parsedPortions);
+    const nextEntry = createPantryEntry(
+      activePantryItem,
+      entryDate,
+      parsedPortions,
+    );
     await persistEntry(nextEntry);
   }
 
@@ -693,7 +701,15 @@ export default function DashboardDiary({
             </form>
           ) : (
             <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface p-6 text-sm leading-7 text-foreground-muted">
-              Add foods to <Link href="/my-pantry" className="font-medium text-foreground underline underline-offset-4">My Pantry</Link> first, then you can pull them straight into this diary snapshot with scaled portions.
+              Add foods to{" "}
+              <Link
+                href="/my-pantry"
+                className="font-medium text-foreground underline underline-offset-4"
+              >
+                My Pantry
+              </Link>{" "}
+              first, then you can pull them straight into this diary snapshot
+              with scaled portions.
             </div>
           )
         ) : (
