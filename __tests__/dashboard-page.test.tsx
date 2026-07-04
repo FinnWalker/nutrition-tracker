@@ -63,16 +63,9 @@ describe("DashboardPage", () => {
         "Review your daily totals, then pull foods straight from your pantry into the diary as you log meals.",
       ),
     ).toBeVisible();
-    expect(screen.getByText("Loading diary")).toBeVisible();
-    expect(screen.getByText("Preparing your dashboard.")).toBeVisible();
-    expect(
-      screen.getByText(
-        "We are checking whether your diary and pantry are ready.",
-        {
-          exact: false,
-        },
-      ),
-    ).toBeVisible();
+    expect(screen.getByText("Summary")).toBeVisible();
+    expect(screen.getByText("Today's totals")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Loading..." })).toBeDisabled();
   });
 
   it("lets signed-out visitors explore the resolved dashboard", async () => {
@@ -80,9 +73,6 @@ describe("DashboardPage", () => {
 
     render(await DashboardDiarySection());
 
-    expect(
-      screen.getByText("You can log food before creating an account."),
-    ).toBeVisible();
     expect(screen.getByText("Quick add")).toBeVisible();
     expect(screen.getByText("Diary snapshot")).toBeVisible();
   });
@@ -109,15 +99,9 @@ describe("DashboardPage", () => {
 
     render(await DashboardDiarySection());
 
-    expect(screen.getByText("Your daily summary comes first.")).toBeVisible();
-    expect(
-      screen.getByText(
-        "Welcome back, Ava Green. Pick a saved pantry item, scale the portions, and add it straight into today's diary.",
-      ),
-    ).toBeVisible();
-    expect(
-      screen.getByText("Build today's diary from saved foods"),
-    ).toBeVisible();
+    expect(screen.getByText("Summary")).toBeVisible();
+    expect(screen.getByText("Today's totals")).toBeVisible();
+    expect(screen.getByText("Search your saved foods")).toBeVisible();
   });
 
   it("lets visitors build up local diary entries before signing in", async () => {
@@ -170,6 +154,7 @@ describe("DashboardPage", () => {
 
     render(await DashboardDiarySection());
 
+    fireEvent.click(screen.getByRole("button", { name: /Greek yogurt/i }));
     fireEvent.change(screen.getByLabelText("Portions"), {
       target: { value: "1.5" },
     });
@@ -186,6 +171,7 @@ describe("DashboardPage", () => {
       expect(mockAddDailyEntry).toHaveBeenCalledWith({
         entryDate: expect.any(String),
         foodName: "Greek yogurt (Fage)",
+        pantryItemId: "pantry-1",
         servings: 1.5,
         calories: 210,
         protein: 22.5,
@@ -193,6 +179,11 @@ describe("DashboardPage", () => {
         fat: 6,
       });
     });
+    expect(
+      screen.getByText(
+        "Choose a pantry item from the results to scale servings and add it to your diary.",
+      ),
+    ).toBeVisible();
     expect(screen.getByText("Greek yogurt (Fage)")).toBeVisible();
     expect(screen.getByText("1.5")).toBeVisible();
   });

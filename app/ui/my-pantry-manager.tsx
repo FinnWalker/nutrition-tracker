@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import { startTransition, useOptimistic, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import {
   MacroBreakdown,
   SummaryCard,
 } from "@/app/ui/nutrition-display";
+import PantryFoodForm, { type PantryFoodDraft } from "@/app/ui/pantry-food-form";
 
 type PantryItem = {
   id: string;
@@ -22,6 +23,7 @@ type PantryItem = {
   brand: string | null;
   servingSize: string | null;
   servingsPerContainer: number | null;
+  lastUsedAt: string | null;
   calories: number;
   totalFat: number;
   saturatedFat: number;
@@ -42,30 +44,6 @@ type PantryItem = {
   updatedAt: string;
 };
 
-type PantryDraft = {
-  name: string;
-  brand: string;
-  servingSize: string;
-  servingsPerContainer: string;
-  calories: string;
-  totalFat: string;
-  saturatedFat: string;
-  transFat: string;
-  polyunsaturatedFat: string;
-  monounsaturatedFat: string;
-  cholesterolMg: string;
-  sodiumMg: string;
-  totalCarbohydrate: string;
-  dietaryFiber: string;
-  totalSugars: string;
-  addedSugars: string;
-  protein: string;
-  vitaminDMcg: string;
-  calciumMg: string;
-  ironMg: string;
-  potassiumMg: string;
-};
-
 type PantryMutation =
   | { type: "add"; item: PantryItem }
   | { type: "update"; item: PantryItem }
@@ -78,7 +56,7 @@ type MyPantryManagerProps = {
   isLoading?: boolean;
 };
 
-const initialDraft = (): PantryDraft => ({
+const initialDraft = (): PantryFoodDraft => ({
   name: "",
   brand: "",
   servingSize: "",
@@ -151,7 +129,7 @@ function formatUpdatedAt(value: string) {
   }).format(new Date(value));
 }
 
-function createDraftFromItem(item: PantryItem): PantryDraft {
+function createDraftFromItem(item: PantryItem): PantryFoodDraft {
   return {
     name: item.name,
     brand: item.brand ?? "",
@@ -182,7 +160,7 @@ function createDraftFromItem(item: PantryItem): PantryDraft {
 }
 
 function createItemFromDraft(
-  draft: PantryDraft,
+  draft: PantryFoodDraft,
   itemId = crypto.randomUUID(),
 ): PantryItem {
   return {
@@ -193,6 +171,7 @@ function createItemFromDraft(
     servingsPerContainer: draft.servingsPerContainer.trim()
       ? Math.max(0, parseNumber(draft.servingsPerContainer))
       : null,
+    lastUsedAt: null,
     calories: Math.max(0, parseNumber(draft.calories)),
     totalFat: Math.max(0, parseNumber(draft.totalFat)),
     saturatedFat: Math.max(0, parseNumber(draft.saturatedFat)),
@@ -214,112 +193,6 @@ function createItemFromDraft(
   };
 }
 
-function NutritionNumberRow({
-  label,
-  name,
-  value,
-  placeholder,
-  disabled,
-  onChange,
-  indent = false,
-  border = true,
-  inputClassName,
-}: {
-  label: string;
-  name: keyof PantryDraft;
-  value: string;
-  placeholder: string;
-  disabled: boolean;
-  onChange: (field: keyof PantryDraft, value: string) => void;
-  indent?: boolean;
-  border?: boolean;
-  inputClassName?: string;
-}) {
-  return (
-    <label
-      className={`flex items-center justify-between gap-3 py-2 ${border ? "border-b border-border" : ""}`}
-    >
-      <span
-        className={`text-sm ${indent ? "pl-4 text-foreground-muted" : "font-medium text-foreground"}`}
-      >
-        {label}
-      </span>
-      <input
-        type="number"
-        step="any"
-        name={name}
-        value={value}
-        onChange={(event) => onChange(name, event.target.value)}
-        disabled={disabled}
-        placeholder={placeholder}
-        className={`w-24 rounded-xl border border-border bg-surface-elevated px-3 py-2 text-right text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${inputClassName ?? ""}`}
-      />
-    </label>
-  );
-}
-
-function NutritionTextRow({
-  label,
-  name,
-  value,
-  placeholder,
-  disabled,
-  onChange,
-  border = true,
-  inputClassName,
-  required = false,
-}: {
-  label: string;
-  name: keyof PantryDraft;
-  value: string;
-  placeholder: string;
-  disabled: boolean;
-  onChange: (field: keyof PantryDraft, value: string) => void;
-  border?: boolean;
-  inputClassName?: string;
-  required?: boolean;
-}) {
-  return (
-    <label
-      className={`flex items-center justify-between gap-3 py-2 ${border ? "border-b border-border" : ""}`}
-    >
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <input
-        type="text"
-        name={name}
-        value={value}
-        onChange={(event) => onChange(name, event.target.value)}
-        disabled={disabled}
-        placeholder={placeholder}
-        required={required}
-        className={`w-32 rounded-xl border border-border bg-surface-elevated px-3 py-2 text-right text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 ${inputClassName ?? ""}`}
-      />
-    </label>
-  );
-}
-
-function LabelSection({
-  title,
-  detailToggle,
-  children,
-}: {
-  title: string;
-  detailToggle?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="border-t-4 border-foreground pt-3">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-lg font-semibold tracking-tight text-foreground">
-          {title}
-        </p>
-        {detailToggle}
-      </div>
-      <div className="mt-2">{children}</div>
-    </section>
-  );
-}
-
 export default function MyPantryManager({
   canPersist,
   initialItems,
@@ -327,11 +200,8 @@ export default function MyPantryManager({
   isLoading = false,
 }: MyPantryManagerProps) {
   const router = useRouter();
-  const [draft, setDraft] = useState<PantryDraft>(initialDraft);
+  const [draft, setDraft] = useState<PantryFoodDraft>(initialDraft);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showCarbDetails, setShowCarbDetails] = useState(false);
-  const [showFatDetails, setShowFatDetails] = useState(false);
-  const [showMicroDetails, setShowMicroDetails] = useState(false);
   const [isPersisting, setIsPersisting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<"closed" | "create" | "edit">(
@@ -363,9 +233,9 @@ export default function MyPantryManager({
       ? `Your pantry belongs to ${viewerLabel}. Search it like a personal food database, then add or update foods only when you need to.`
       : "Sign in to build a personal food catalogue that you can search while logging your diary.";
 
-  function updateDraft<K extends keyof PantryDraft>(
+  function updateDraft<K extends keyof PantryFoodDraft>(
     field: K,
-    value: PantryDraft[K],
+    value: PantryFoodDraft[K],
   ) {
     setDraft((current) => ({
       ...current,
@@ -377,40 +247,18 @@ export default function MyPantryManager({
     setDraft(initialDraft());
     setEditingItemId(null);
     setFormMode("closed");
-    setShowCarbDetails(false);
-    setShowFatDetails(false);
-    setShowMicroDetails(false);
   }
 
   function openCreateForm() {
     setDraft(initialDraft());
     setEditingItemId(null);
     setFormMode("create");
-    setShowCarbDetails(false);
-    setShowFatDetails(false);
-    setShowMicroDetails(false);
   }
 
   function openEditForm(item: PantryItem) {
     setDraft(createDraftFromItem(item));
     setEditingItemId(item.id);
     setFormMode("edit");
-    setShowCarbDetails(
-      item.dietaryFiber > 0 || item.totalSugars > 0 || item.addedSugars > 0,
-    );
-    setShowFatDetails(
-      item.saturatedFat > 0 ||
-        item.transFat > 0 ||
-        item.polyunsaturatedFat > 0 ||
-        item.monounsaturatedFat > 0 ||
-        item.cholesterolMg > 0,
-    );
-    setShowMicroDetails(
-      item.vitaminDMcg > 0 ||
-        item.calciumMg > 0 ||
-        item.ironMg > 0 ||
-        item.potassiumMg > 0,
-    );
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -651,280 +499,12 @@ export default function MyPantryManager({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <div className="rounded-2xl border-2 border-foreground bg-background px-4 py-4">
-                <div className="border-b-4 border-foreground pb-3">
-                  <h3 className="text-2xl font-semibold tracking-tight text-foreground">
-                    Nutrition Facts
-                  </h3>
-                  <p className="mt-1 text-sm text-foreground-muted">
-                    Compact entry for your pantry database.
-                  </p>
-                </div>
-
-                <div className="mt-3 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)]">
-                  <div className="space-y-4">
-                    <LabelSection title="Product">
-                      <NutritionTextRow
-                        label="Name"
-                        name="name"
-                        value={draft.name}
-                        placeholder="Greek yogurt"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        inputClassName="w-52"
-                        required
-                      />
-                      <NutritionTextRow
-                        label="Brand"
-                        name="brand"
-                        value={draft.brand}
-                        placeholder="Fage"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        inputClassName="w-40"
-                      />
-                      <NutritionNumberRow
-                        label="Servings per container"
-                        name="servingsPerContainer"
-                        value={draft.servingsPerContainer}
-                        placeholder="1"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        border={false}
-                      />
-                    </LabelSection>
-
-                    <LabelSection
-                      title="Carbs"
-                      detailToggle={
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowCarbDetails((current) => !current)
-                          }
-                          className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface-elevated"
-                          aria-expanded={showCarbDetails}
-                        >
-                          {showCarbDetails ? "Less" : "More"}
-                        </button>
-                      }
-                    >
-                      <NutritionNumberRow
-                        label="Total carbohydrate (g)"
-                        name="totalCarbohydrate"
-                        value={draft.totalCarbohydrate}
-                        placeholder="6"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        border={!showCarbDetails}
-                      />
-                      {showCarbDetails ? (
-                        <>
-                          <NutritionNumberRow
-                            label="Total sugars (g)"
-                            name="totalSugars"
-                            value={draft.totalSugars}
-                            placeholder="5"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            indent
-                          />
-                          <NutritionNumberRow
-                            label="Added sugars (g)"
-                            name="addedSugars"
-                            value={draft.addedSugars}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            indent
-                            border={false}
-                          />
-                        </>
-                      ) : null}
-                    </LabelSection>
-
-                    <LabelSection
-                      title="Fat"
-                      detailToggle={
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowFatDetails((current) => !current)
-                          }
-                          className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface-elevated"
-                          aria-expanded={showFatDetails}
-                        >
-                          {showFatDetails ? "Less" : "More"}
-                        </button>
-                      }
-                    >
-                      <NutritionNumberRow
-                        label="Total fat (g)"
-                        name="totalFat"
-                        value={draft.totalFat}
-                        placeholder="4"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        border={!showFatDetails}
-                      />
-                      {showFatDetails ? (
-                        <>
-                          <NutritionNumberRow
-                            label="Saturated fat (g)"
-                            name="saturatedFat"
-                            value={draft.saturatedFat}
-                            placeholder="2.5"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            indent
-                          />
-                          <NutritionNumberRow
-                            label="Trans fat (g)"
-                            name="transFat"
-                            value={draft.transFat}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            indent
-                          />
-                          <NutritionNumberRow
-                            label="Polyunsaturated fat (g)"
-                            name="polyunsaturatedFat"
-                            value={draft.polyunsaturatedFat}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            indent
-                          />
-                          <NutritionNumberRow
-                            label="Monounsaturated fat (g)"
-                            name="monounsaturatedFat"
-                            value={draft.monounsaturatedFat}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            indent
-                          />
-                          <NutritionNumberRow
-                            label="Cholesterol (mg)"
-                            name="cholesterolMg"
-                            value={draft.cholesterolMg}
-                            placeholder="15"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            border={false}
-                          />
-                        </>
-                      ) : null}
-                    </LabelSection>
-
-                    <LabelSection title="Protein">
-                      <NutritionNumberRow
-                        label="Protein (g)"
-                        name="protein"
-                        value={draft.protein}
-                        placeholder="15"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        border={false}
-                      />
-                    </LabelSection>
-                  </div>
-
-                  <div className="space-y-4">
-                    <LabelSection title="Serving">
-                      <NutritionTextRow
-                        label="Serving size"
-                        name="servingSize"
-                        value={draft.servingSize}
-                        placeholder="170g tub"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        inputClassName="w-44"
-                      />
-                      <NutritionNumberRow
-                        label="Calories"
-                        name="calories"
-                        value={draft.calories}
-                        placeholder="140"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        border={false}
-                      />
-                    </LabelSection>
-
-                    <LabelSection
-                      title="Micros"
-                      detailToggle={
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowMicroDetails((current) => !current)
-                          }
-                          className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface-elevated"
-                          aria-expanded={showMicroDetails}
-                        >
-                          {showMicroDetails ? "Less" : "More"}
-                        </button>
-                      }
-                    >
-                      <NutritionNumberRow
-                        label="Sodium (mg)"
-                        name="sodiumMg"
-                        value={draft.sodiumMg}
-                        placeholder="65"
-                        disabled={isDisabled}
-                        onChange={updateDraft}
-                        border={!showMicroDetails}
-                      />
-                      {showMicroDetails ? (
-                        <>
-                          <NutritionNumberRow
-                            label="Dietary fiber (g)"
-                            name="dietaryFiber"
-                            value={draft.dietaryFiber}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                          />
-                          <NutritionNumberRow
-                            label="Vitamin D (mcg)"
-                            name="vitaminDMcg"
-                            value={draft.vitaminDMcg}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                          />
-                          <NutritionNumberRow
-                            label="Calcium (mg)"
-                            name="calciumMg"
-                            value={draft.calciumMg}
-                            placeholder="190"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                          />
-                          <NutritionNumberRow
-                            label="Iron (mg)"
-                            name="ironMg"
-                            value={draft.ironMg}
-                            placeholder="0"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                          />
-                          <NutritionNumberRow
-                            label="Potassium (mg)"
-                            name="potassiumMg"
-                            value={draft.potassiumMg}
-                            placeholder="240"
-                            disabled={isDisabled}
-                            onChange={updateDraft}
-                            border={false}
-                          />
-                        </>
-                      ) : null}
-                    </LabelSection>
-                  </div>
-                </div>
+              <div className="rounded-2xl border border-border bg-surface-elevated p-4 md:p-5">
+                <PantryFoodForm
+                  draft={draft}
+                  disabled={isDisabled}
+                  onChange={updateDraft}
+                />
               </div>
 
               {saveError ? (

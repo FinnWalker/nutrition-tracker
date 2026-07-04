@@ -48,10 +48,7 @@ function mapEntryToDiaryEntry(entry: {
 }
 
 export default async function DashboardDiarySection() {
-  // await new Promise((resolve) => setTimeout(resolve, 1000));
-
   const session = await getCurrentSession();
-  const viewerLabel = session?.user?.name ?? session?.user?.email ?? "there";
   const initialEntries = session?.user?.email
     ? (await getCachedDailyEntries(session.user.email)).map(
         mapEntryToDiaryEntry,
@@ -75,7 +72,6 @@ export default async function DashboardDiarySection() {
       canPersist={Boolean(session?.user)}
       initialEntries={initialEntries}
       initialPantryItems={initialPantryItems}
-      viewerLabel={viewerLabel}
     />
   );
 }

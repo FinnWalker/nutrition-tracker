@@ -8,6 +8,7 @@ type PantryListItem = {
   brand: string | null;
   servingSize: string | null;
   servingsPerContainer: number | null;
+  lastUsedAt: string | null;
   calories: number;
   totalFat: number;
   saturatedFat: number;
@@ -34,6 +35,7 @@ function mapPantryItem(item: {
   brand: string | null;
   servingSize: string | null;
   servingsPerContainer: number | null;
+  lastUsedAt: Date | null;
   calories: number;
   totalFat: number;
   saturatedFat: number;
@@ -55,6 +57,7 @@ function mapPantryItem(item: {
 }): PantryListItem {
   return {
     ...item,
+    lastUsedAt: item.lastUsedAt?.toISOString() ?? null,
     updatedAt: item.updatedAt.toISOString(),
   };
 }

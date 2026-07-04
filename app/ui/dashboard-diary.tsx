@@ -2,8 +2,10 @@
 
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import {
   startTransition,
+  useDeferredValue,
   useOptimistic,
   useState,
   useSyncExternalStore,
@@ -20,7 +22,6 @@ type DashboardDiaryProps = {
   canPersist: boolean;
   initialEntries: DiaryEntry[];
   initialPantryItems: PantryItem[];
-  viewerLabel: string;
   isLoading?: boolean;
 };
 
@@ -40,6 +41,7 @@ type PantryItem = {
   name: string;
   brand: string | null;
   servingSize: string | null;
+  lastUsedAt?: string | null;
   calories: number;
   totalFat: number;
   totalCarbohydrate: number;
@@ -258,14 +260,26 @@ function DiaryTable({
               <th className="px-4 py-3 font-medium">Carbs</th>
               <th className="px-4 py-3 font-medium">Fat</th>
               <th className="px-4 py-3 font-medium">Protein</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-surface-elevated">
             {entries.map((entry) => (
               <tr key={entry.id}>
-                <td className="px-4 py-3 font-medium text-foreground">
-                  {entry.foodName}
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onRemove(entry.id)}
+                      disabled={isDisabled}
+                      aria-label={`Delete ${entry.foodName}`}
+                      className="rounded-lg p-1.5 text-foreground-muted transition-colors hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <span className="font-medium text-foreground">
+                      {entry.foodName}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   {formatNutritionNumber(entry.servings)}
@@ -280,16 +294,6 @@ function DiaryTable({
                 <td className="px-4 py-3">
                   {formatNutritionNumber(entry.protein)}g
                 </td>
-                <td className="px-4 py-3">
-                  <button
-                    type="button"
-                    onClick={() => onRemove(entry.id)}
-                    disabled={isDisabled}
-                    className="rounded-xl border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Remove
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -303,18 +307,17 @@ export default function DashboardDiary({
   canPersist,
   initialEntries,
   initialPantryItems,
-  viewerLabel,
   isLoading = false,
 }: DashboardDiaryProps) {
   const router = useRouter();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
   const entryDate = getTodayDateInputValue();
-  const [selectedPantryItemId, setSelectedPantryItemId] = useState(
-    initialPantryItems[0]?.id ?? "",
-  );
+  const [pantryQuery, setPantryQuery] = useState("");
+  const [selectedPantryItemId, setSelectedPantryItemId] = useState("");
   const [portions, setPortions] = useState("1");
   const [isPersisting, setIsPersisting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const deferredPantryQuery = useDeferredValue(pantryQuery);
   const anonymousEntries = useSyncExternalStore(
     subscribeToAnonymousEntries,
     readAnonymousEntries,
@@ -331,24 +334,28 @@ export default function DashboardDiary({
     : canPersist
       ? optimisticEntries
       : anonymousEntries;
+  const filteredPantryItems = initialPantryItems.filter((item) => {
+    const searchTerm = deferredPantryQuery.trim().toLowerCase();
+
+    if (!searchTerm) {
+      return true;
+    }
+
+    const haystack = [
+      item.name,
+      item.brand ?? "",
+      item.servingSize ?? "",
+      `${item.calories}`,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(searchTerm);
+  });
   const activePantryItem =
-    initialPantryItems.find((item) => item.id === selectedPantryItemId) ??
-    initialPantryItems[0] ??
-    null;
+    initialPantryItems.find((item) => item.id === selectedPantryItemId) ?? null;
   const parsedPortions = parseNumber(portions);
   const hasValidPortions = parsedPortions > 0;
-  const pantryPreview = activePantryItem
-    ? createPantryEntry(
-        activePantryItem,
-        entryDate,
-        Math.max(parsedPortions, 0),
-      )
-    : null;
-  const statusCopy = isLoading
-    ? "We are checking whether your diary and pantry are ready."
-    : canPersist
-      ? `Welcome back, ${viewerLabel}. Pick a saved pantry item, scale the portions, and add it straight into today's diary.`
-      : "You can still sketch out diary entries in this browser while you decide whether to create an account.";
 
   const totals = entries.reduce(
     (runningTotals, entry) => ({
@@ -394,11 +401,17 @@ export default function DashboardDiary({
           entryDate: nextEntry.entryDate,
           foodName: nextEntry.foodName,
           servings: nextEntry.servings,
+          pantryItemId: activePantryItem?.id,
           calories: nextEntry.calories,
           protein: nextEntry.protein,
           carbs: nextEntry.carbs,
           fat: nextEntry.fat,
         });
+        if (canPersist) {
+          setSelectedPantryItemId("");
+          setPantryQuery("");
+          setPortions("1");
+        }
         router.refresh();
       } catch {
         if (draftSnapshot) {
@@ -514,26 +527,6 @@ export default function DashboardDiary({
 
   return (
     <div className="mt-8 space-y-6">
-      <div className="rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
-          {isLoading
-            ? "Loading diary"
-            : canPersist
-              ? "Signed-in diary"
-              : "Try the flow"}
-        </p>
-        <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-          {isLoading
-            ? "Preparing your dashboard."
-            : canPersist
-              ? "Your daily summary comes first."
-              : "You can log food before creating an account."}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-foreground-muted">
-          {statusCopy}
-        </p>
-      </div>
-
       <section
         className={`rounded-3xl border border-border bg-surface-elevated p-6 shadow-soft transition-opacity ${isLoading ? "opacity-60" : "opacity-100"}`}
         aria-busy={isLoading}
@@ -587,97 +580,150 @@ export default function DashboardDiary({
                     Add from pantry
                   </p>
                   <h3 className="mt-3 text-2xl font-semibold tracking-tight">
-                    Build today&apos;s diary from saved foods
+                    Search your saved foods
                   </h3>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-foreground-muted">
-                    Choose a pantry item, set the number of portions, and we
-                    will scale the macros before it lands in the diary snapshot.
-                  </p>
                 </div>
-                {activePantryItem ? (
-                  <div className="rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm text-foreground-muted">
-                    <div className="font-medium text-foreground">
-                      {activePantryItem.name}
-                    </div>
-                    {activePantryItem.brand ? (
-                      <div className="mt-1">{activePantryItem.brand}</div>
-                    ) : null}
-                    {activePantryItem.servingSize ? (
-                      <div className="mt-1">
-                        Serving: {activePantryItem.servingSize}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
               </div>
 
-              <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                <div className="grid gap-4 sm:grid-cols-2">
+              <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(18rem,0.9fr)]">
+                <div>
                   <label className="block">
                     <span className="text-sm font-medium text-foreground">
-                      Portions
+                      Search pantry
                     </span>
                     <input
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      name="portions"
-                      value={portions}
-                      onChange={(event) => setPortions(event.target.value)}
+                      type="search"
+                      name="pantryQuery"
+                      value={pantryQuery}
+                      onChange={(event) => setPantryQuery(event.target.value)}
                       disabled={isDisabled}
+                      placeholder="Search foods, brands, or serving sizes"
                       className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
-                      required
                     />
                   </label>
 
-                  <label className="block sm:col-span-2">
-                    <span className="text-sm font-medium text-foreground">
-                      Pantry item
-                    </span>
-                    <select
-                      name="pantryItemId"
-                      value={activePantryItem?.id ?? ""}
-                      onChange={(event) =>
-                        setSelectedPantryItemId(event.target.value)
-                      }
-                      disabled={isDisabled}
-                      className="mt-2 w-full rounded-2xl border border-border bg-surface-elevated px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {initialPantryItems.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.name}
-                          {item.brand ? ` - ${item.brand}` : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface-elevated">
+                    <div className="max-h-72 overflow-y-auto">
+                      {filteredPantryItems.length === 0 ? (
+                        <div className="px-4 py-6 text-sm text-foreground-muted">
+                          No pantry items match that search.
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-border">
+                          {filteredPantryItems.map((item) => {
+                            const isSelected = item.id === selectedPantryItemId;
+
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => setSelectedPantryItemId(item.id)}
+                                disabled={isDisabled}
+                                className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors ${isSelected ? "bg-brand-muted/60" : "hover:bg-surface"}`}
+                              >
+                                <div className="min-w-0">
+                                  <div className="font-medium text-foreground">
+                                    {item.name}
+                                  </div>
+                                  {item.brand ? (
+                                    <div className="mt-1 text-xs text-foreground-muted">
+                                      {item.brand}
+                                    </div>
+                                  ) : null}
+                                  {item.servingSize ? (
+                                    <div className="mt-1 text-xs text-foreground-muted">
+                                      {item.servingSize}
+                                    </div>
+                                  ) : null}
+                                </div>
+                                <div className="shrink-0 text-right text-xs text-foreground-muted">
+                                  <div>{formatNutritionNumber(item.calories)} cal</div>
+                                  <div className="mt-1">
+                                    P {formatNutritionNumber(item.protein)}g
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-border bg-surface-elevated p-5">
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
-                    Live preview
+                    Selection
                   </p>
-                  <h4 className="mt-3 text-xl font-semibold tracking-tight">
-                    Scaled nutrition
-                  </h4>
-                  <div className="mt-5 grid grid-cols-2 gap-3">
-                    <SummaryCard
-                      label="Calories"
-                      value={`${pantryPreview?.calories ?? 0}`}
-                    />
-                    <SummaryCard
-                      label="Carbs"
-                      value={`${formatNutritionNumber(pantryPreview?.carbs ?? 0)}g`}
-                    />
-                    <SummaryCard
-                      label="Fat"
-                      value={`${formatNutritionNumber(pantryPreview?.fat ?? 0)}g`}
-                    />
-                    <SummaryCard
-                      label="Protein"
-                      value={`${formatNutritionNumber(pantryPreview?.protein ?? 0)}g`}
-                    />
-                  </div>
+                  {activePantryItem ? (
+                    <>
+                      <h4 className="mt-3 text-xl font-semibold tracking-tight">
+                        {activePantryItem.name}
+                      </h4>
+                      {activePantryItem.brand ? (
+                        <p className="mt-1 text-sm text-foreground-muted">
+                          {activePantryItem.brand}
+                        </p>
+                      ) : null}
+                      {activePantryItem.servingSize ? (
+                        <p className="mt-1 text-sm text-foreground-muted">
+                          Serving: {activePantryItem.servingSize}
+                        </p>
+                      ) : null}
+
+                      <label className="mt-5 block">
+                        <span className="text-sm font-medium text-foreground">
+                          Portions
+                        </span>
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          name="portions"
+                          value={portions}
+                          onChange={(event) => setPortions(event.target.value)}
+                          disabled={isDisabled}
+                          className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                          required
+                        />
+                      </label>
+
+                      <div className="mt-5 grid grid-cols-2 gap-3">
+                        <SummaryCard
+                          label="Calories"
+                          value={`${Math.max(0, Math.round(activePantryItem.calories * parsedPortions))}`}
+                        />
+                        <SummaryCard
+                          label="Carbs"
+                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activePantryItem.totalCarbohydrate * parsedPortions)))}g`}
+                        />
+                        <SummaryCard
+                          label="Fat"
+                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activePantryItem.totalFat * parsedPortions)))}g`}
+                        />
+                        <SummaryCard
+                          label="Protein"
+                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activePantryItem.protein * parsedPortions)))}g`}
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isDisabled || !hasValidPortions}
+                        className="mt-5 rounded-2xl bg-[color:color-mix(in_srgb,var(--brand)_65%,var(--surface)_35%)] px-5 py-3 text-sm font-semibold text-white shadow-soft transition-colors hover:bg-[color:color-mix(in_srgb,var(--brand)_58%,var(--surface)_42%)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isLoading
+                          ? "Loading..."
+                          : isPersisting
+                            ? "Saving..."
+                            : "Add to diary"}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="mt-3 rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-sm leading-7 text-foreground-muted">
+                      Choose a pantry item from the results to scale servings and add it to your diary.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -686,18 +732,6 @@ export default function DashboardDiary({
                   {saveError}
                 </p>
               ) : null}
-
-              <button
-                type="submit"
-                disabled={isDisabled || !activePantryItem || !hasValidPortions}
-                className="mt-6 rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isLoading
-                  ? "Loading..."
-                  : isPersisting
-                    ? "Saving..."
-                    : "Add to diary"}
-              </button>
             </form>
           ) : (
             <div className="mt-6 rounded-2xl border border-dashed border-border bg-surface p-6 text-sm leading-7 text-foreground-muted">
