@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import AuthSessionProvider from "./ui/auth-session-provider";
 import SidebarNav from "./ui/sidebar-nav";
 import ThemeProvider from "./ui/theme-provider";
-import ThemeToggle from "./ui/theme-toggle";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,17 +42,6 @@ export default function RootLayout(props: RootLayoutProps) {
               </aside>
 
               <main className="box-border flex min-h-dvh flex-col px-5 py-8 md:px-10 md:py-10">
-                <div className="mb-8 flex items-center justify-between gap-4 md:hidden">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-foreground-muted">
-                      Wellness
-                    </p>
-                    <p className="mt-2 text-lg font-semibold tracking-tight">
-                      Nutrition Tracker
-                    </p>
-                  </div>
-                  <ThemeToggle />
-                </div>
                 {props.children}
               </main>
             </div>
