@@ -24,6 +24,7 @@ model DailyEntry {
   userId    String
   entryDate DateTime @db.Date
   foodName  String
+  servings  Float    @default(1)
   calories  Int
   protein   Float
   carbs     Float

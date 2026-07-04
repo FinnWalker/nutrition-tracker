@@ -7,6 +7,7 @@ import { prisma } from "@/prisma";
 type DailyEntryInput = {
   entryDate: string;
   foodName: string;
+  servings: number;
   calories: number;
   protein: number;
   carbs: number;
@@ -40,6 +41,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
       },
       entryDate: new Date(`${input.entryDate}T00:00:00.000Z`),
       foodName: input.foodName.trim(),
+      servings: Math.max(0.1, input.servings),
       calories: Math.max(0, Math.round(input.calories)),
       protein: Math.max(0, input.protein),
       carbs: Math.max(0, input.carbs),
@@ -49,6 +51,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
       id: true,
       entryDate: true,
       foodName: true,
+      servings: true,
       calories: true,
       protein: true,
       carbs: true,
