@@ -280,9 +280,13 @@ function DiaryTable({
                   </span>
                 </div>
               </td>
-              <td className="px-4 py-3">{formatNutritionNumber(entry.servings)}</td>
+              <td className="px-4 py-3">
+                {formatNutritionNumber(entry.servings)}
+              </td>
               <td className="px-4 py-3">{entry.calories}</td>
-              <td className="px-4 py-3">{formatNutritionNumber(entry.carbs)}g</td>
+              <td className="px-4 py-3">
+                {formatNutritionNumber(entry.carbs)}g
+              </td>
               <td className="px-4 py-3">{formatNutritionNumber(entry.fat)}g</td>
               <td className="px-4 py-3">
                 {formatNutritionNumber(entry.protein)}g
@@ -628,7 +632,9 @@ export default function DashboardDiary({
                                 ) : null}
                               </div>
                               <div className="shrink-0 text-right text-xs text-foreground-muted">
-                                <div>{formatNutritionNumber(item.calories)} cal</div>
+                                <div>
+                                  {formatNutritionNumber(item.calories)} cal
+                                </div>
                                 <div className="mt-1">
                                   P {formatNutritionNumber(item.protein)}g
                                 </div>
@@ -711,7 +717,8 @@ export default function DashboardDiary({
                     </>
                   ) : (
                     <div className="mt-3 border border-dashed border-border bg-background px-4 py-6 text-sm leading-7 text-foreground-muted">
-                      Choose a pantry item from the results to scale servings and add it to your diary.
+                      Choose a pantry item from the results to scale servings
+                      and add it to your diary.
                     </div>
                   )}
                 </div>

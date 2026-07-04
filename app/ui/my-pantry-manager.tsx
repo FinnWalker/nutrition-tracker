@@ -15,7 +15,9 @@ import {
   MacroBreakdown,
   SummaryCard,
 } from "@/app/ui/nutrition-display";
-import PantryFoodForm, { type PantryFoodDraft } from "@/app/ui/pantry-food-form";
+import PantryFoodForm, {
+  type PantryFoodDraft,
+} from "@/app/ui/pantry-food-form";
 
 type PantryItem = {
   id: string;
