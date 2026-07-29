@@ -105,6 +105,40 @@ describe("DiaryPage", () => {
     expect(screen.queryByText("140 cal")).not.toBeInTheDocument();
   });
 
+  it("supports fuzzy saved food search in the diary picker", async () => {
+    mockGetCurrentSession.mockResolvedValue({
+      user: {
+        name: "Ava Green",
+        email: "ava@example.com",
+      },
+    });
+    mockGetCachedSavedFoodSummaries.mockResolvedValue([
+      {
+        id: "food-1",
+        name: "Greek yogurt",
+        brand: "Fage",
+        servingSize: "170g tub",
+        lastUsedAt: null,
+      },
+      {
+        id: "food-2",
+        name: "Banana",
+        brand: null,
+        servingSize: "1 medium",
+        lastUsedAt: null,
+      },
+    ]);
+
+    render(await DiarySection());
+
+    fireEvent.change(screen.getByLabelText("Search saved foods"), {
+      target: { value: "grk ygt" },
+    });
+
+    expect(screen.getByText("Greek yogurt")).toBeVisible();
+    expect(screen.queryByText("Banana")).not.toBeInTheDocument();
+  });
+
   it("lets visitors build up local diary entries before signing in", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 

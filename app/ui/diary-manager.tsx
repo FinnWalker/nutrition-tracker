@@ -1,5 +1,6 @@
 "use client";
 
+import Fuse from "fuse.js";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
@@ -344,19 +345,20 @@ export default function DiaryManager({
     : canPersist
       ? optimisticEntries
       : anonymousEntries;
-  const filteredSavedFoods = initialSavedFoods.filter((item) => {
-    const searchTerm = deferredSavedFoodQuery.trim().toLowerCase();
-
-    if (!searchTerm) {
-      return true;
-    }
-
-    const haystack = [item.name, item.brand ?? "", item.servingSize ?? ""]
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(searchTerm);
-  });
+  const searchTerm = deferredSavedFoodQuery.trim();
+  const filteredSavedFoods = searchTerm
+    ? new Fuse(initialSavedFoods, {
+        threshold: 0.6,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+        keys: [
+          { name: "name", weight: 0.7 },
+          { name: "brand", weight: 0.3 },
+        ],
+      })
+        .search(searchTerm)
+        .map((result) => result.item)
+    : initialSavedFoods;
   const activeSavedFood =
     initialSavedFoods.find((item) => item.id === selectedSavedFoodId) ?? null;
   const parsedPortions = parseNumber(portions);
