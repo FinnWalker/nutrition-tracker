@@ -95,14 +95,18 @@ function canvasToBlob(
   quality?: number,
 ) {
   return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (blob) {
-        resolve(blob);
-        return;
-      }
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
 
-      reject(new Error("The cropped image could not be prepared."));
-    }, type, quality);
+        reject(new Error("The cropped image could not be prepared."));
+      },
+      type,
+      quality,
+    );
   });
 }
 
@@ -199,11 +203,7 @@ export default function NutritionLabelImporter({
       });
       setCrop(nextCrop);
       setCompletedCrop(
-        convertToPixelCrop(
-          nextCrop,
-          image.naturalWidth,
-          image.naturalHeight,
-        ),
+        convertToPixelCrop(nextCrop, image.naturalWidth, image.naturalHeight),
       );
     } catch (loadError) {
       const message =
@@ -425,8 +425,8 @@ export default function NutritionLabelImporter({
                 <p>Compression quality: {OUTPUT_QUALITY}</p>
                 <p>
                   Target size: under{" "}
-                  {formatFileSize(MAX_OUTPUT_SIZE_MB * 1024 * 1024)} with
-                  enough detail for label text.
+                  {formatFileSize(MAX_OUTPUT_SIZE_MB * 1024 * 1024)} with enough
+                  detail for label text.
                 </p>
               </div>
             </div>
@@ -439,38 +439,46 @@ export default function NutritionLabelImporter({
                 <div className="mt-4 space-y-2 text-sm text-foreground-muted">
                   <p>
                     Left:{" "}
-                    {toCropRect(
-                      completedCrop,
-                      sourceDimensions.width,
-                      sourceDimensions.height,
-                    ).left}
+                    {
+                      toCropRect(
+                        completedCrop,
+                        sourceDimensions.width,
+                        sourceDimensions.height,
+                      ).left
+                    }
                     %
                   </p>
                   <p>
                     Top:{" "}
-                    {toCropRect(
-                      completedCrop,
-                      sourceDimensions.width,
-                      sourceDimensions.height,
-                    ).top}
+                    {
+                      toCropRect(
+                        completedCrop,
+                        sourceDimensions.width,
+                        sourceDimensions.height,
+                      ).top
+                    }
                     %
                   </p>
                   <p>
                     Width:{" "}
-                    {toCropRect(
-                      completedCrop,
-                      sourceDimensions.width,
-                      sourceDimensions.height,
-                    ).width}
+                    {
+                      toCropRect(
+                        completedCrop,
+                        sourceDimensions.width,
+                        sourceDimensions.height,
+                      ).width
+                    }
                     %
                   </p>
                   <p>
                     Height:{" "}
-                    {toCropRect(
-                      completedCrop,
-                      sourceDimensions.width,
-                      sourceDimensions.height,
-                    ).height}
+                    {
+                      toCropRect(
+                        completedCrop,
+                        sourceDimensions.width,
+                        sourceDimensions.height,
+                      ).height
+                    }
                     %
                   </p>
                 </div>
@@ -487,8 +495,8 @@ export default function NutritionLabelImporter({
       ) : null}
 
       <p className="mt-6 text-sm leading-7 text-foreground-muted">
-        Prepared files stay in the browser for now. The next phase will send
-        the cropped result to an OpenAI Vision endpoint.
+        Prepared files stay in the browser for now. The next phase will send the
+        cropped result to an OpenAI Vision endpoint.
       </p>
     </section>
   );

@@ -45,7 +45,9 @@ function createSchemaProperties() {
   );
 }
 
-function isPantryLabelModelOutput(value: unknown): value is PantryLabelModelOutput {
+function isPantryLabelModelOutput(
+  value: unknown,
+): value is PantryLabelModelOutput {
   if (typeof value !== "object" || value === null) {
     return false;
   }
@@ -65,11 +67,15 @@ function isPantryLabelModelOutput(value: unknown): value is PantryLabelModelOutp
   );
 }
 
-function normalizeModelOutput(value: PantryLabelModelOutput): PantryImportResponse {
+function normalizeModelOutput(
+  value: PantryLabelModelOutput,
+): PantryImportResponse {
   const draft = Object.fromEntries(
     pantryDraftFields.map((field) => [field, value[field].trim()]),
   ) as PantryImportDraft;
-  const warnings = value.warnings.map((warning) => warning.trim()).filter(Boolean);
+  const warnings = value.warnings
+    .map((warning) => warning.trim())
+    .filter(Boolean);
 
   // Product identity is expected to be entered manually outside the nutrition panel.
   draft.name = "";

@@ -291,8 +291,7 @@ export default function MyPantryManager({
       body: formData,
     });
     const payload = (await response.json()) as
-      | PantryImportResponse
-      | { error?: string };
+      PantryImportResponse | { error?: string };
 
     if (!response.ok || !("draft" in payload)) {
       const message =
@@ -300,9 +299,7 @@ export default function MyPantryManager({
           ? payload.error
           : "We couldn't read that label. Please try again.";
 
-      throw new Error(
-        message,
-      );
+      throw new Error(message);
     }
 
     return payload;
@@ -736,7 +733,9 @@ export default function MyPantryManager({
                         <button
                           type="button"
                           onClick={() => openEditForm(item)}
-                          disabled={!canPersist || isLoading || isAnalyzingLabel}
+                          disabled={
+                            !canPersist || isLoading || isAnalyzingLabel
+                          }
                           aria-label={`Edit ${item.name}${item.brand ? ` ${item.brand}` : ""}`}
                           className="min-w-0 text-left"
                         >

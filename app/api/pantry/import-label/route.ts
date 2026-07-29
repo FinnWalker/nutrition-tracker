@@ -104,10 +104,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error:
-          isMissingApiKey
-            ? message
-            : "We couldn't read that label. Please try again.",
+        error: isMissingApiKey
+          ? message
+          : "We couldn't read that label. Please try again.",
       },
       {
         status,
