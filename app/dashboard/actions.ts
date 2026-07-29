@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { auth } from "@/auth";
+import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 import { prisma } from "@/prisma";
 
 type DailyEntryInput = {
@@ -15,17 +15,6 @@ type DailyEntryInput = {
   fat: number;
 };
 
-async function requireSignedInUserEmail() {
-  const session = await auth();
-  const email = session?.user?.email;
-
-  if (!email) {
-    throw new Error("You must be signed in to save diary entries.");
-  }
-
-  return email;
-}
-
 function revalidateDailyEntries(email: string) {
   updateTag(`daily-entries:${email}`);
 }
@@ -35,13 +24,13 @@ function revalidatePantryItems(email: string) {
 }
 
 export async function addDailyEntry(input: DailyEntryInput) {
-  const email = await requireSignedInUserEmail();
+  const user = await requireCurrentUserRecord();
 
   const createdEntry = await prisma.dailyEntry.create({
     data: {
       user: {
         connect: {
-          email,
+          id: user.id,
         },
       },
       entryDate: new Date(`${input.entryDate}T00:00:00.000Z`),
@@ -69,46 +58,46 @@ export async function addDailyEntry(input: DailyEntryInput) {
       where: {
         id: input.pantryItemId,
         user: {
-          email,
+          id: user.id,
         },
       },
       data: {
         lastUsedAt: new Date(),
       },
     });
-    revalidatePantryItems(email);
+    revalidatePantryItems(user.email);
   }
 
-  revalidateDailyEntries(email);
+  revalidateDailyEntries(user.email);
 
   return createdEntry;
 }
 
 export async function deleteDailyEntry(entryId: string) {
-  const email = await requireSignedInUserEmail();
+  const user = await requireCurrentUserRecord();
 
   await prisma.dailyEntry.deleteMany({
     where: {
       id: entryId,
       user: {
-        email,
+        id: user.id,
       },
     },
   });
 
-  revalidateDailyEntries(email);
+  revalidateDailyEntries(user.email);
 }
 
 export async function clearDailyEntries() {
-  const email = await requireSignedInUserEmail();
+  const user = await requireCurrentUserRecord();
 
   await prisma.dailyEntry.deleteMany({
     where: {
       user: {
-        email,
+        id: user.id,
       },
     },
   });
 
-  revalidateDailyEntries(email);
+  revalidateDailyEntries(user.email);
 }

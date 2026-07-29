@@ -1,28 +1,7 @@
 import type { ReactNode } from "react";
+import type { PantryImportDraft } from "@/app/lib/pantry-label-import";
 
-export type PantryFoodDraft = {
-  name: string;
-  brand: string;
-  servingSize: string;
-  servingsPerContainer: string;
-  calories: string;
-  totalFat: string;
-  saturatedFat: string;
-  transFat: string;
-  polyunsaturatedFat: string;
-  monounsaturatedFat: string;
-  cholesterolMg: string;
-  sodiumMg: string;
-  totalCarbohydrate: string;
-  dietaryFiber: string;
-  totalSugars: string;
-  addedSugars: string;
-  protein: string;
-  vitaminDMcg: string;
-  calciumMg: string;
-  ironMg: string;
-  potassiumMg: string;
-};
+export type PantryFoodDraft = PantryImportDraft;
 
 type PantryFoodFormProps = {
   draft: PantryFoodDraft;

@@ -5,6 +5,10 @@ import { startTransition, useOptimistic, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import NextImage from "next/image";
 import { useRouter } from "next/navigation";
+import type {
+  PantryImportDraft,
+  PantryImportResponse,
+} from "@/app/lib/pantry-label-import";
 import {
   addPantryItem,
   deletePantryItem as deleteSavedPantryItem,
@@ -210,7 +214,10 @@ export default function MyPantryManager({
   const [draft, setDraft] = useState<PantryFoodDraft>(initialDraft);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPersisting, setIsPersisting] = useState(false);
+  const [isAnalyzingLabel, setIsAnalyzingLabel] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [formMode, setFormMode] = useState<"closed" | "create" | "edit">(
     "closed",
   );
@@ -255,12 +262,16 @@ export default function MyPantryManager({
   function resetFormState() {
     setDraft(initialDraft());
     setEditingItemId(null);
+    setImportError(null);
+    setImportWarnings([]);
     setFormMode("closed");
   }
 
   function openCreateForm() {
     setDraft(initialDraft());
     setEditingItemId(null);
+    setImportError(null);
+    setImportWarnings([]);
     setFormMode("create");
   }
 
@@ -271,22 +282,73 @@ export default function MyPantryManager({
     });
   }
 
-  function handlePreparedLabelImage(image: PreparedNutritionLabelImage) {
+  async function importPreparedLabel(image: PreparedNutritionLabelImage) {
+    const formData = new FormData();
+    formData.set("image", image.file);
+
+    const response = await fetch("/api/pantry/import-label", {
+      method: "POST",
+      body: formData,
+    });
+    const payload = (await response.json()) as
+      | PantryImportResponse
+      | { error?: string };
+
+    if (!response.ok || !("draft" in payload)) {
+      const message =
+        "error" in payload && payload.error
+          ? payload.error
+          : "We couldn't read that label. Please try again.";
+
+      throw new Error(
+        message,
+      );
+    }
+
+    return payload;
+  }
+
+  function applyImportedDraft(nextDraft: PantryImportDraft) {
+    setDraft(nextDraft);
+    setEditingItemId(null);
+    setFormMode("create");
+  }
+
+  async function handlePreparedLabelImage(image: PreparedNutritionLabelImage) {
     setPreparedLabelImage(image);
     setSaveError(null);
-    setFormMode("create");
+    setImportError(null);
+    setImportWarnings([]);
+    setIsAnalyzingLabel(true);
+
+    try {
+      const response = await importPreparedLabel(image);
+      applyImportedDraft(response.draft);
+      setImportWarnings(response.warnings);
+    } catch (error) {
+      setImportError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't read that label. Please try again.",
+      );
+      setFormMode("closed");
+    } finally {
+      setIsAnalyzingLabel(false);
+    }
   }
 
   function openEditForm(item: PantryItem) {
     setDraft(createDraftFromItem(item));
     setEditingItemId(item.id);
+    setImportError(null);
+    setImportWarnings([]);
     setFormMode("edit");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isDisabled) {
+    if (isDisabled || isAnalyzingLabel) {
       return;
     }
 
@@ -400,7 +462,7 @@ export default function MyPantryManager({
   }
 
   async function removeItem(itemId: string) {
-    if (isDisabled) {
+    if (isDisabled || isAnalyzingLabel) {
       return;
     }
 
@@ -506,7 +568,9 @@ export default function MyPantryManager({
 
         <section ref={importerRef} className="mt-6">
           <NutritionLabelImporter
-            disabled={!canPersist || isLoading || isPersisting}
+            disabled={
+              !canPersist || isLoading || isPersisting || isAnalyzingLabel
+            }
             onPrepared={handlePreparedLabelImage}
           />
         </section>
@@ -528,16 +592,25 @@ export default function MyPantryManager({
               <div className="space-y-2 text-sm leading-7 text-foreground-muted">
                 <p>{preparedLabelImage.file.name}</p>
                 <p>
-                  {preparedLabelImage.width} × {preparedLabelImage.height}
+                  {preparedLabelImage.width} x {preparedLabelImage.height}
                 </p>
-                <p>{formatNutritionNumber(preparedLabelImage.sizeBytes / 1024)} KB</p>
+                <p>
+                  {formatNutritionNumber(preparedLabelImage.sizeBytes / 1024)}{" "}
+                  KB
+                </p>
                 <p>{preparedLabelImage.mimeType}</p>
                 <p>
-                  This image is ready for the upcoming OpenAI Vision extraction
-                  step.
+                  {isAnalyzingLabel
+                    ? "Reading the label and building a draft..."
+                    : "This image has been prepared for label extraction."}
                 </p>
               </div>
             </div>
+            {importError ? (
+              <p className="mt-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {importError}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -566,9 +639,24 @@ export default function MyPantryManager({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+              {isAnalyzingLabel ? (
+                <div className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground-muted">
+                  We are reading the prepared label and pre-filling the pantry
+                  form now.
+                </div>
+              ) : null}
+
+              {importWarnings.length > 0 ? (
+                <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {importWarnings.map((warning) => (
+                    <p key={warning}>{warning}</p>
+                  ))}
+                </div>
+              ) : null}
+
               <PantryFoodForm
                 draft={draft}
-                disabled={isDisabled}
+                disabled={isDisabled || isAnalyzingLabel}
                 onChange={updateDraft}
               />
 
@@ -581,16 +669,18 @@ export default function MyPantryManager({
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
-                  disabled={isDisabled}
+                  disabled={isDisabled || isAnalyzingLabel}
                   className="bg-brand px-4 py-2 text-sm text-white"
                 >
-                  {isPersisting
-                    ? formMode === "edit"
-                      ? "Saving..."
-                      : "Adding..."
-                    : formMode === "edit"
-                      ? "Save changes"
-                      : "Add to pantry"}
+                  {isAnalyzingLabel
+                    ? "Reading label..."
+                    : isPersisting
+                      ? formMode === "edit"
+                        ? "Saving..."
+                        : "Adding..."
+                      : formMode === "edit"
+                        ? "Save changes"
+                        : "Add to pantry"}
                 </button>
                 <button
                   type="button"
@@ -637,7 +727,7 @@ export default function MyPantryManager({
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
-                          disabled={isDisabled}
+                          disabled={isDisabled || isAnalyzingLabel}
                           aria-label={`Delete ${item.name}`}
                           className="mt-0.5 p-1.5 text-foreground-muted"
                         >
@@ -646,7 +736,7 @@ export default function MyPantryManager({
                         <button
                           type="button"
                           onClick={() => openEditForm(item)}
-                          disabled={!canPersist || isLoading}
+                          disabled={!canPersist || isLoading || isAnalyzingLabel}
                           aria-label={`Edit ${item.name}${item.brand ? ` ${item.brand}` : ""}`}
                           className="min-w-0 text-left"
                         >

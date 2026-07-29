@@ -1,7 +1,7 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { auth } from "@/auth";
+import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 import { prisma } from "@/prisma";
 
 type PantryItemInput = {
@@ -28,23 +28,12 @@ type PantryItemInput = {
   potassiumMg: number;
 };
 
-async function requireSignedInUserEmail() {
-  const session = await auth();
-  const email = session?.user?.email;
-
-  if (!email) {
-    throw new Error("You must be signed in to manage your pantry.");
-  }
-
-  return email;
-}
-
 function revalidatePantryItems(email: string) {
   updateTag(`pantry-items:${email}`);
 }
 
 export async function addPantryItem(input: PantryItemInput) {
-  const email = await requireSignedInUserEmail();
+  const user = await requireCurrentUserRecord();
   const name = input.name.trim();
   const brand = input.brand?.trim() ?? "";
   const servingSize = input.servingSize?.trim() ?? "";
@@ -57,7 +46,7 @@ export async function addPantryItem(input: PantryItemInput) {
     data: {
       user: {
         connect: {
-          email,
+          id: user.id,
         },
       },
       name,
@@ -114,13 +103,13 @@ export async function addPantryItem(input: PantryItemInput) {
     },
   });
 
-  revalidatePantryItems(email);
+  revalidatePantryItems(user.email);
 
   return createdItem;
 }
 
 export async function updatePantryItem(itemId: string, input: PantryItemInput) {
-  const email = await requireSignedInUserEmail();
+  const user = await requireCurrentUserRecord();
   const name = input.name.trim();
   const brand = input.brand?.trim() ?? "";
   const servingSize = input.servingSize?.trim() ?? "";
@@ -133,7 +122,7 @@ export async function updatePantryItem(itemId: string, input: PantryItemInput) {
     where: {
       id: itemId,
       user: {
-        email,
+        id: user.id,
       },
     },
     data: {
@@ -191,22 +180,22 @@ export async function updatePantryItem(itemId: string, input: PantryItemInput) {
     },
   });
 
-  revalidatePantryItems(email);
+  revalidatePantryItems(user.email);
 
   return updatedItem[0] ?? null;
 }
 
 export async function deletePantryItem(itemId: string) {
-  const email = await requireSignedInUserEmail();
+  const user = await requireCurrentUserRecord();
 
   await prisma.pantryItem.deleteMany({
     where: {
       id: itemId,
       user: {
-        email,
+        id: user.id,
       },
     },
   });
 
-  revalidatePantryItems(email);
+  revalidatePantryItems(user.email);
 }
