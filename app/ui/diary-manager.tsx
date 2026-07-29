@@ -1,27 +1,37 @@
 "use client";
 
+import Fuse from "fuse.js";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import {
+  useEffect,
+  useRef,
   startTransition,
   useDeferredValue,
   useOptimistic,
   useState,
   useSyncExternalStore,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   addDailyEntry,
   clearDailyEntries as clearSavedDailyEntries,
   deleteDailyEntry as deleteSavedDailyEntry,
-} from "@/app/dashboard/actions";
+} from "@/app/diary/actions";
+import {
+  addDaysToDiaryDate,
+  formatDiaryDateLabel,
+  getTodayDiaryDate,
+} from "@/app/lib/diary-date";
 import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 
-type DashboardDiaryProps = {
+type DiaryManagerProps = {
   canPersist: boolean;
   initialEntries: DiaryEntry[];
   initialSavedFoods: SavedFood[];
+  selectedDate: string;
+  hasExplicitDate: boolean;
   isLoading?: boolean;
 };
 
@@ -41,7 +51,11 @@ type SavedFood = {
   name: string;
   brand: string | null;
   servingSize: string | null;
-  lastUsedAt?: string | null;
+  lastUsedAt: string | null;
+};
+
+type SavedFoodDiaryDetails = {
+  id: string;
   calories: number;
   totalFat: number;
   totalCarbohydrate: number;
@@ -62,19 +76,14 @@ type OptimisticEntryMutation =
   | { type: "remove"; entryId: string }
   | { type: "clear" };
 
-const STORAGE_KEY = "nutrition-tracker-dashboard-draft";
-const STORAGE_EVENT = "nutrition-tracker-dashboard-storage";
+const STORAGE_KEY = "nutrition-tracker-diary-draft";
+const STORAGE_EVENT = "nutrition-tracker-diary-storage";
 const EMPTY_ENTRIES: DiaryEntry[] = [];
 let lastStoredEntriesRaw: string | null = null;
 let lastStoredEntriesSnapshot: DiaryEntry[] = EMPTY_ENTRIES;
 
 function getTodayDateInputValue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return getTodayDiaryDate();
 }
 
 const initialDraft = (): DraftEntry => ({
@@ -207,10 +216,10 @@ function applyEntryMutation(
   }
 }
 
-function createManualEntry(draft: DraftEntry): DiaryEntry {
+function createManualEntry(draft: DraftEntry, entryDate: string): DiaryEntry {
   return {
     id: crypto.randomUUID(),
-    entryDate: draft.entryDate,
+    entryDate,
     foodName: draft.foodName.trim(),
     servings: 1,
     calories: Math.max(0, Math.round(parseNumber(draft.calories))),
@@ -222,6 +231,7 @@ function createManualEntry(draft: DraftEntry): DiaryEntry {
 
 function createSavedFoodEntry(
   item: SavedFood,
+  details: SavedFoodDiaryDetails,
   entryDate: string,
   portions: number,
 ): DiaryEntry {
@@ -232,10 +242,10 @@ function createSavedFoodEntry(
     entryDate,
     foodName: label,
     servings: roundMacro(portions),
-    calories: Math.max(0, Math.round(item.calories * portions)),
-    protein: Math.max(0, roundMacro(item.protein * portions)),
-    carbs: Math.max(0, roundMacro(item.totalCarbohydrate * portions)),
-    fat: Math.max(0, roundMacro(item.totalFat * portions)),
+    calories: Math.max(0, Math.round(details.calories * portions)),
+    protein: Math.max(0, roundMacro(details.protein * portions)),
+    carbs: Math.max(0, roundMacro(details.totalCarbohydrate * portions)),
+    fat: Math.max(0, roundMacro(details.totalFat * portions)),
   };
 }
 
@@ -299,20 +309,30 @@ function DiaryTable({
   );
 }
 
-export default function DashboardDiary({
+export default function DiaryManager({
   canPersist,
   initialEntries,
   initialSavedFoods,
+  selectedDate,
+  hasExplicitDate,
   isLoading = false,
-}: DashboardDiaryProps) {
+}: DiaryManagerProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
-  const entryDate = getTodayDateInputValue();
   const [savedFoodQuery, setSavedFoodQuery] = useState("");
   const [selectedSavedFoodId, setSelectedSavedFoodId] = useState("");
   const [portions, setPortions] = useState("1");
   const [isPersisting, setIsPersisting] = useState(false);
+  const [isLoadingSavedFoodDetails, setIsLoadingSavedFoodDetails] =
+    useState(false);
+  const [savedFoodDetails, setSavedFoodDetails] =
+    useState<SavedFoodDiaryDetails | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedFoodLoadError, setSavedFoodLoadError] = useState<string | null>(
+    null,
+  );
+  const savedFoodRequestIdRef = useRef(0);
   const deferredSavedFoodQuery = useDeferredValue(savedFoodQuery);
   const anonymousEntries = useSyncExternalStore(
     subscribeToAnonymousEntries,
@@ -323,35 +343,35 @@ export default function DashboardDiary({
     initialEntries,
     applyEntryMutation,
   );
+  const isViewingToday = selectedDate === getTodayDateInputValue();
 
   const isDisabled = isLoading || isPersisting;
   const entries = isLoading
     ? EMPTY_ENTRIES
     : canPersist
       ? optimisticEntries
-      : anonymousEntries;
-  const filteredSavedFoods = initialSavedFoods.filter((item) => {
-    const searchTerm = deferredSavedFoodQuery.trim().toLowerCase();
-
-    if (!searchTerm) {
-      return true;
-    }
-
-    const haystack = [
-      item.name,
-      item.brand ?? "",
-      item.servingSize ?? "",
-      `${item.calories}`,
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(searchTerm);
-  });
+      : anonymousEntries.filter((entry) => entry.entryDate === selectedDate);
+  const searchTerm = deferredSavedFoodQuery.trim();
+  const filteredSavedFoods = searchTerm
+    ? new Fuse(initialSavedFoods, {
+        threshold: 0.6,
+        ignoreLocation: true,
+        minMatchCharLength: 2,
+        keys: [
+          { name: "name", weight: 0.7 },
+          { name: "brand", weight: 0.3 },
+        ],
+      })
+        .search(searchTerm)
+        .map((result) => result.item)
+    : initialSavedFoods;
   const activeSavedFood =
     initialSavedFoods.find((item) => item.id === selectedSavedFoodId) ?? null;
   const parsedPortions = parseNumber(portions);
   const hasValidPortions = parsedPortions > 0;
+  const hasLoadedSavedFoodDetails =
+    savedFoodDetails?.id === selectedSavedFoodId && activeSavedFood !== null;
+  const didNormalizeInitialDateRef = useRef(false);
 
   const totals = entries.reduce(
     (runningTotals, entry) => ({
@@ -368,6 +388,17 @@ export default function DashboardDiary({
     },
   );
 
+  useEffect(() => {
+    if (hasExplicitDate || didNormalizeInitialDateRef.current) {
+      return;
+    }
+
+    didNormalizeInitialDateRef.current = true;
+    const clientToday = getTodayDiaryDate();
+
+    router.replace(`${pathname}?date=${clientToday}`);
+  }, [hasExplicitDate, pathname, router]);
+
   function updateDraft<K extends keyof DraftEntry>(
     field: K,
     value: DraftEntry[K],
@@ -376,6 +407,60 @@ export default function DashboardDiary({
       ...current,
       [field]: value,
     }));
+  }
+
+  function navigateToDate(nextDate: string) {
+    router.push(`${pathname}?date=${nextDate}`);
+  }
+
+  async function selectSavedFood(itemId: string) {
+    if (!canPersist || isDisabled) {
+      return;
+    }
+
+    const requestId = savedFoodRequestIdRef.current + 1;
+    savedFoodRequestIdRef.current = requestId;
+    setSelectedSavedFoodId(itemId);
+    setSavedFoodDetails(null);
+    setSavedFoodLoadError(null);
+    setIsLoadingSavedFoodDetails(true);
+
+    try {
+      const response = await fetch(
+        `/api/food-library/${itemId}/diary-details`,
+        {
+          method: "GET",
+        },
+      );
+      const payload = (await response.json()) as
+        SavedFoodDiaryDetails | { error?: string };
+
+      if (!response.ok || !("id" in payload)) {
+        throw new Error(
+          "error" in payload && payload.error
+            ? payload.error
+            : "We couldn't load that saved food.",
+        );
+      }
+
+      if (savedFoodRequestIdRef.current === requestId) {
+        setSavedFoodDetails(payload);
+      }
+    } catch (error) {
+      if (savedFoodRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setSavedFoodLoadError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't load that saved food.",
+      );
+    } finally {
+      if (savedFoodRequestIdRef.current === requestId) {
+        setIsLoadingSavedFoodDetails(false);
+      }
+    }
   }
 
   async function persistEntry(
@@ -404,9 +489,12 @@ export default function DashboardDiary({
           fat: nextEntry.fat,
         });
         if (canPersist) {
+          savedFoodRequestIdRef.current += 1;
           setSelectedSavedFoodId("");
           setSavedFoodQuery("");
           setPortions("1");
+          setSavedFoodDetails(null);
+          setSavedFoodLoadError(null);
         }
         router.refresh();
       } catch {
@@ -433,7 +521,7 @@ export default function DashboardDiary({
       return;
     }
 
-    const nextEntry = createManualEntry(draft);
+    const nextEntry = createManualEntry(draft, selectedDate);
 
     if (canPersist) {
       const draftSnapshot = draft;
@@ -449,13 +537,20 @@ export default function DashboardDiary({
   async function handleSavedFoodSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isDisabled || !activeSavedFood || !hasValidPortions || !canPersist) {
+    if (
+      isDisabled ||
+      !activeSavedFood ||
+      !savedFoodDetails ||
+      !hasValidPortions ||
+      !canPersist
+    ) {
       return;
     }
 
     const nextEntry = createSavedFoodEntry(
       activeSavedFood,
-      entryDate,
+      savedFoodDetails,
+      selectedDate,
       parsedPortions,
     );
     await persistEntry(nextEntry);
@@ -506,7 +601,7 @@ export default function DashboardDiary({
         applyOptimisticMutation(mutation);
 
         try {
-          await clearSavedDailyEntries();
+          await clearSavedDailyEntries(selectedDate);
           router.refresh();
         } catch {
           setSaveError("We couldn't clear your diary. Please try again.");
@@ -518,7 +613,9 @@ export default function DashboardDiary({
       return;
     }
 
-    writeAnonymousEntries([]);
+    writeAnonymousEntries(
+      anonymousEntries.filter((entry) => entry.entryDate !== selectedDate),
+    );
   }
 
   return (
@@ -533,8 +630,47 @@ export default function DashboardDiary({
               Summary
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-              Today&apos;s totals
+              {isViewingToday
+                ? "Today's totals"
+                : `Totals for ${formatDiaryDateLabel(selectedDate)}`}
             </h2>
+            <p className="mt-2 text-sm text-foreground-muted">
+              {formatDiaryDateLabel(selectedDate)}
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  navigateToDate(addDaysToDiaryDate(selectedDate, -1))
+                }
+                disabled={isDisabled}
+                className="border border-border px-3 py-2 text-sm"
+              >
+                Previous day
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  navigateToDate(addDaysToDiaryDate(selectedDate, 1))
+                }
+                disabled={isDisabled}
+                className="border border-border px-3 py-2 text-sm"
+              >
+                Next day
+              </button>
+            </div>
+            <label className="block w-full sm:w-auto">
+              <span className="sr-only">Choose diary date</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => navigateToDate(event.target.value)}
+                disabled={isDisabled}
+                className="w-full border border-border bg-background px-4 py-2 text-sm outline-none sm:w-auto"
+              />
+            </label>
           </div>
           {entries.length > 0 ? (
             <button
@@ -543,7 +679,7 @@ export default function DashboardDiary({
               disabled={isDisabled}
               className="border border-border px-4 py-2 text-sm"
             >
-              Clear all
+              Clear this day
             </button>
           ) : null}
         </div>
@@ -614,7 +750,9 @@ export default function DashboardDiary({
                             <button
                               key={item.id}
                               type="button"
-                              onClick={() => setSelectedSavedFoodId(item.id)}
+                              onClick={() => {
+                                void selectSavedFood(item.id);
+                              }}
                               disabled={isDisabled}
                               className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left ${isSelected ? "bg-brand-muted" : ""}`}
                             >
@@ -632,14 +770,11 @@ export default function DashboardDiary({
                                     {item.servingSize}
                                   </div>
                                 ) : null}
-                              </div>
-                              <div className="shrink-0 text-right text-xs text-foreground-muted">
-                                <div>
-                                  {formatNutritionNumber(item.calories)} cal
-                                </div>
-                                <div className="mt-1">
-                                  P {formatNutritionNumber(item.protein)}g
-                                </div>
+                                {item.lastUsedAt ? (
+                                  <div className="mt-1 text-xs text-foreground-muted">
+                                    Recently used
+                                  </div>
+                                ) : null}
                               </div>
                             </button>
                           );
@@ -686,28 +821,43 @@ export default function DashboardDiary({
                         />
                       </label>
 
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <SummaryCard
-                          label="Calories"
-                          value={`${Math.max(0, Math.round(activeSavedFood.calories * parsedPortions))}`}
-                        />
-                        <SummaryCard
-                          label="Carbs"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.totalCarbohydrate * parsedPortions)))}g`}
-                        />
-                        <SummaryCard
-                          label="Fat"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.totalFat * parsedPortions)))}g`}
-                        />
-                        <SummaryCard
-                          label="Protein"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.protein * parsedPortions)))}g`}
-                        />
-                      </div>
+                      {isLoadingSavedFoodDetails ? (
+                        <div className="mt-5 border border-dashed border-border bg-background px-4 py-6 text-sm text-foreground-muted">
+                          Loading nutrition details...
+                        </div>
+                      ) : savedFoodLoadError ? (
+                        <p className="mt-5 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+                          {savedFoodLoadError}
+                        </p>
+                      ) : hasLoadedSavedFoodDetails && savedFoodDetails ? (
+                        <div className="mt-5 grid grid-cols-2 gap-3">
+                          <SummaryCard
+                            label="Calories"
+                            value={`${Math.max(0, Math.round(savedFoodDetails.calories * parsedPortions))}`}
+                          />
+                          <SummaryCard
+                            label="Carbs"
+                            value={`${formatNutritionNumber(Math.max(0, roundMacro(savedFoodDetails.totalCarbohydrate * parsedPortions)))}g`}
+                          />
+                          <SummaryCard
+                            label="Fat"
+                            value={`${formatNutritionNumber(Math.max(0, roundMacro(savedFoodDetails.totalFat * parsedPortions)))}g`}
+                          />
+                          <SummaryCard
+                            label="Protein"
+                            value={`${formatNutritionNumber(Math.max(0, roundMacro(savedFoodDetails.protein * parsedPortions)))}g`}
+                          />
+                        </div>
+                      ) : null}
 
                       <button
                         type="submit"
-                        disabled={isDisabled || !hasValidPortions}
+                        disabled={
+                          isDisabled ||
+                          isLoadingSavedFoodDetails ||
+                          !hasLoadedSavedFoodDetails ||
+                          !hasValidPortions
+                        }
                         className="mt-5 bg-brand px-4 py-2 text-sm text-white"
                       >
                         {isLoading
@@ -755,7 +905,7 @@ export default function DashboardDiary({
                 Quick add
               </p>
               <h3 className="mt-3 text-2xl font-semibold tracking-tight">
-                Build out today&apos;s diary
+                Build out this day&apos;s diary
               </h3>
             </div>
 
@@ -884,8 +1034,8 @@ export default function DashboardDiary({
               {isLoading
                 ? "Your diary entries will appear here once we finish loading your session."
                 : canPersist
-                  ? "Choose a saved food above and your diary snapshot will start building from there."
-                  : "Add your first meal above and the dashboard will start building a running daily total."}
+                  ? `Choose a saved food above and your diary snapshot for ${formatDiaryDateLabel(selectedDate)} will start building from there.`
+                  : `Add your first meal above and the diary for ${formatDiaryDateLabel(selectedDate)} will start building a running daily total.`}
             </div>
           ) : (
             <DiaryTable

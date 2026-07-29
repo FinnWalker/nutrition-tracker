@@ -6,7 +6,7 @@ import {
 
 describe("getSafeCallbackPath", () => {
   it("accepts internal paths", () => {
-    expect(getSafeCallbackPath("/dashboard")).toBe("/dashboard");
+    expect(getSafeCallbackPath("/diary")).toBe("/diary");
     expect(getSafeCallbackPath("/meals?day=today")).toBe("/meals?day=today");
   });
 
@@ -18,6 +18,6 @@ describe("getSafeCallbackPath", () => {
   });
 
   it("uses the first value from repeated params", () => {
-    expect(getSafeCallbackPath(["/dashboard", "/settings"])).toBe("/dashboard");
+    expect(getSafeCallbackPath(["/diary", "/settings"])).toBe("/diary");
   });
 });

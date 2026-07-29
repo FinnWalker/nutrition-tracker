@@ -17,7 +17,7 @@ describe("SidebarNav", () => {
     mockUsePathname.mockReset();
   });
 
-  it("lets signed-out users open the dashboard from primary navigation", async () => {
+  it("lets signed-out users open the diary from primary navigation", async () => {
     mockUsePathname.mockReturnValue("/");
 
     render(await SidebarNav());
@@ -31,22 +31,22 @@ describe("SidebarNav", () => {
       "href",
       "/",
     );
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
       "href",
-      "/dashboard",
+      "/diary",
     );
   });
 
   it("marks the current page link", async () => {
-    mockUsePathname.mockReturnValue("/dashboard");
+    mockUsePathname.mockReturnValue("/diary");
 
     render(await SidebarNav());
 
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveClass(
+    expect(screen.getByRole("link", { name: "Diary" })).toHaveClass(
       "bg-brand-muted",
     );
     expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute(

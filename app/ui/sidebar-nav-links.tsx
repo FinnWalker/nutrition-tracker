@@ -11,8 +11,8 @@ const navigationItems = [
     icon: House,
   },
   {
-    href: "/dashboard",
-    label: "Dashboard",
+    href: "/diary",
+    label: "Diary",
     icon: CalendarDays,
   },
   {

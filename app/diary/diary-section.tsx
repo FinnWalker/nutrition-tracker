@@ -1,7 +1,8 @@
 import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
-import { getCachedSavedFoods } from "@/app/lib/get-cached-saved-foods";
+import { normalizeDiaryDate } from "@/app/lib/diary-date";
+import { getCachedSavedFoodSummaries } from "@/app/lib/get-cached-saved-food-summaries";
 import { getCurrentSession } from "@/app/lib/get-current-session";
-import DashboardDiary from "@/app/ui/dashboard-diary";
+import DiaryManager from "@/app/ui/diary-manager";
 
 type DiaryEntry = {
   id: string;
@@ -19,10 +20,7 @@ type SavedFoodListItem = {
   name: string;
   brand: string | null;
   servingSize: string | null;
-  calories: number;
-  totalFat: number;
-  totalCarbohydrate: number;
-  protein: number;
+  lastUsedAt: string | null;
 };
 
 function mapEntryToDiaryEntry(entry: {
@@ -47,31 +45,40 @@ function mapEntryToDiaryEntry(entry: {
   };
 }
 
-export default async function DashboardDiarySection() {
+export default async function DiarySection({
+  selectedDate,
+  hasExplicitDate = true,
+}: {
+  selectedDate?: string;
+  hasExplicitDate?: boolean;
+} = {}) {
   const session = await getCurrentSession();
+  const resolvedSelectedDate = normalizeDiaryDate(selectedDate);
   const initialEntries = session?.user?.email
-    ? (await getCachedDailyEntries(session.user.email)).map(
-        mapEntryToDiaryEntry,
-      )
+    ? (
+        await getCachedDailyEntries(session.user.email, resolvedSelectedDate)
+      ).map(mapEntryToDiaryEntry)
     : [];
   const initialSavedFoods: SavedFoodListItem[] = session?.user?.email
-    ? (await getCachedSavedFoods(session.user.email)).map((item) => ({
+    ? (await getCachedSavedFoodSummaries(session.user.email)).map((item) => ({
         id: item.id,
         name: item.name,
         brand: item.brand,
         servingSize: item.servingSize,
-        calories: item.calories,
-        totalFat: item.totalFat,
-        totalCarbohydrate: item.totalCarbohydrate,
-        protein: item.protein,
+        lastUsedAt:
+          item.lastUsedAt instanceof Date
+            ? item.lastUsedAt.toISOString()
+            : (item.lastUsedAt ?? null),
       }))
     : [];
 
   return (
-    <DashboardDiary
+    <DiaryManager
       canPersist={Boolean(session?.user)}
       initialEntries={initialEntries}
       initialSavedFoods={initialSavedFoods}
+      selectedDate={resolvedSelectedDate}
+      hasExplicitDate={hasExplicitDate}
     />
   );
 }
