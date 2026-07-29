@@ -1,13 +1,13 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/prisma";
 
-export async function getCachedPantryItems(email: string) {
+export async function getCachedSavedFoods(email: string) {
   "use cache";
 
   cacheLife("minutes");
-  cacheTag(`pantry-items:${email}`);
+  cacheTag(`saved-foods:${email}`);
 
-  return prisma.pantryItem.findMany({
+  return prisma.savedFood.findMany({
     where: {
       user: {
         email,

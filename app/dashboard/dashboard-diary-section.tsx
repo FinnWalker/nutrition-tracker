@@ -1,5 +1,5 @@
 import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
-import { getCachedPantryItems } from "@/app/lib/get-cached-pantry-items";
+import { getCachedSavedFoods } from "@/app/lib/get-cached-saved-foods";
 import { getCurrentSession } from "@/app/lib/get-current-session";
 import DashboardDiary from "@/app/ui/dashboard-diary";
 
@@ -14,7 +14,7 @@ type DiaryEntry = {
   fat: number;
 };
 
-type PantryListItem = {
+type SavedFoodListItem = {
   id: string;
   name: string;
   brand: string | null;
@@ -54,8 +54,8 @@ export default async function DashboardDiarySection() {
         mapEntryToDiaryEntry,
       )
     : [];
-  const initialPantryItems: PantryListItem[] = session?.user?.email
-    ? (await getCachedPantryItems(session.user.email)).map((item) => ({
+  const initialSavedFoods: SavedFoodListItem[] = session?.user?.email
+    ? (await getCachedSavedFoods(session.user.email)).map((item) => ({
         id: item.id,
         name: item.name,
         brand: item.brand,
@@ -71,7 +71,7 @@ export default async function DashboardDiarySection() {
     <DashboardDiary
       canPersist={Boolean(session?.user)}
       initialEntries={initialEntries}
-      initialPantryItems={initialPantryItems}
+      initialSavedFoods={initialSavedFoods}
     />
   );
 }

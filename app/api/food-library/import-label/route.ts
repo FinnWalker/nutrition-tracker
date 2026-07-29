@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { extractPantryLabelFromImage } from "@/app/lib/extract-pantry-label-from-image";
 import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 
 const MAX_PREPARED_IMPORT_IMAGE_SIZE_BYTES = 512 * 1024;
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   const requestId = crypto.randomUUID();
   let userId: string | null = null;
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     user = await requireCurrentUserRecord();
     userId = user.id;
   } catch {
-    console.warn("pantry_import_unauthorized", {
+    console.warn("food_library_import_unauthorized", {
       requestId,
       durationMs: Date.now() - startedAt,
     });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const image = formData.get("image");
 
   if (!(image instanceof File)) {
-    console.warn("pantry_import_bad_request", {
+    console.warn("food_library_import_bad_request", {
       requestId,
       userId,
       reason: "missing_image",
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   if (!image.type.startsWith("image/")) {
-    console.warn("pantry_import_bad_request", {
+    console.warn("food_library_import_bad_request", {
       requestId,
       userId,
       reason: "invalid_mime_type",
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   }
 
   if (image.size > MAX_PREPARED_IMPORT_IMAGE_SIZE_BYTES) {
-    console.warn("pantry_import_bad_request", {
+    console.warn("food_library_import_bad_request", {
       requestId,
       userId,
       reason: "image_too_large",
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
   try {
     const result = await extractPantryLabelFromImage(image);
 
-    console.info("pantry_import_success", {
+    console.info("food_library_import_success", {
       requestId,
       userId,
       imageType: image.type,
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       message === "OPENAI_API_KEY is not configured on the server.";
     const status = isMissingApiKey ? 500 : 502;
 
-    console.error("pantry_import_failed", {
+    console.error("food_library_import_failed", {
       requestId,
       userId,
       imageType: image.type,

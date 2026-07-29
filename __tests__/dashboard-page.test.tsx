@@ -5,7 +5,7 @@ import DashboardDiarySection from "@/app/dashboard/dashboard-diary-section";
 
 const mockGetCurrentSession = vi.fn();
 const mockGetCachedDailyEntries = vi.fn();
-const mockGetCachedPantryItems = vi.fn();
+const mockGetCachedSavedFoods = vi.fn();
 const mockAddDailyEntry = vi.fn();
 const mockDeleteDailyEntry = vi.fn();
 const mockClearDailyEntries = vi.fn();
@@ -20,9 +20,8 @@ vi.mock("@/app/lib/get-cached-daily-entries", () => ({
     mockGetCachedDailyEntries(...args),
 }));
 
-vi.mock("@/app/lib/get-cached-pantry-items", () => ({
-  getCachedPantryItems: (...args: unknown[]) =>
-    mockGetCachedPantryItems(...args),
+vi.mock("@/app/lib/get-cached-saved-foods", () => ({
+  getCachedSavedFoods: (...args: unknown[]) => mockGetCachedSavedFoods(...args),
 }));
 
 vi.mock("@/app/dashboard/actions", () => ({
@@ -41,14 +40,14 @@ describe("DashboardPage", () => {
   beforeEach(() => {
     mockGetCurrentSession.mockReset();
     mockGetCachedDailyEntries.mockReset();
-    mockGetCachedPantryItems.mockReset();
+    mockGetCachedSavedFoods.mockReset();
     mockAddDailyEntry.mockReset();
     mockDeleteDailyEntry.mockReset();
     mockClearDailyEntries.mockReset();
     mockRefresh.mockReset();
     window.localStorage.clear();
     mockGetCachedDailyEntries.mockResolvedValue([]);
-    mockGetCachedPantryItems.mockResolvedValue([]);
+    mockGetCachedSavedFoods.mockResolvedValue([]);
     mockAddDailyEntry.mockResolvedValue({ id: "saved-entry" });
   });
 
@@ -60,7 +59,7 @@ describe("DashboardPage", () => {
     expect(screen.getByText("Dashboard")).toBeVisible();
     expect(
       screen.getByText(
-        "Review your daily totals, then pull foods straight from your pantry into the diary as you log meals.",
+        "Review your daily totals, then pull foods straight from your saved foods into the diary as you log meals.",
       ),
     ).toBeVisible();
     expect(screen.getByText("Summary")).toBeVisible();
@@ -84,7 +83,7 @@ describe("DashboardPage", () => {
         email: "ava@example.com",
       },
     });
-    mockGetCachedPantryItems.mockResolvedValue([
+    mockGetCachedSavedFoods.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
@@ -132,14 +131,14 @@ describe("DashboardPage", () => {
     expect(screen.getAllByText("15g")[0]).toBeVisible();
   });
 
-  it("adds a pantry item to the diary using scaled portions", async () => {
+  it("adds a saved food to the diary using scaled portions", async () => {
     mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
         email: "ava@example.com",
       },
     });
-    mockGetCachedPantryItems.mockResolvedValue([
+    mockGetCachedSavedFoods.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
@@ -171,7 +170,7 @@ describe("DashboardPage", () => {
       expect(mockAddDailyEntry).toHaveBeenCalledWith({
         entryDate: expect.any(String),
         foodName: "Greek yogurt (Fage)",
-        pantryItemId: "pantry-1",
+        savedFoodId: "pantry-1",
         servings: 1.5,
         calories: 210,
         protein: 22.5,
@@ -181,7 +180,7 @@ describe("DashboardPage", () => {
     });
     expect(
       screen.getByText(
-        "Choose a pantry item from the results to scale servings and add it to your diary.",
+        "Choose a saved food from the results to scale servings and add it to your diary.",
       ),
     ).toBeVisible();
     expect(screen.getByText("Greek yogurt (Fage)")).toBeVisible();
@@ -210,7 +209,7 @@ describe("DashboardPage", () => {
         email: "ava@example.com",
       },
     });
-    mockGetCachedPantryItems.mockResolvedValue([
+    mockGetCachedSavedFoods.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
@@ -241,6 +240,6 @@ describe("DashboardPage", () => {
     expect(screen.getAllByText("1")[0]).toBeVisible();
     expect(screen.queryByText("Local granola")).not.toBeInTheDocument();
     expect(mockGetCachedDailyEntries).toHaveBeenCalledWith("ava@example.com");
-    expect(mockGetCachedPantryItems).toHaveBeenCalledWith("ava@example.com");
+    expect(mockGetCachedSavedFoods).toHaveBeenCalledWith("ava@example.com");
   });
 });

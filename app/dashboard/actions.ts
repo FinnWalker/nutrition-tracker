@@ -8,7 +8,7 @@ type DailyEntryInput = {
   entryDate: string;
   foodName: string;
   servings: number;
-  pantryItemId?: string;
+  savedFoodId?: string;
   calories: number;
   protein: number;
   carbs: number;
@@ -19,8 +19,8 @@ function revalidateDailyEntries(email: string) {
   updateTag(`daily-entries:${email}`);
 }
 
-function revalidatePantryItems(email: string) {
-  updateTag(`pantry-items:${email}`);
+function revalidateSavedFoods(email: string) {
+  updateTag(`saved-foods:${email}`);
 }
 
 export async function addDailyEntry(input: DailyEntryInput) {
@@ -53,10 +53,10 @@ export async function addDailyEntry(input: DailyEntryInput) {
     },
   });
 
-  if (input.pantryItemId) {
-    await prisma.pantryItem.updateMany({
+  if (input.savedFoodId) {
+    await prisma.savedFood.updateMany({
       where: {
-        id: input.pantryItemId,
+        id: input.savedFoodId,
         user: {
           id: user.id,
         },
@@ -65,7 +65,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
         lastUsedAt: new Date(),
       },
     });
-    revalidatePantryItems(user.email);
+    revalidateSavedFoods(user.email);
   }
 
   revalidateDailyEntries(user.email);

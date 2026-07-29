@@ -16,8 +16,8 @@ const navigationItems = [
     icon: CalendarDays,
   },
   {
-    href: "/my-pantry",
-    label: "My Pantry",
+    href: "/food-library",
+    label: "Saved Foods",
     icon: ChefHat,
   },
 ] as const;
