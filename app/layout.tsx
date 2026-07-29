@@ -39,7 +39,7 @@ export default function RootLayout(props: RootLayoutProps) {
         <ThemeProvider>
           <AuthSessionProvider>
             <div className="min-h-dvh md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
-              <aside className="hidden border-r border-border bg-surface px-5 py-6 md:flex md:flex-col">
+              <aside className="hidden border-r border-border bg-surface px-5 py-6 md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:self-start md:overflow-y-auto">
                 <SidebarNav />
               </aside>
 

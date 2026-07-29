@@ -3,6 +3,7 @@
 import type { ChangeEvent } from "react";
 import imageCompression from "browser-image-compression";
 import { useEffect, useRef, useState } from "react";
+import { RotateCcw, RotateCw } from "lucide-react";
 import ReactCrop, {
   centerCrop,
   convertToPixelCrop,
@@ -38,6 +39,7 @@ const DEFAULT_CROP_WIDTH_PERCENT = 72;
 const MAX_OUTPUT_DIMENSION = 900;
 const OUTPUT_QUALITY = 0.82;
 const MAX_OUTPUT_SIZE_MB = 0.35;
+const ROTATION_STEP_DEGREES = 90;
 
 function formatFileSize(sizeBytes: number) {
   if (sizeBytes < 1024) {
@@ -135,6 +137,48 @@ function toCropRect(crop: PixelCrop, width: number, height: number): CropRect {
   };
 }
 
+async function rotateImageSource(src: string, rotationDegrees: number) {
+  const normalizedRotation = ((rotationDegrees % 360) + 360) % 360;
+  const sourceImage = await loadImage(src);
+
+  if (normalizedRotation === 0) {
+    return {
+      sourceImageUrl: src,
+      width: sourceImage.naturalWidth,
+      height: sourceImage.naturalHeight,
+    };
+  }
+
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Image rotation is not available in this browser.");
+  }
+
+  const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
+  canvas.width = isQuarterTurn
+    ? sourceImage.naturalHeight
+    : sourceImage.naturalWidth;
+  canvas.height = isQuarterTurn
+    ? sourceImage.naturalWidth
+    : sourceImage.naturalHeight;
+
+  context.translate(canvas.width / 2, canvas.height / 2);
+  context.rotate((normalizedRotation * Math.PI) / 180);
+  context.drawImage(
+    sourceImage,
+    -sourceImage.naturalWidth / 2,
+    -sourceImage.naturalHeight / 2,
+  );
+
+  return {
+    sourceImageUrl: canvas.toDataURL("image/png"),
+    width: canvas.width,
+    height: canvas.height,
+  };
+}
+
 export default function NutritionLabelImporter({
   disabled,
   onPrepared,
@@ -143,14 +187,17 @@ export default function NutritionLabelImporter({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const preparedPreviewUrlRef = useRef<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
   const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
   const [sourceDimensions, setSourceDimensions] = useState<{
     width: number;
     height: number;
   } | null>(null);
+  const [rotationDegrees, setRotationDegrees] = useState(0);
   const [crop, setCrop] = useState<PercentCrop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -161,8 +208,10 @@ export default function NutritionLabelImporter({
 
   function clearSourceImage() {
     setSelectedFileName(null);
+    setOriginalImageUrl(null);
     setSourceImageUrl(null);
     setSourceDimensions(null);
+    setRotationDegrees(0);
     setCrop(undefined);
     setCompletedCrop(null);
     setError(null);
@@ -186,24 +235,27 @@ export default function NutritionLabelImporter({
 
     setError(null);
     setIsPreparing(false);
+    setIsRotating(false);
 
     try {
-      const nextSourceImageUrl = await readFileAsDataUrl(file);
-      const image = await loadImage(nextSourceImageUrl);
+      const nextOriginalImageUrl = await readFileAsDataUrl(file);
+      const rotatedImage = await rotateImageSource(nextOriginalImageUrl, 0);
       const nextCrop = createCenteredCrop(
-        image.naturalWidth,
-        image.naturalHeight,
+        rotatedImage.width,
+        rotatedImage.height,
       );
 
       setSelectedFileName(file.name);
-      setSourceImageUrl(nextSourceImageUrl);
+      setOriginalImageUrl(nextOriginalImageUrl);
+      setSourceImageUrl(rotatedImage.sourceImageUrl);
       setSourceDimensions({
-        width: image.naturalWidth,
-        height: image.naturalHeight,
+        width: rotatedImage.width,
+        height: rotatedImage.height,
       });
+      setRotationDegrees(0);
       setCrop(nextCrop);
       setCompletedCrop(
-        convertToPixelCrop(nextCrop, image.naturalWidth, image.naturalHeight),
+        convertToPixelCrop(nextCrop, rotatedImage.width, rotatedImage.height),
       );
     } catch (loadError) {
       const message =
@@ -235,8 +287,55 @@ export default function NutritionLabelImporter({
     );
   }
 
+  async function handleRotateImage(rotationDelta: number) {
+    if (!originalImageUrl || disabled || isPreparing) {
+      return;
+    }
+
+    setIsRotating(true);
+    setError(null);
+
+    try {
+      const nextRotationDegrees =
+        (((rotationDegrees + rotationDelta) % 360) + 360) % 360;
+      const rotatedImage = await rotateImageSource(
+        originalImageUrl,
+        nextRotationDegrees,
+      );
+      const nextCrop = createCenteredCrop(
+        rotatedImage.width,
+        rotatedImage.height,
+      );
+
+      setRotationDegrees(nextRotationDegrees);
+      setSourceImageUrl(rotatedImage.sourceImageUrl);
+      setSourceDimensions({
+        width: rotatedImage.width,
+        height: rotatedImage.height,
+      });
+      setCrop(nextCrop);
+      setCompletedCrop(
+        convertToPixelCrop(nextCrop, rotatedImage.width, rotatedImage.height),
+      );
+    } catch (rotationError) {
+      setError(
+        rotationError instanceof Error
+          ? rotationError.message
+          : "The selected image could not be rotated.",
+      );
+    } finally {
+      setIsRotating(false);
+    }
+  }
+
   async function handlePrepareImage() {
-    if (!sourceDimensions || !completedCrop || !imageRef.current || disabled) {
+    if (
+      !sourceDimensions ||
+      !completedCrop ||
+      !imageRef.current ||
+      disabled ||
+      isRotating
+    ) {
       return;
     }
 
@@ -331,7 +430,7 @@ export default function NutritionLabelImporter({
               ref={inputRef}
               type="file"
               accept="image/*"
-              disabled={disabled || isPreparing}
+              disabled={disabled || isPreparing || isRotating}
               onChange={handleFileChange}
               className="sr-only"
             />
@@ -340,7 +439,7 @@ export default function NutritionLabelImporter({
           <button
             type="button"
             onClick={clearSourceImage}
-            disabled={disabled || !sourceImageUrl || isPreparing}
+            disabled={disabled || !sourceImageUrl || isPreparing || isRotating}
             className="border border-border px-4 py-2 text-sm"
           >
             Clear
@@ -362,7 +461,7 @@ export default function NutritionLabelImporter({
                   ? ` | ${sourceDimensions.width} x ${sourceDimensions.height}`
                   : ""}
               </div>
-              <div className="p-4">
+              <div className="overflow-auto p-4">
                 <ReactCrop
                   crop={crop}
                   onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -371,14 +470,14 @@ export default function NutritionLabelImporter({
                   minWidth={120}
                   minHeight={120}
                   ruleOfThirds
-                  className="w-full bg-surface-elevated"
+                  className="inline-block max-w-full bg-surface-elevated align-top"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     ref={imageRef}
                     src={sourceImageUrl}
                     alt="Selected nutrition label"
-                    className="block h-auto max-h-[70vh] w-full object-contain"
+                    className="block h-auto max-h-[70vh] w-auto max-w-full"
                   />
                 </ReactCrop>
               </div>
@@ -394,12 +493,37 @@ export default function NutritionLabelImporter({
                 <p>Drag inside the box to move it.</p>
                 <p>Drag the corners or edges to tighten the selection.</p>
                 <p>Keep only the nutrition panel in frame for the best OCR.</p>
+                <p>Rotate first if your phone photo was taken sideways.</p>
               </div>
               <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   type="button"
+                  onClick={() => handleRotateImage(-ROTATION_STEP_DEGREES)}
+                  disabled={
+                    disabled || isPreparing || isRotating || !originalImageUrl
+                  }
+                  className="inline-flex items-center gap-2 border border-border px-4 py-2 text-sm"
+                >
+                  <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                  Rotate left
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRotateImage(ROTATION_STEP_DEGREES)}
+                  disabled={
+                    disabled || isPreparing || isRotating || !originalImageUrl
+                  }
+                  className="inline-flex items-center gap-2 border border-border px-4 py-2 text-sm"
+                >
+                  <RotateCw className="h-4 w-4" aria-hidden="true" />
+                  Rotate right
+                </button>
+                <button
+                  type="button"
                   onClick={resetCrop}
-                  disabled={disabled || isPreparing || !sourceDimensions}
+                  disabled={
+                    disabled || isPreparing || isRotating || !sourceDimensions
+                  }
                   className="border border-border px-4 py-2 text-sm"
                 >
                   Reset crop
@@ -407,10 +531,16 @@ export default function NutritionLabelImporter({
                 <button
                   type="button"
                   onClick={handlePrepareImage}
-                  disabled={disabled || isPreparing || !completedCrop}
+                  disabled={
+                    disabled || isPreparing || isRotating || !completedCrop
+                  }
                   className="bg-brand px-4 py-2 text-sm text-white"
                 >
-                  {isPreparing ? "Preparing..." : "Prepare image"}
+                  {isRotating
+                    ? "Rotating..."
+                    : isPreparing
+                      ? "Preparing..."
+                      : "Prepare image"}
                 </button>
               </div>
             </div>
