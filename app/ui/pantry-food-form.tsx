@@ -263,14 +263,6 @@ export default function PantryFoodForm({
             onChange={onChange}
           />
           <NutritionNumberRow
-            label="Vitamin D (mcg)"
-            name="vitaminDMcg"
-            value={draft.vitaminDMcg}
-            placeholder="0"
-            disabled={disabled}
-            onChange={onChange}
-          />
-          <NutritionNumberRow
             label="Calcium (mg)"
             name="calciumMg"
             value={draft.calciumMg}
