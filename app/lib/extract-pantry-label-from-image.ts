@@ -52,7 +52,6 @@ const extractedValueFields = [
   "totalSugars",
   "addedSugars",
   "protein",
-  "vitaminDMcg",
   "calciumMg",
   "ironMg",
   "potassiumMg",
@@ -555,7 +554,7 @@ export async function extractPantryLabelFromImage(image: File) {
         content: [
           {
             type: "input_text",
-            text: "Return JSON only with these keys: per100Heading, perServingHeading, per100, perServing. Inside per100 and perServing include only: calories, totalFat, saturatedFat, transFat, polyunsaturatedFat, monounsaturatedFat, cholesterolMg, sodiumMg, totalCarbohydrate, dietaryFiber, totalSugars, addedSugars, protein, vitaminDMcg, calciumMg, ironMg, potassiumMg, saltGrams.",
+            text: "Return JSON only with these keys: per100Heading, perServingHeading, per100, perServing. Inside per100 and perServing include only: calories, totalFat, saturatedFat, transFat, polyunsaturatedFat, monounsaturatedFat, cholesterolMg, sodiumMg, totalCarbohydrate, dietaryFiber, totalSugars, addedSugars, protein, calciumMg, ironMg, potassiumMg, saltGrams.",
           },
           {
             type: "input_image",
