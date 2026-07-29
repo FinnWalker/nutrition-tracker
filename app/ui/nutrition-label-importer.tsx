@@ -35,9 +35,9 @@ type NutritionLabelImporterProps = {
 };
 
 const DEFAULT_CROP_WIDTH_PERCENT = 72;
-const MAX_OUTPUT_DIMENSION = 1200;
+const MAX_OUTPUT_DIMENSION = 900;
 const OUTPUT_QUALITY = 0.82;
-const MAX_OUTPUT_SIZE_MB = 0.5;
+const MAX_OUTPUT_SIZE_MB = 0.35;
 
 function formatFileSize(sizeBytes: number) {
   if (sizeBytes < 1024) {

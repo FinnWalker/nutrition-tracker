@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { extractPantryLabelFromImage } from "@/app/lib/extract-pantry-label-from-image";
 import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 
+const MAX_PREPARED_IMPORT_IMAGE_SIZE_BYTES = 512 * 1024;
+
 export async function POST(request: Request) {
   const startedAt = Date.now();
   const requestId = crypto.randomUUID();
@@ -55,7 +57,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (image.size > 1024 * 1024) {
+  if (image.size > MAX_PREPARED_IMPORT_IMAGE_SIZE_BYTES) {
     console.warn("pantry_import_bad_request", {
       requestId,
       userId,
@@ -65,7 +67,10 @@ export async function POST(request: Request) {
       durationMs: Date.now() - startedAt,
     });
     return NextResponse.json(
-      { error: "The prepared image is unexpectedly large. Please crop again." },
+      {
+        error:
+          "The prepared image is unexpectedly large. Please crop again before importing.",
+      },
       { status: 400 },
     );
   }

@@ -109,7 +109,7 @@ export default function PantryFoodForm({
             label="Name"
             name="name"
             value={draft.name}
-            placeholder="Greek yogurt"
+            placeholder="Product Name"
             disabled={disabled}
             onChange={onChange}
             inputClassName="w-52"
@@ -119,7 +119,7 @@ export default function PantryFoodForm({
             label="Brand"
             name="brand"
             value={draft.brand}
-            placeholder="Fage"
+            placeholder="Brand Name"
             disabled={disabled}
             onChange={onChange}
             inputClassName="w-40"
@@ -128,7 +128,7 @@ export default function PantryFoodForm({
             label="Servings per container"
             name="servingsPerContainer"
             value={draft.servingsPerContainer}
-            placeholder="1"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -139,7 +139,7 @@ export default function PantryFoodForm({
             label="Total carbohydrate (g)"
             name="totalCarbohydrate"
             value={draft.totalCarbohydrate}
-            placeholder="6"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -155,7 +155,7 @@ export default function PantryFoodForm({
             label="Total sugars (g)"
             name="totalSugars"
             value={draft.totalSugars}
-            placeholder="5"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -174,7 +174,7 @@ export default function PantryFoodForm({
             label="Total fat (g)"
             name="totalFat"
             value={draft.totalFat}
-            placeholder="4"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -182,7 +182,7 @@ export default function PantryFoodForm({
             label="Saturated fat (g)"
             name="saturatedFat"
             value={draft.saturatedFat}
-            placeholder="2.5"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -214,7 +214,7 @@ export default function PantryFoodForm({
             label="Cholesterol (mg)"
             name="cholesterolMg"
             value={draft.cholesterolMg}
-            placeholder="15"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -225,7 +225,7 @@ export default function PantryFoodForm({
             label="Protein (g)"
             name="protein"
             value={draft.protein}
-            placeholder="15"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -238,7 +238,7 @@ export default function PantryFoodForm({
             label="Serving size"
             name="servingSize"
             value={draft.servingSize}
-            placeholder="170g tub"
+            placeholder="Serving Size"
             disabled={disabled}
             onChange={onChange}
             inputClassName="w-44"
@@ -247,7 +247,7 @@ export default function PantryFoodForm({
             label="Calories"
             name="calories"
             value={draft.calories}
-            placeholder="140"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -258,7 +258,7 @@ export default function PantryFoodForm({
             label="Sodium (mg)"
             name="sodiumMg"
             value={draft.sodiumMg}
-            placeholder="65"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -274,7 +274,7 @@ export default function PantryFoodForm({
             label="Calcium (mg)"
             name="calciumMg"
             value={draft.calciumMg}
-            placeholder="190"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
@@ -290,7 +290,7 @@ export default function PantryFoodForm({
             label="Potassium (mg)"
             name="potassiumMg"
             value={draft.potassiumMg}
-            placeholder="240"
+            placeholder="0"
             disabled={disabled}
             onChange={onChange}
           />
