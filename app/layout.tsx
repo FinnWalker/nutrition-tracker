@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "react-image-crop/dist/ReactCrop.css";
 import AuthSessionProvider from "./ui/auth-session-provider";
+import MobileNavDrawer from "./ui/mobile-nav-drawer";
 import SidebarNav from "./ui/sidebar-nav";
 import ThemeProvider from "./ui/theme-provider";
 import "./globals.css";
@@ -43,6 +44,9 @@ export default function RootLayout(props: RootLayoutProps) {
               </aside>
 
               <main className="flex min-h-dvh flex-col px-4 py-6 md:px-8 md:py-8">
+                <MobileNavDrawer>
+                  <SidebarNav />
+                </MobileNavDrawer>
                 {props.children}
               </main>
             </div>

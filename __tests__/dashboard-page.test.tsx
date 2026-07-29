@@ -34,6 +34,17 @@ vi.mock("@/app/diary/actions", () => ({
   clearDailyEntries: (...args: unknown[]) => mockClearDailyEntries(...args),
 }));
 
+vi.mock("@/app/lib/diary-date", async () => {
+  const actual = await vi.importActual<typeof import("@/app/lib/diary-date")>(
+    "@/app/lib/diary-date",
+  );
+
+  return {
+    ...actual,
+    getTodayDiaryDate: () => "2026-07-29",
+  };
+});
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: (...args: unknown[]) => mockRefresh(...args),
