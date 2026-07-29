@@ -1,43 +1,23 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
-import type { PantryImportResponse } from "@/app/lib/pantry-label-import";
-
-function createStubDraft(): PantryImportResponse {
-  return {
-    draft: {
-      name: "Organic rolled oats",
-      brand: "North Mill",
-      servingSize: "1/2 cup (40g)",
-      servingsPerContainer: "8",
-      calories: "150",
-      totalFat: "3",
-      saturatedFat: "0.5",
-      transFat: "0",
-      polyunsaturatedFat: "1",
-      monounsaturatedFat: "1",
-      cholesterolMg: "0",
-      sodiumMg: "0",
-      totalCarbohydrate: "27",
-      dietaryFiber: "4",
-      totalSugars: "1",
-      addedSugars: "0",
-      protein: "5",
-      vitaminDMcg: "0",
-      calciumMg: "20",
-      ironMg: "1.6",
-      potassiumMg: "150",
-    },
-    warnings: [
-      "Stub response: this draft is mocked until the OpenAI Vision step is connected.",
-      "Review serving size and micronutrients before saving.",
-    ],
-  };
-}
+import { extractPantryLabelFromImage } from "@/app/lib/extract-pantry-label-from-image";
+import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 
 export async function POST(request: Request) {
-  const session = await auth();
+  const startedAt = Date.now();
+  const requestId = crypto.randomUUID();
+  let userId: string | null = null;
 
-  if (!session?.user?.email) {
+  let user;
+
+  try {
+    user = await requireCurrentUserRecord();
+    userId = user.id;
+  } catch {
+    console.warn("pantry_import_unauthorized", {
+      requestId,
+      durationMs: Date.now() - startedAt,
+    });
+
     return NextResponse.json(
       { error: "You must be signed in to import a nutrition label." },
       { status: 401 },
@@ -48,6 +28,12 @@ export async function POST(request: Request) {
   const image = formData.get("image");
 
   if (!(image instanceof File)) {
+    console.warn("pantry_import_bad_request", {
+      requestId,
+      userId,
+      reason: "missing_image",
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json(
       { error: "A prepared label image is required." },
       { status: 400 },
@@ -55,6 +41,14 @@ export async function POST(request: Request) {
   }
 
   if (!image.type.startsWith("image/")) {
+    console.warn("pantry_import_bad_request", {
+      requestId,
+      userId,
+      reason: "invalid_mime_type",
+      imageType: image.type,
+      imageSizeBytes: image.size,
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json(
       { error: "The uploaded file must be an image." },
       { status: 400 },
@@ -62,13 +56,62 @@ export async function POST(request: Request) {
   }
 
   if (image.size > 1024 * 1024) {
+    console.warn("pantry_import_bad_request", {
+      requestId,
+      userId,
+      reason: "image_too_large",
+      imageType: image.type,
+      imageSizeBytes: image.size,
+      durationMs: Date.now() - startedAt,
+    });
     return NextResponse.json(
       { error: "The prepared image is unexpectedly large. Please crop again." },
       { status: 400 },
     );
   }
 
-  await image.arrayBuffer();
+  try {
+    const result = await extractPantryLabelFromImage(image);
 
-  return NextResponse.json(createStubDraft());
+    console.info("pantry_import_success", {
+      requestId,
+      userId,
+      imageType: image.type,
+      imageSizeBytes: image.size,
+      warningsCount: result.warnings.length,
+      durationMs: Date.now() - startedAt,
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "We couldn't read that label. Please try again.";
+    const isMissingApiKey =
+      message === "OPENAI_API_KEY is not configured on the server.";
+    const status = isMissingApiKey ? 500 : 502;
+
+    console.error("pantry_import_failed", {
+      requestId,
+      userId,
+      imageType: image.type,
+      imageSizeBytes: image.size,
+      status,
+      errorMessage: message,
+      durationMs: Date.now() - startedAt,
+    });
+
+    return NextResponse.json(
+      {
+        error:
+          isMissingApiKey
+            ? message
+            : "We couldn't read that label. Please try again.",
+      },
+      {
+        status,
+      },
+    );
+  }
 }
