@@ -66,7 +66,8 @@ describe("MyPantryPage", () => {
     expect(
       screen.getByText("Create an account to save pantry foods."),
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: "Add food" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Manual entry" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Import label" })).toBeDisabled();
     expect(
       screen.getByText(
         "Sign in to open the pantry form and start building your own food database.",
@@ -129,7 +130,7 @@ describe("MyPantryPage", () => {
 
     render(await PantrySection());
 
-    fireEvent.click(screen.getByRole("button", { name: "Add food" }));
+    fireEvent.click(screen.getByRole("button", { name: "Manual entry" }));
 
     expect(screen.getByText("Add to your catalogue")).toBeVisible();
     expect(screen.getByRole("button", { name: "Add to pantry" })).toBeVisible();

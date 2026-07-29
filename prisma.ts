@@ -11,7 +11,19 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set.");
 }
 
-const adapter = new PrismaPg({ connectionString });
+function getAdapterConnectionString(url: string) {
+  const parsedUrl = new URL(url);
+
+  // The pg driver adapter targets the database directly and does not need the
+  // Prisma-specific schema query parameter.
+  parsedUrl.searchParams.delete("schema");
+
+  return parsedUrl.toString();
+}
+
+const adapter = new PrismaPg({
+  connectionString: getAdapterConnectionString(connectionString),
+});
 
 export const prisma =
   globalForPrisma.prisma ??
