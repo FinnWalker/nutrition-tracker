@@ -34,7 +34,15 @@ describe("RootLayout", () => {
     const aside = document.querySelector("aside");
     const main = screen.getByRole("main");
 
-    expect(aside).toHaveClass("hidden", "md:flex");
+    expect(aside).toHaveClass(
+      "hidden",
+      "md:sticky",
+      "md:top-0",
+      "md:flex",
+      "md:h-dvh",
+      "md:self-start",
+      "md:overflow-y-auto",
+    );
     expect(aside).toContainElement(nav);
     expect(
       within(main).queryByRole("navigation", { name: "Primary" }),
