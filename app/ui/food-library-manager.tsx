@@ -10,10 +10,10 @@ import type {
   PantryImportResponse,
 } from "@/app/lib/pantry-label-import";
 import {
-  addPantryItem,
-  deletePantryItem as deleteSavedPantryItem,
-  updatePantryItem,
-} from "@/app/my-pantry/actions";
+  addSavedFood,
+  deleteSavedFood,
+  updateSavedFood,
+} from "@/app/food-library/actions";
 import {
   FatBreakdown,
   formatNutritionNumber,
@@ -23,11 +23,11 @@ import {
 import NutritionLabelImporter, {
   type PreparedNutritionLabelImage,
 } from "@/app/ui/nutrition-label-importer";
-import PantryFoodForm, {
-  type PantryFoodDraft,
-} from "@/app/ui/pantry-food-form";
+import FoodLibraryForm, {
+  type FoodLibraryDraft,
+} from "@/app/ui/food-library-form";
 
-type PantryItem = {
+type SavedFood = {
   id: string;
   name: string;
   brand: string | null;
@@ -54,19 +54,19 @@ type PantryItem = {
   updatedAt: string;
 };
 
-type PantryMutation =
-  | { type: "add"; item: PantryItem }
-  | { type: "update"; item: PantryItem }
+type SavedFoodMutation =
+  | { type: "add"; item: SavedFood }
+  | { type: "update"; item: SavedFood }
   | { type: "remove"; itemId: string };
 
-type MyPantryManagerProps = {
+type FoodLibraryManagerProps = {
   canPersist: boolean;
-  initialItems: PantryItem[];
+  initialItems: SavedFood[];
   viewerLabel: string;
   isLoading?: boolean;
 };
 
-const initialDraft = (): PantryFoodDraft => ({
+const initialDraft = (): FoodLibraryDraft => ({
   name: "",
   brand: "",
   servingSize: "",
@@ -101,7 +101,7 @@ function parseNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function formatServing(item: PantryItem) {
+function formatServing(item: SavedFood) {
   if (item.servingSize) {
     return item.servingSize;
   }
@@ -113,9 +113,9 @@ function formatServing(item: PantryItem) {
   return "Not set";
 }
 
-function applyPantryMutation(
-  currentItems: PantryItem[],
-  mutation: PantryMutation,
+function applySavedFoodMutation(
+  currentItems: SavedFood[],
+  mutation: SavedFoodMutation,
 ) {
   switch (mutation.type) {
     case "add":
@@ -139,7 +139,7 @@ function formatUpdatedAt(value: string) {
   }).format(new Date(value));
 }
 
-function createDraftFromItem(item: PantryItem): PantryFoodDraft {
+function createDraftFromItem(item: SavedFood): FoodLibraryDraft {
   return {
     name: item.name,
     brand: item.brand ?? "",
@@ -170,9 +170,9 @@ function createDraftFromItem(item: PantryItem): PantryFoodDraft {
 }
 
 function createItemFromDraft(
-  draft: PantryFoodDraft,
+  draft: FoodLibraryDraft,
   itemId = crypto.randomUUID(),
-): PantryItem {
+): SavedFood {
   return {
     id: itemId,
     name: draft.name.trim(),
@@ -203,15 +203,15 @@ function createItemFromDraft(
   };
 }
 
-export default function MyPantryManager({
+export default function FoodLibraryManager({
   canPersist,
   initialItems,
   viewerLabel,
   isLoading = false,
-}: MyPantryManagerProps) {
+}: FoodLibraryManagerProps) {
   const router = useRouter();
   const importerRef = useRef<HTMLElement | null>(null);
-  const [draft, setDraft] = useState<PantryFoodDraft>(initialDraft);
+  const [draft, setDraft] = useState<FoodLibraryDraft>(initialDraft);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPersisting, setIsPersisting] = useState(false);
   const [isAnalyzingLabel, setIsAnalyzingLabel] = useState(false);
@@ -226,7 +226,7 @@ export default function MyPantryManager({
     useState<PreparedNutritionLabelImage | null>(null);
   const [optimisticItems, applyOptimisticMutation] = useOptimistic(
     initialItems,
-    applyPantryMutation,
+    applySavedFoodMutation,
   );
 
   const items = isLoading ? [] : optimisticItems;
@@ -244,14 +244,14 @@ export default function MyPantryManager({
   const isDisabled = isLoading || isPersisting || !canPersist;
   const isFormOpen = formMode !== "closed";
   const statusCopy = isLoading
-    ? "We are checking your pantry access."
+    ? "We are checking your saved foods access."
     : canPersist
-      ? `Your pantry belongs to ${viewerLabel}. Search it like a personal food database, then add or update foods only when you need to.`
-      : "Sign in to build a personal food catalogue that you can search while logging your diary.";
+      ? `Your food library belongs to ${viewerLabel}. Search it like a personal food database, then add or update saved foods only when you need to.`
+      : "Sign in to build a saved foods library that you can search while logging your diary.";
 
-  function updateDraft<K extends keyof PantryFoodDraft>(
+  function updateDraft<K extends keyof FoodLibraryDraft>(
     field: K,
-    value: PantryFoodDraft[K],
+    value: FoodLibraryDraft[K],
   ) {
     setDraft((current) => ({
       ...current,
@@ -286,7 +286,7 @@ export default function MyPantryManager({
     const formData = new FormData();
     formData.set("image", image.file);
 
-    const response = await fetch("/api/pantry/import-label", {
+    const response = await fetch("/api/food-library/import-label", {
       method: "POST",
       body: formData,
     });
@@ -334,7 +334,7 @@ export default function MyPantryManager({
     }
   }
 
-  function openEditForm(item: PantryItem) {
+  function openEditForm(item: SavedFood) {
     setDraft(createDraftFromItem(item));
     setEditingItemId(item.id);
     setImportError(null);
@@ -379,7 +379,7 @@ export default function MyPantryManager({
 
       try {
         if (formMode === "edit" && editingItemId) {
-          await updatePantryItem(editingItemId, {
+          await updateSavedFood(editingItemId, {
             name: nextItem.name,
             brand: nextItem.brand ?? undefined,
             servingSize: nextItem.servingSize ?? undefined,
@@ -403,7 +403,7 @@ export default function MyPantryManager({
             potassiumMg: nextItem.potassiumMg,
           });
         } else {
-          await addPantryItem({
+          await addSavedFood({
             name: nextItem.name,
             brand: nextItem.brand ?? undefined,
             servingSize: nextItem.servingSize ?? undefined,
@@ -450,7 +450,7 @@ export default function MyPantryManager({
         setSaveError(
           formMode === "edit"
             ? "We couldn't save those changes. Please try again."
-            : "We couldn't save that pantry item. Please try again.",
+            : "We couldn't save that food. Please try again.",
         );
       } finally {
         setIsPersisting(false);
@@ -463,7 +463,7 @@ export default function MyPantryManager({
       return;
     }
 
-    const mutation: PantryMutation = { type: "remove", itemId };
+    const mutation: SavedFoodMutation = { type: "remove", itemId };
 
     setIsPersisting(true);
     setSaveError(null);
@@ -471,7 +471,7 @@ export default function MyPantryManager({
       applyOptimisticMutation(mutation);
 
       try {
-        await deleteSavedPantryItem(itemId);
+        await deleteSavedFood(itemId);
 
         if (editingItemId === itemId) {
           resetFormState();
@@ -479,7 +479,7 @@ export default function MyPantryManager({
 
         router.refresh();
       } catch {
-        setSaveError("We couldn't remove that pantry item. Please try again.");
+        setSaveError("We couldn't remove that food. Please try again.");
       } finally {
         setIsPersisting(false);
       }
@@ -491,17 +491,17 @@ export default function MyPantryManager({
       <div className="border border-border bg-surface p-6">
         <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
           {isLoading
-            ? "Loading pantry"
+            ? "Loading saved foods"
             : canPersist
-              ? "Food catalogue"
+              ? "Food library"
               : "Sign in required"}
         </p>
         <h2 className="mt-3 text-2xl font-semibold tracking-tight">
           {isLoading
-            ? "Preparing your catalogue."
+            ? "Preparing your food library."
             : canPersist
-              ? "Search your personal food database."
-              : "Create an account to save pantry foods."}
+              ? "Search your saved foods."
+              : "Create an account to save foods."}
         </h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-foreground-muted">
           {statusCopy}
@@ -620,7 +620,7 @@ export default function MyPantryManager({
                 </p>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight">
                   {formMode === "edit"
-                    ? "Update this pantry item"
+                    ? "Update this saved food"
                     : "Add to your catalogue"}
                 </h2>
               </div>
@@ -638,7 +638,7 @@ export default function MyPantryManager({
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
               {isAnalyzingLabel ? (
                 <div className="rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground-muted">
-                  We are reading the prepared label and pre-filling the pantry
+                  We are reading the prepared label and pre-filling the food
                   form now.
                 </div>
               ) : null}
@@ -651,7 +651,7 @@ export default function MyPantryManager({
                 </div>
               ) : null}
 
-              <PantryFoodForm
+              <FoodLibraryForm
                 draft={draft}
                 disabled={isDisabled || isAnalyzingLabel}
                 onChange={updateDraft}
@@ -677,7 +677,7 @@ export default function MyPantryManager({
                         : "Adding..."
                       : formMode === "edit"
                         ? "Save changes"
-                        : "Add to pantry"}
+                        : "Save food"}
                 </button>
                 <button
                   type="button"
@@ -693,14 +693,14 @@ export default function MyPantryManager({
           <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
             {canPersist
               ? "Use Import label to prepare an image for AI extraction, choose Manual entry to type one in yourself, or click any catalogue row to update an existing food."
-              : "Sign in to open the pantry form and start building your own food database."}
+              : "Sign in to open the saved foods form and start building your own food library."}
           </div>
         )}
 
         {filteredItems.length === 0 ? (
           <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
             {items.length === 0
-              ? "No foods in your catalogue yet. Add a new item when you are ready to start building your pantry database."
+              ? "No saved foods yet. Add a new item when you are ready to start building your food library."
               : "No foods match that search right now."}
           </div>
         ) : (

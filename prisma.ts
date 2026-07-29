@@ -25,12 +25,24 @@ const adapter = new PrismaPg({
   connectionString: getAdapterConnectionString(connectionString),
 });
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createPrismaClient() {
+  return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
+}
+
+function hasSavedFoodDelegate(
+  client: PrismaClient | undefined,
+): client is PrismaClient {
+  return Boolean(client && "savedFood" in client);
+}
+
+const cachedPrisma = globalForPrisma.prisma;
+
+export const prisma: PrismaClient = hasSavedFoodDelegate(cachedPrisma)
+  ? cachedPrisma
+  : createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;

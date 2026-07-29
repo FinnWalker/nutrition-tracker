@@ -1,8 +1,8 @@
-import { getCachedPantryItems } from "@/app/lib/get-cached-pantry-items";
+import { getCachedSavedFoods } from "@/app/lib/get-cached-saved-foods";
 import { getCurrentSession } from "@/app/lib/get-current-session";
-import MyPantryManager from "@/app/ui/my-pantry-manager";
+import FoodLibraryManager from "@/app/ui/food-library-manager";
 
-type PantryListItem = {
+type FoodLibraryListItem = {
   id: string;
   name: string;
   brand: string | null;
@@ -29,7 +29,7 @@ type PantryListItem = {
   updatedAt: string;
 };
 
-function mapPantryItem(item: {
+function mapFoodLibraryItem(item: {
   id: string;
   name: string;
   brand: string | null;
@@ -54,7 +54,7 @@ function mapPantryItem(item: {
   ironMg: number;
   potassiumMg: number;
   updatedAt: Date;
-}): PantryListItem {
+}): FoodLibraryListItem {
   return {
     ...item,
     lastUsedAt: item.lastUsedAt?.toISOString() ?? null,
@@ -62,15 +62,15 @@ function mapPantryItem(item: {
   };
 }
 
-export default async function PantrySection() {
+export default async function FoodLibrarySection() {
   const session = await getCurrentSession();
   const viewerLabel = session?.user?.name ?? session?.user?.email ?? "there";
   const initialItems = session?.user?.email
-    ? (await getCachedPantryItems(session.user.email)).map(mapPantryItem)
+    ? (await getCachedSavedFoods(session.user.email)).map(mapFoodLibraryItem)
     : [];
 
   return (
-    <MyPantryManager
+    <FoodLibraryManager
       canPersist={Boolean(session?.user)}
       initialItems={initialItems}
       viewerLabel={viewerLabel}

@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import type { PantryImportDraft } from "@/app/lib/pantry-label-import";
 
-export type PantryFoodDraft = PantryImportDraft;
+export type FoodLibraryDraft = PantryImportDraft;
 
-type PantryFoodFormProps = {
-  draft: PantryFoodDraft;
+type FoodLibraryFormProps = {
+  draft: FoodLibraryDraft;
   disabled: boolean;
-  onChange: (field: keyof PantryFoodDraft, value: string) => void;
+  onChange: (field: keyof FoodLibraryDraft, value: string) => void;
 };
 
 function NutritionNumberRow({
@@ -19,11 +19,11 @@ function NutritionNumberRow({
   inputClassName,
 }: {
   label: string;
-  name: keyof PantryFoodDraft;
+  name: keyof FoodLibraryDraft;
   value: string;
   placeholder: string;
   disabled: boolean;
-  onChange: (field: keyof PantryFoodDraft, value: string) => void;
+  onChange: (field: keyof FoodLibraryDraft, value: string) => void;
   inputClassName?: string;
 }) {
   return (
@@ -54,11 +54,11 @@ function NutritionTextRow({
   required = false,
 }: {
   label: string;
-  name: keyof PantryFoodDraft;
+  name: keyof FoodLibraryDraft;
   value: string;
   placeholder: string;
   disabled: boolean;
-  onChange: (field: keyof PantryFoodDraft, value: string) => void;
+  onChange: (field: keyof FoodLibraryDraft, value: string) => void;
   inputClassName?: string;
   required?: boolean;
 }) {
@@ -96,11 +96,11 @@ function FormSection({
   );
 }
 
-export default function PantryFoodForm({
+export default function FoodLibraryForm({
   draft,
   disabled,
   onChange,
-}: PantryFoodFormProps) {
+}: FoodLibraryFormProps) {
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
       <div className="space-y-4">

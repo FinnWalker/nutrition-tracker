@@ -1,28 +1,28 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import MyPantryPage from "@/app/my-pantry/page";
-import PantrySection from "@/app/my-pantry/pantry-section";
+import FoodLibraryPage from "@/app/food-library/page";
+import FoodLibrarySection from "@/app/food-library/food-library-section";
 
 const mockGetCurrentSession = vi.fn();
-const mockGetCachedPantryItems = vi.fn();
-const mockAddPantryItem = vi.fn();
-const mockUpdatePantryItem = vi.fn();
-const mockDeletePantryItem = vi.fn();
+const mockGetCachedFoodLibraryItems = vi.fn();
+const mockAddFoodLibraryItem = vi.fn();
+const mockUpdateFoodLibraryItem = vi.fn();
+const mockDeleteFoodLibraryItem = vi.fn();
 const mockRefresh = vi.fn();
 
 vi.mock("@/app/lib/get-current-session", () => ({
   getCurrentSession: (...args: unknown[]) => mockGetCurrentSession(...args),
 }));
 
-vi.mock("@/app/lib/get-cached-pantry-items", () => ({
-  getCachedPantryItems: (...args: unknown[]) =>
-    mockGetCachedPantryItems(...args),
+vi.mock("@/app/lib/get-cached-saved-foods", () => ({
+  getCachedSavedFoods: (...args: unknown[]) =>
+    mockGetCachedFoodLibraryItems(...args),
 }));
 
-vi.mock("@/app/my-pantry/actions", () => ({
-  addPantryItem: (...args: unknown[]) => mockAddPantryItem(...args),
-  updatePantryItem: (...args: unknown[]) => mockUpdatePantryItem(...args),
-  deletePantryItem: (...args: unknown[]) => mockDeletePantryItem(...args),
+vi.mock("@/app/food-library/actions", () => ({
+  addSavedFood: (...args: unknown[]) => mockAddFoodLibraryItem(...args),
+  updateSavedFood: (...args: unknown[]) => mockUpdateFoodLibraryItem(...args),
+  deleteSavedFood: (...args: unknown[]) => mockDeleteFoodLibraryItem(...args),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -31,46 +31,44 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("MyPantryPage", () => {
+describe("FoodLibraryPage", () => {
   beforeEach(() => {
     mockGetCurrentSession.mockReset();
-    mockGetCachedPantryItems.mockReset();
-    mockAddPantryItem.mockReset();
-    mockUpdatePantryItem.mockReset();
-    mockDeletePantryItem.mockReset();
+    mockGetCachedFoodLibraryItems.mockReset();
+    mockAddFoodLibraryItem.mockReset();
+    mockUpdateFoodLibraryItem.mockReset();
+    mockDeleteFoodLibraryItem.mockReset();
     mockRefresh.mockReset();
-    mockGetCachedPantryItems.mockResolvedValue([]);
-    mockAddPantryItem.mockResolvedValue({ id: "saved-item" });
-    mockUpdatePantryItem.mockResolvedValue({ id: "updated-item" });
+    mockGetCachedFoodLibraryItems.mockResolvedValue([]);
+    mockAddFoodLibraryItem.mockResolvedValue({ id: "saved-item" });
+    mockUpdateFoodLibraryItem.mockResolvedValue({ id: "updated-item" });
   });
 
-  it("shows the pantry page heading and loading fallback", async () => {
+  it("shows the food library page heading and loading fallback", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await MyPantryPage());
+    render(await FoodLibraryPage());
 
-    expect(screen.getByText("My Pantry")).toBeVisible();
+    expect(screen.getByText("Food Library")).toBeVisible();
     expect(
       screen.getByText(
-        "Build a personal food catalogue that you can search, maintain, and eventually reuse while logging your diary.",
+        "Build a saved foods library that you can search, maintain, and reuse while logging your diary.",
       ),
     ).toBeVisible();
-    expect(screen.getByText("Loading pantry")).toBeVisible();
+    expect(screen.getByText("Loading saved foods")).toBeVisible();
   });
 
   it("prompts signed-out visitors to sign in before opening the form", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await PantrySection());
+    render(await FoodLibrarySection());
 
-    expect(
-      screen.getByText("Create an account to save pantry foods."),
-    ).toBeVisible();
+    expect(screen.getByText("Create an account to save foods.")).toBeVisible();
     expect(screen.getByRole("button", { name: "Manual entry" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Import label" })).toBeDisabled();
     expect(
       screen.getByText(
-        "Sign in to open the pantry form and start building your own food database.",
+        "Sign in to open the saved foods form and start building your own food library.",
       ),
     ).toBeVisible();
   });
@@ -82,7 +80,7 @@ describe("MyPantryPage", () => {
         email: "ava@example.com",
       },
     });
-    mockGetCachedPantryItems.mockResolvedValue([
+    mockGetCachedFoodLibraryItems.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
@@ -110,14 +108,14 @@ describe("MyPantryPage", () => {
       },
     ]);
 
-    render(await PantrySection());
+    render(await FoodLibrarySection());
 
-    expect(
-      screen.getByText("Search your personal food database."),
-    ).toBeVisible();
+    expect(screen.getByText("Search your saved foods.")).toBeVisible();
     expect(screen.getByText("Greek yogurt")).toBeVisible();
     expect(screen.getByText("Fage")).toBeVisible();
-    expect(mockGetCachedPantryItems).toHaveBeenCalledWith("ava@example.com");
+    expect(mockGetCachedFoodLibraryItems).toHaveBeenCalledWith(
+      "ava@example.com",
+    );
   });
 
   it("opens the form when adding a new food", async () => {
@@ -128,22 +126,22 @@ describe("MyPantryPage", () => {
       },
     });
 
-    render(await PantrySection());
+    render(await FoodLibrarySection());
 
     fireEvent.click(screen.getByRole("button", { name: "Manual entry" }));
 
     expect(screen.getByText("Add to your catalogue")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Add to pantry" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Save food" })).toBeVisible();
   });
 
-  it("lets signed-in users edit an existing pantry item", async () => {
+  it("lets signed-in users edit an existing saved food", async () => {
     mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
         email: "ava@example.com",
       },
     });
-    mockGetCachedPantryItems.mockResolvedValue([
+    mockGetCachedFoodLibraryItems.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
@@ -171,7 +169,7 @@ describe("MyPantryPage", () => {
       },
     ]);
 
-    render(await PantrySection());
+    render(await FoodLibrarySection());
 
     fireEvent.click(
       screen.getByRole("button", {
@@ -187,7 +185,7 @@ describe("MyPantryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     await waitFor(() => {
-      expect(mockUpdatePantryItem).toHaveBeenCalledWith("pantry-1", {
+      expect(mockUpdateFoodLibraryItem).toHaveBeenCalledWith("pantry-1", {
         name: "Greek yogurt 0%",
         brand: "Fage",
         servingSize: "170g tub",

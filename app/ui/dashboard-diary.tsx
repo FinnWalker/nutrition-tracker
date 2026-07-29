@@ -21,7 +21,7 @@ import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 type DashboardDiaryProps = {
   canPersist: boolean;
   initialEntries: DiaryEntry[];
-  initialPantryItems: PantryItem[];
+  initialSavedFoods: SavedFood[];
   isLoading?: boolean;
 };
 
@@ -36,7 +36,7 @@ type DiaryEntry = {
   fat: number;
 };
 
-type PantryItem = {
+type SavedFood = {
   id: string;
   name: string;
   brand: string | null;
@@ -220,8 +220,8 @@ function createManualEntry(draft: DraftEntry): DiaryEntry {
   };
 }
 
-function createPantryEntry(
-  item: PantryItem,
+function createSavedFoodEntry(
+  item: SavedFood,
   entryDate: string,
   portions: number,
 ): DiaryEntry {
@@ -302,18 +302,18 @@ function DiaryTable({
 export default function DashboardDiary({
   canPersist,
   initialEntries,
-  initialPantryItems,
+  initialSavedFoods,
   isLoading = false,
 }: DashboardDiaryProps) {
   const router = useRouter();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
   const entryDate = getTodayDateInputValue();
-  const [pantryQuery, setPantryQuery] = useState("");
-  const [selectedPantryItemId, setSelectedPantryItemId] = useState("");
+  const [savedFoodQuery, setSavedFoodQuery] = useState("");
+  const [selectedSavedFoodId, setSelectedSavedFoodId] = useState("");
   const [portions, setPortions] = useState("1");
   const [isPersisting, setIsPersisting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const deferredPantryQuery = useDeferredValue(pantryQuery);
+  const deferredSavedFoodQuery = useDeferredValue(savedFoodQuery);
   const anonymousEntries = useSyncExternalStore(
     subscribeToAnonymousEntries,
     readAnonymousEntries,
@@ -330,8 +330,8 @@ export default function DashboardDiary({
     : canPersist
       ? optimisticEntries
       : anonymousEntries;
-  const filteredPantryItems = initialPantryItems.filter((item) => {
-    const searchTerm = deferredPantryQuery.trim().toLowerCase();
+  const filteredSavedFoods = initialSavedFoods.filter((item) => {
+    const searchTerm = deferredSavedFoodQuery.trim().toLowerCase();
 
     if (!searchTerm) {
       return true;
@@ -348,8 +348,8 @@ export default function DashboardDiary({
 
     return haystack.includes(searchTerm);
   });
-  const activePantryItem =
-    initialPantryItems.find((item) => item.id === selectedPantryItemId) ?? null;
+  const activeSavedFood =
+    initialSavedFoods.find((item) => item.id === selectedSavedFoodId) ?? null;
   const parsedPortions = parseNumber(portions);
   const hasValidPortions = parsedPortions > 0;
 
@@ -397,15 +397,15 @@ export default function DashboardDiary({
           entryDate: nextEntry.entryDate,
           foodName: nextEntry.foodName,
           servings: nextEntry.servings,
-          pantryItemId: activePantryItem?.id,
+          savedFoodId: activeSavedFood?.id,
           calories: nextEntry.calories,
           protein: nextEntry.protein,
           carbs: nextEntry.carbs,
           fat: nextEntry.fat,
         });
         if (canPersist) {
-          setSelectedPantryItemId("");
-          setPantryQuery("");
+          setSelectedSavedFoodId("");
+          setSavedFoodQuery("");
           setPortions("1");
         }
         router.refresh();
@@ -446,15 +446,15 @@ export default function DashboardDiary({
     resetDraftKeepingDate(setDraft);
   }
 
-  async function handlePantrySubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSavedFoodSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isDisabled || !activePantryItem || !hasValidPortions || !canPersist) {
+    if (isDisabled || !activeSavedFood || !hasValidPortions || !canPersist) {
       return;
     }
 
-    const nextEntry = createPantryEntry(
-      activePantryItem,
+    const nextEntry = createSavedFoodEntry(
+      activeSavedFood,
       entryDate,
       parsedPortions,
     );
@@ -565,15 +565,15 @@ export default function DashboardDiary({
         </div>
 
         {canPersist ? (
-          initialPantryItems.length > 0 ? (
+          initialSavedFoods.length > 0 ? (
             <form
-              onSubmit={handlePantrySubmit}
+              onSubmit={handleSavedFoodSubmit}
               className="mt-6 border border-border bg-background p-6"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
-                    Add from pantry
+                    Add from saved foods
                   </p>
                   <h3 className="mt-3 text-2xl font-semibold tracking-tight">
                     Search your saved foods
@@ -585,13 +585,15 @@ export default function DashboardDiary({
                 <div>
                   <label className="block">
                     <span className="text-sm font-medium text-foreground">
-                      Search pantry
+                      Search saved foods
                     </span>
                     <input
                       type="search"
-                      name="pantryQuery"
-                      value={pantryQuery}
-                      onChange={(event) => setPantryQuery(event.target.value)}
+                      name="savedFoodQuery"
+                      value={savedFoodQuery}
+                      onChange={(event) =>
+                        setSavedFoodQuery(event.target.value)
+                      }
                       disabled={isDisabled}
                       placeholder="Search foods, brands, or serving sizes"
                       className="mt-2 w-full border border-border bg-surface px-4 py-3 text-sm outline-none"
@@ -599,20 +601,20 @@ export default function DashboardDiary({
                   </label>
 
                   <div className="mt-4 max-h-72 overflow-y-auto border border-border bg-surface">
-                    {filteredPantryItems.length === 0 ? (
+                    {filteredSavedFoods.length === 0 ? (
                       <div className="px-4 py-6 text-sm text-foreground-muted">
-                        No pantry items match that search.
+                        No saved foods match that search.
                       </div>
                     ) : (
                       <div className="divide-y divide-border">
-                        {filteredPantryItems.map((item) => {
-                          const isSelected = item.id === selectedPantryItemId;
+                        {filteredSavedFoods.map((item) => {
+                          const isSelected = item.id === selectedSavedFoodId;
 
                           return (
                             <button
                               key={item.id}
                               type="button"
-                              onClick={() => setSelectedPantryItemId(item.id)}
+                              onClick={() => setSelectedSavedFoodId(item.id)}
                               disabled={isDisabled}
                               className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left ${isSelected ? "bg-brand-muted" : ""}`}
                             >
@@ -651,19 +653,19 @@ export default function DashboardDiary({
                   <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
                     Selection
                   </p>
-                  {activePantryItem ? (
+                  {activeSavedFood ? (
                     <>
                       <h4 className="mt-3 text-xl font-semibold tracking-tight">
-                        {activePantryItem.name}
+                        {activeSavedFood.name}
                       </h4>
-                      {activePantryItem.brand ? (
+                      {activeSavedFood.brand ? (
                         <p className="mt-1 text-sm text-foreground-muted">
-                          {activePantryItem.brand}
+                          {activeSavedFood.brand}
                         </p>
                       ) : null}
-                      {activePantryItem.servingSize ? (
+                      {activeSavedFood.servingSize ? (
                         <p className="mt-1 text-sm text-foreground-muted">
-                          Serving: {activePantryItem.servingSize}
+                          Serving: {activeSavedFood.servingSize}
                         </p>
                       ) : null}
 
@@ -687,19 +689,19 @@ export default function DashboardDiary({
                       <div className="mt-5 grid grid-cols-2 gap-3">
                         <SummaryCard
                           label="Calories"
-                          value={`${Math.max(0, Math.round(activePantryItem.calories * parsedPortions))}`}
+                          value={`${Math.max(0, Math.round(activeSavedFood.calories * parsedPortions))}`}
                         />
                         <SummaryCard
                           label="Carbs"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activePantryItem.totalCarbohydrate * parsedPortions)))}g`}
+                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.totalCarbohydrate * parsedPortions)))}g`}
                         />
                         <SummaryCard
                           label="Fat"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activePantryItem.totalFat * parsedPortions)))}g`}
+                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.totalFat * parsedPortions)))}g`}
                         />
                         <SummaryCard
                           label="Protein"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activePantryItem.protein * parsedPortions)))}g`}
+                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.protein * parsedPortions)))}g`}
                         />
                       </div>
 
@@ -717,8 +719,8 @@ export default function DashboardDiary({
                     </>
                   ) : (
                     <div className="mt-3 border border-dashed border-border bg-background px-4 py-6 text-sm leading-7 text-foreground-muted">
-                      Choose a pantry item from the results to scale servings
-                      and add it to your diary.
+                      Choose a saved food from the results to scale servings and
+                      add it to your diary.
                     </div>
                   )}
                 </div>
@@ -734,10 +736,10 @@ export default function DashboardDiary({
             <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
               Add foods to{" "}
               <Link
-                href="/my-pantry"
+                href="/food-library"
                 className="font-medium text-foreground underline underline-offset-4"
               >
-                My Pantry
+                Food Library
               </Link>{" "}
               first, then you can pull them straight into this diary snapshot
               with scaled portions.
@@ -882,7 +884,7 @@ export default function DashboardDiary({
               {isLoading
                 ? "Your diary entries will appear here once we finish loading your session."
                 : canPersist
-                  ? "Choose a pantry item above and your diary snapshot will start building from there."
+                  ? "Choose a saved food above and your diary snapshot will start building from there."
                   : "Add your first meal above and the dashboard will start building a running daily total."}
             </div>
           ) : (

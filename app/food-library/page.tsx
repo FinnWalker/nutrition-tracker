@@ -1,21 +1,21 @@
 import { Suspense } from "react";
-import PantrySection from "./pantry-section";
-import MyPantryManager from "@/app/ui/my-pantry-manager";
+import FoodLibrarySection from "./food-library-section";
+import FoodLibraryManager from "@/app/ui/food-library-manager";
 import PageContainer from "@/app/ui/page-container";
 
 export const unstable_instant = false;
 
-export default function MyPantryPage() {
+export default function FoodLibraryPage() {
   return (
     <PageContainer>
-      <h1 className="text-4xl font-semibold tracking-tight">My Pantry</h1>
+      <h1 className="text-4xl font-semibold tracking-tight">Food Library</h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-foreground-muted">
-        Build a personal food catalogue that you can search, maintain, and
-        eventually reuse while logging your diary.
+        Build a saved foods library that you can search, maintain, and reuse
+        while logging your diary.
       </p>
       <Suspense
         fallback={
-          <MyPantryManager
+          <FoodLibraryManager
             canPersist={false}
             initialItems={[]}
             viewerLabel="there"
@@ -23,7 +23,7 @@ export default function MyPantryPage() {
           />
         }
       >
-        <PantrySection />
+        <FoodLibrarySection />
       </Suspense>
     </PageContainer>
   );

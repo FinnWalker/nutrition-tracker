@@ -4,7 +4,7 @@ import { updateTag } from "next/cache";
 import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 import { prisma } from "@/prisma";
 
-type PantryItemInput = {
+type SavedFoodInput = {
   name: string;
   brand?: string;
   servingSize?: string;
@@ -28,11 +28,11 @@ type PantryItemInput = {
   potassiumMg: number;
 };
 
-function revalidatePantryItems(email: string) {
-  updateTag(`pantry-items:${email}`);
+function revalidateSavedFoods(email: string) {
+  updateTag(`saved-foods:${email}`);
 }
 
-export async function addPantryItem(input: PantryItemInput) {
+export async function addSavedFood(input: SavedFoodInput) {
   const user = await requireCurrentUserRecord();
   const name = input.name.trim();
   const brand = input.brand?.trim() ?? "";
@@ -42,7 +42,7 @@ export async function addPantryItem(input: PantryItemInput) {
     throw new Error("Food name is required.");
   }
 
-  const createdItem = await prisma.pantryItem.create({
+  const createdItem = await prisma.savedFood.create({
     data: {
       user: {
         connect: {
@@ -103,12 +103,12 @@ export async function addPantryItem(input: PantryItemInput) {
     },
   });
 
-  revalidatePantryItems(user.email);
+  revalidateSavedFoods(user.email);
 
   return createdItem;
 }
 
-export async function updatePantryItem(itemId: string, input: PantryItemInput) {
+export async function updateSavedFood(itemId: string, input: SavedFoodInput) {
   const user = await requireCurrentUserRecord();
   const name = input.name.trim();
   const brand = input.brand?.trim() ?? "";
@@ -118,7 +118,7 @@ export async function updatePantryItem(itemId: string, input: PantryItemInput) {
     throw new Error("Food name is required.");
   }
 
-  const updatedItem = await prisma.pantryItem.updateManyAndReturn({
+  const updatedItem = await prisma.savedFood.updateManyAndReturn({
     where: {
       id: itemId,
       user: {
@@ -180,15 +180,15 @@ export async function updatePantryItem(itemId: string, input: PantryItemInput) {
     },
   });
 
-  revalidatePantryItems(user.email);
+  revalidateSavedFoods(user.email);
 
   return updatedItem[0] ?? null;
 }
 
-export async function deletePantryItem(itemId: string) {
+export async function deleteSavedFood(itemId: string) {
   const user = await requireCurrentUserRecord();
 
-  await prisma.pantryItem.deleteMany({
+  await prisma.savedFood.deleteMany({
     where: {
       id: itemId,
       user: {
@@ -197,5 +197,5 @@ export async function deletePantryItem(itemId: string) {
     },
   });
 
-  revalidatePantryItems(user.email);
+  revalidateSavedFoods(user.email);
 }

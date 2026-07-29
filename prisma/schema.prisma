@@ -13,7 +13,7 @@ model User {
   emailVerified  DateTime?
   image          String?
   dailyEntries   DailyEntry[]
-  pantryItems    PantryItem[]
+  savedFoods     SavedFood[]
   accounts       Account[]
   sessions       Session[]
   authenticators Authenticator[]
@@ -36,7 +36,7 @@ model DailyEntry {
   @@index([userId, entryDate])
 }
 
-model PantryItem {
+model SavedFood {
   id                   String   @id @default(cuid())
   userId               String
   name                 String
