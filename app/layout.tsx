@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import "react-image-crop/dist/ReactCrop.css";
 import AuthSessionProvider from "./ui/auth-session-provider";
 import SidebarNav from "./ui/sidebar-nav";
 import ThemeProvider from "./ui/theme-provider";

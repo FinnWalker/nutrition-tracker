@@ -1,8 +1,9 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { startTransition, useOptimistic, useState } from "react";
+import { startTransition, useOptimistic, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import {
   addPantryItem,
@@ -15,6 +16,9 @@ import {
   MacroBreakdown,
   SummaryCard,
 } from "@/app/ui/nutrition-display";
+import NutritionLabelImporter, {
+  type PreparedNutritionLabelImage,
+} from "@/app/ui/nutrition-label-importer";
 import PantryFoodForm, {
   type PantryFoodDraft,
 } from "@/app/ui/pantry-food-form";
@@ -202,6 +206,7 @@ export default function MyPantryManager({
   isLoading = false,
 }: MyPantryManagerProps) {
   const router = useRouter();
+  const importerRef = useRef<HTMLElement | null>(null);
   const [draft, setDraft] = useState<PantryFoodDraft>(initialDraft);
   const [searchQuery, setSearchQuery] = useState("");
   const [isPersisting, setIsPersisting] = useState(false);
@@ -210,6 +215,8 @@ export default function MyPantryManager({
     "closed",
   );
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [preparedLabelImage, setPreparedLabelImage] =
+    useState<PreparedNutritionLabelImage | null>(null);
   const [optimisticItems, applyOptimisticMutation] = useOptimistic(
     initialItems,
     applyPantryMutation,
@@ -254,6 +261,19 @@ export default function MyPantryManager({
   function openCreateForm() {
     setDraft(initialDraft());
     setEditingItemId(null);
+    setFormMode("create");
+  }
+
+  function focusImporter() {
+    importerRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function handlePreparedLabelImage(image: PreparedNutritionLabelImage) {
+    setPreparedLabelImage(image);
+    setSaveError(null);
     setFormMode("create");
   }
 
@@ -461,9 +481,17 @@ export default function MyPantryManager({
               type="button"
               onClick={openCreateForm}
               disabled={!canPersist || isLoading}
+              className="border border-border px-4 py-2 text-sm"
+            >
+              Manual entry
+            </button>
+            <button
+              type="button"
+              onClick={focusImporter}
+              disabled={!canPersist || isLoading}
               className="bg-brand px-4 py-2 text-sm text-white"
             >
-              Add food
+              Import label
             </button>
           </div>
         </div>
@@ -475,6 +503,43 @@ export default function MyPantryManager({
             value={`${filteredItems.length}`}
           />
         </div>
+
+        <section ref={importerRef} className="mt-6">
+          <NutritionLabelImporter
+            disabled={!canPersist || isLoading || isPersisting}
+            onPrepared={handlePreparedLabelImage}
+          />
+        </section>
+
+        {preparedLabelImage ? (
+          <div className="mt-6 border border-border bg-background p-6">
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-foreground-muted">
+              Prepared image
+            </p>
+            <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start">
+              <NextImage
+                src={preparedLabelImage.previewUrl}
+                alt="Prepared nutrition label crop"
+                width={preparedLabelImage.width}
+                height={preparedLabelImage.height}
+                unoptimized
+                className="w-full max-w-sm border border-border object-contain"
+              />
+              <div className="space-y-2 text-sm leading-7 text-foreground-muted">
+                <p>{preparedLabelImage.file.name}</p>
+                <p>
+                  {preparedLabelImage.width} × {preparedLabelImage.height}
+                </p>
+                <p>{formatNutritionNumber(preparedLabelImage.sizeBytes / 1024)} KB</p>
+                <p>{preparedLabelImage.mimeType}</p>
+                <p>
+                  This image is ready for the upcoming OpenAI Vision extraction
+                  step.
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {isFormOpen ? (
           <div className="mt-6 border border-border bg-background p-6">
@@ -540,7 +605,7 @@ export default function MyPantryManager({
         ) : (
           <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
             {canPersist
-              ? "Choose Add food to create a new entry, or click any catalogue row to update an existing food."
+              ? "Use Import label to prepare an image for AI extraction, choose Manual entry to type one in yourself, or click any catalogue row to update an existing food."
               : "Sign in to open the pantry form and start building your own food database."}
           </div>
         )}
