@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import RootLayout from "@/app/layout";
 
@@ -39,5 +39,24 @@ describe("RootLayout", () => {
     expect(
       within(main).queryByRole("navigation", { name: "Primary" }),
     ).toBeNull();
+  });
+
+  it("opens the primary navigation in a mobile drawer", () => {
+    render(<RootLayout auth={null}>Page content</RootLayout>);
+
+    expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(
+      1,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open navigation menu" }),
+    );
+
+    expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(
+      2,
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Navigation menu" }),
+    ).toBeVisible();
   });
 });
