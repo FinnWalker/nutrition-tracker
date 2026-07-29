@@ -1,4 +1,5 @@
 import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
+import { normalizeDiaryDate } from "@/app/lib/diary-date";
 import { getCachedSavedFoodSummaries } from "@/app/lib/get-cached-saved-food-summaries";
 import { getCurrentSession } from "@/app/lib/get-current-session";
 import DiaryManager from "@/app/ui/diary-manager";
@@ -44,12 +45,19 @@ function mapEntryToDiaryEntry(entry: {
   };
 }
 
-export default async function DiarySection() {
+export default async function DiarySection({
+  selectedDate,
+  hasExplicitDate = true,
+}: {
+  selectedDate?: string;
+  hasExplicitDate?: boolean;
+} = {}) {
   const session = await getCurrentSession();
+  const resolvedSelectedDate = normalizeDiaryDate(selectedDate);
   const initialEntries = session?.user?.email
-    ? (await getCachedDailyEntries(session.user.email)).map(
-        mapEntryToDiaryEntry,
-      )
+    ? (
+        await getCachedDailyEntries(session.user.email, resolvedSelectedDate)
+      ).map(mapEntryToDiaryEntry)
     : [];
   const initialSavedFoods: SavedFoodListItem[] = session?.user?.email
     ? (await getCachedSavedFoodSummaries(session.user.email)).map((item) => ({
@@ -69,6 +77,8 @@ export default async function DiarySection() {
       canPersist={Boolean(session?.user)}
       initialEntries={initialEntries}
       initialSavedFoods={initialSavedFoods}
+      selectedDate={resolvedSelectedDate}
+      hasExplicitDate={hasExplicitDate}
     />
   );
 }

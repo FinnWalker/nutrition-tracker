@@ -10,6 +10,8 @@ const mockAddDailyEntry = vi.fn();
 const mockDeleteDailyEntry = vi.fn();
 const mockClearDailyEntries = vi.fn();
 const mockRefresh = vi.fn();
+const mockPush = vi.fn();
+const mockReplace = vi.fn();
 const mockFetch = vi.fn();
 
 vi.mock("@/app/lib/get-current-session", () => ({
@@ -35,7 +37,10 @@ vi.mock("@/app/diary/actions", () => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: (...args: unknown[]) => mockRefresh(...args),
+    push: (...args: unknown[]) => mockPush(...args),
+    replace: (...args: unknown[]) => mockReplace(...args),
   }),
+  usePathname: () => "/diary",
 }));
 
 describe("DiaryPage", () => {
@@ -47,6 +52,8 @@ describe("DiaryPage", () => {
     mockDeleteDailyEntry.mockReset();
     mockClearDailyEntries.mockReset();
     mockRefresh.mockReset();
+    mockPush.mockReset();
+    mockReplace.mockReset();
     mockFetch.mockReset();
     vi.stubGlobal("fetch", mockFetch);
     window.localStorage.clear();
@@ -97,7 +104,7 @@ describe("DiaryPage", () => {
       },
     ]);
 
-    render(await DiarySection());
+    render(await DiarySection({ selectedDate: "2026-07-29" }));
 
     expect(screen.getByText("Summary")).toBeVisible();
     expect(screen.getByText("Today's totals")).toBeVisible();
@@ -129,7 +136,7 @@ describe("DiaryPage", () => {
       },
     ]);
 
-    render(await DiarySection());
+    render(await DiarySection({ selectedDate: "2026-07-29" }));
 
     fireEvent.change(screen.getByLabelText("Search saved foods"), {
       target: { value: "grk ygt" },
@@ -142,7 +149,7 @@ describe("DiaryPage", () => {
   it("lets visitors build up local diary entries before signing in", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await DiarySection());
+    render(await DiarySection({ selectedDate: "2026-07-29" }));
 
     fireEvent.change(screen.getByLabelText("Food"), {
       target: { value: "Greek yogurt" },
@@ -194,7 +201,7 @@ describe("DiaryPage", () => {
       }),
     });
 
-    render(await DiarySection());
+    render(await DiarySection({ selectedDate: "2026-07-29" }));
 
     fireEvent.click(screen.getByRole("button", { name: /Greek yogurt/i }));
     await waitFor(() => {
@@ -284,14 +291,66 @@ describe("DiaryPage", () => {
       },
     ]);
 
-    render(await DiarySection());
+    render(await DiarySection({ selectedDate: "2026-07-02" }));
 
     expect(screen.getByText("Saved omelette")).toBeVisible();
     expect(screen.getAllByText("1")[0]).toBeVisible();
     expect(screen.queryByText("Local granola")).not.toBeInTheDocument();
-    expect(mockGetCachedDailyEntries).toHaveBeenCalledWith("ava@example.com");
+    expect(mockGetCachedDailyEntries).toHaveBeenCalledWith(
+      "ava@example.com",
+      "2026-07-02",
+    );
     expect(mockGetCachedSavedFoodSummaries).toHaveBeenCalledWith(
       "ava@example.com",
     );
+  });
+
+  it("navigates between diary dates and scopes local entries to the selected day", async () => {
+    window.localStorage.setItem(
+      "nutrition-tracker-diary-draft",
+      JSON.stringify([
+        {
+          id: "today-entry",
+          entryDate: "2026-07-29",
+          foodName: "Greek yogurt",
+          calories: 150,
+          protein: 15,
+          carbs: 9,
+          fat: 3,
+        },
+        {
+          id: "other-entry",
+          entryDate: "2026-07-28",
+          foodName: "Banana",
+          calories: 90,
+          protein: 1,
+          carbs: 23,
+          fat: 0,
+        },
+      ]),
+    );
+    mockGetCurrentSession.mockResolvedValue(null);
+
+    render(await DiarySection({ selectedDate: "2026-07-29" }));
+
+    expect(screen.getByText("Greek yogurt")).toBeVisible();
+    expect(screen.queryByText("Banana")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Previous day" }));
+
+    expect(mockPush).toHaveBeenCalledWith("/diary?date=2026-07-28");
+  });
+
+  it("normalizes the default diary date from the client when no date is in the url", async () => {
+    mockGetCurrentSession.mockResolvedValue(null);
+
+    render(
+      await DiarySection({
+        selectedDate: "2026-07-29",
+        hasExplicitDate: false,
+      }),
+    );
+
+    expect(mockReplace).toHaveBeenCalledWith("/diary?date=2026-07-29");
   });
 });

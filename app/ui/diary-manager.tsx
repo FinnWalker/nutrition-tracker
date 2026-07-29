@@ -5,6 +5,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import {
+  useEffect,
   useRef,
   startTransition,
   useDeferredValue,
@@ -12,18 +13,25 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   addDailyEntry,
   clearDailyEntries as clearSavedDailyEntries,
   deleteDailyEntry as deleteSavedDailyEntry,
 } from "@/app/diary/actions";
+import {
+  addDaysToDiaryDate,
+  formatDiaryDateLabel,
+  getTodayDiaryDate,
+} from "@/app/lib/diary-date";
 import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 
 type DiaryManagerProps = {
   canPersist: boolean;
   initialEntries: DiaryEntry[];
   initialSavedFoods: SavedFood[];
+  selectedDate: string;
+  hasExplicitDate: boolean;
   isLoading?: boolean;
 };
 
@@ -75,12 +83,7 @@ let lastStoredEntriesRaw: string | null = null;
 let lastStoredEntriesSnapshot: DiaryEntry[] = EMPTY_ENTRIES;
 
 function getTodayDateInputValue() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  const day = `${now.getDate()}`.padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return getTodayDiaryDate();
 }
 
 const initialDraft = (): DraftEntry => ({
@@ -213,10 +216,10 @@ function applyEntryMutation(
   }
 }
 
-function createManualEntry(draft: DraftEntry): DiaryEntry {
+function createManualEntry(draft: DraftEntry, entryDate: string): DiaryEntry {
   return {
     id: crypto.randomUUID(),
-    entryDate: draft.entryDate,
+    entryDate,
     foodName: draft.foodName.trim(),
     servings: 1,
     calories: Math.max(0, Math.round(parseNumber(draft.calories))),
@@ -310,11 +313,13 @@ export default function DiaryManager({
   canPersist,
   initialEntries,
   initialSavedFoods,
+  selectedDate,
+  hasExplicitDate,
   isLoading = false,
 }: DiaryManagerProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
-  const entryDate = getTodayDateInputValue();
   const [savedFoodQuery, setSavedFoodQuery] = useState("");
   const [selectedSavedFoodId, setSelectedSavedFoodId] = useState("");
   const [portions, setPortions] = useState("1");
@@ -338,13 +343,14 @@ export default function DiaryManager({
     initialEntries,
     applyEntryMutation,
   );
+  const isViewingToday = selectedDate === getTodayDateInputValue();
 
   const isDisabled = isLoading || isPersisting;
   const entries = isLoading
     ? EMPTY_ENTRIES
     : canPersist
       ? optimisticEntries
-      : anonymousEntries;
+      : anonymousEntries.filter((entry) => entry.entryDate === selectedDate);
   const searchTerm = deferredSavedFoodQuery.trim();
   const filteredSavedFoods = searchTerm
     ? new Fuse(initialSavedFoods, {
@@ -365,6 +371,7 @@ export default function DiaryManager({
   const hasValidPortions = parsedPortions > 0;
   const hasLoadedSavedFoodDetails =
     savedFoodDetails?.id === selectedSavedFoodId && activeSavedFood !== null;
+  const didNormalizeInitialDateRef = useRef(false);
 
   const totals = entries.reduce(
     (runningTotals, entry) => ({
@@ -381,6 +388,17 @@ export default function DiaryManager({
     },
   );
 
+  useEffect(() => {
+    if (hasExplicitDate || didNormalizeInitialDateRef.current) {
+      return;
+    }
+
+    didNormalizeInitialDateRef.current = true;
+    const clientToday = getTodayDiaryDate();
+
+    router.replace(`${pathname}?date=${clientToday}`);
+  }, [hasExplicitDate, pathname, router]);
+
   function updateDraft<K extends keyof DraftEntry>(
     field: K,
     value: DraftEntry[K],
@@ -389,6 +407,10 @@ export default function DiaryManager({
       ...current,
       [field]: value,
     }));
+  }
+
+  function navigateToDate(nextDate: string) {
+    router.push(`${pathname}?date=${nextDate}`);
   }
 
   async function selectSavedFood(itemId: string) {
@@ -499,7 +521,7 @@ export default function DiaryManager({
       return;
     }
 
-    const nextEntry = createManualEntry(draft);
+    const nextEntry = createManualEntry(draft, selectedDate);
 
     if (canPersist) {
       const draftSnapshot = draft;
@@ -528,7 +550,7 @@ export default function DiaryManager({
     const nextEntry = createSavedFoodEntry(
       activeSavedFood,
       savedFoodDetails,
-      entryDate,
+      selectedDate,
       parsedPortions,
     );
     await persistEntry(nextEntry);
@@ -579,7 +601,7 @@ export default function DiaryManager({
         applyOptimisticMutation(mutation);
 
         try {
-          await clearSavedDailyEntries();
+          await clearSavedDailyEntries(selectedDate);
           router.refresh();
         } catch {
           setSaveError("We couldn't clear your diary. Please try again.");
@@ -591,7 +613,9 @@ export default function DiaryManager({
       return;
     }
 
-    writeAnonymousEntries([]);
+    writeAnonymousEntries(
+      anonymousEntries.filter((entry) => entry.entryDate !== selectedDate),
+    );
   }
 
   return (
@@ -606,8 +630,47 @@ export default function DiaryManager({
               Summary
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-              Today&apos;s totals
+              {isViewingToday
+                ? "Today's totals"
+                : `Totals for ${formatDiaryDateLabel(selectedDate)}`}
             </h2>
+            <p className="mt-2 text-sm text-foreground-muted">
+              {formatDiaryDateLabel(selectedDate)}
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  navigateToDate(addDaysToDiaryDate(selectedDate, -1))
+                }
+                disabled={isDisabled}
+                className="border border-border px-3 py-2 text-sm"
+              >
+                Previous day
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  navigateToDate(addDaysToDiaryDate(selectedDate, 1))
+                }
+                disabled={isDisabled}
+                className="border border-border px-3 py-2 text-sm"
+              >
+                Next day
+              </button>
+            </div>
+            <label className="block w-full sm:w-auto">
+              <span className="sr-only">Choose diary date</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => navigateToDate(event.target.value)}
+                disabled={isDisabled}
+                className="w-full border border-border bg-background px-4 py-2 text-sm outline-none sm:w-auto"
+              />
+            </label>
           </div>
           {entries.length > 0 ? (
             <button
@@ -616,7 +679,7 @@ export default function DiaryManager({
               disabled={isDisabled}
               className="border border-border px-4 py-2 text-sm"
             >
-              Clear all
+              Clear this day
             </button>
           ) : null}
         </div>
@@ -842,7 +905,7 @@ export default function DiaryManager({
                 Quick add
               </p>
               <h3 className="mt-3 text-2xl font-semibold tracking-tight">
-                Build out today&apos;s diary
+                Build out this day&apos;s diary
               </h3>
             </div>
 
@@ -971,8 +1034,8 @@ export default function DiaryManager({
               {isLoading
                 ? "Your diary entries will appear here once we finish loading your session."
                 : canPersist
-                  ? "Choose a saved food above and your diary snapshot will start building from there."
-                  : "Add your first meal above and the diary will start building a running daily total."}
+                  ? `Choose a saved food above and your diary snapshot for ${formatDiaryDateLabel(selectedDate)} will start building from there.`
+                  : `Add your first meal above and the diary for ${formatDiaryDateLabel(selectedDate)} will start building a running daily total.`}
             </div>
           ) : (
             <DiaryTable

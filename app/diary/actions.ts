@@ -15,8 +15,8 @@ type DailyEntryInput = {
   fat: number;
 };
 
-function revalidateDailyEntries(email: string) {
-  updateTag(`daily-entries:${email}`);
+function revalidateDailyEntries(email: string, entryDate: string) {
+  updateTag(`daily-entries:${email}:${entryDate}`);
 }
 
 function revalidateSavedFoods(email: string) {
@@ -68,13 +68,25 @@ export async function addDailyEntry(input: DailyEntryInput) {
     revalidateSavedFoods(user.email);
   }
 
-  revalidateDailyEntries(user.email);
+  revalidateDailyEntries(user.email, input.entryDate);
 
   return createdEntry;
 }
 
 export async function deleteDailyEntry(entryId: string) {
   const user = await requireCurrentUserRecord();
+
+  const entry = await prisma.dailyEntry.findFirst({
+    where: {
+      id: entryId,
+      user: {
+        id: user.id,
+      },
+    },
+    select: {
+      entryDate: true,
+    },
+  });
 
   await prisma.dailyEntry.deleteMany({
     where: {
@@ -85,19 +97,25 @@ export async function deleteDailyEntry(entryId: string) {
     },
   });
 
-  revalidateDailyEntries(user.email);
+  if (entry) {
+    revalidateDailyEntries(
+      user.email,
+      entry.entryDate.toISOString().slice(0, 10),
+    );
+  }
 }
 
-export async function clearDailyEntries() {
+export async function clearDailyEntries(entryDate: string) {
   const user = await requireCurrentUserRecord();
 
   await prisma.dailyEntry.deleteMany({
     where: {
+      entryDate: new Date(`${entryDate}T00:00:00.000Z`),
       user: {
         id: user.id,
       },
     },
   });
 
-  revalidateDailyEntries(user.email);
+  revalidateDailyEntries(user.email, entryDate);
 }
