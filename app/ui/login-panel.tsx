@@ -14,7 +14,7 @@ export default function LoginPanel({ callbackUrl }: LoginPanelProps) {
         Connect your Google account
       </h1>
       <p className="mt-3 text-base leading-7 text-foreground-muted">
-        Use Google to unlock your private nutrition dashboard.
+        Use Google to unlock your private nutrition diary.
       </p>
 
       <form

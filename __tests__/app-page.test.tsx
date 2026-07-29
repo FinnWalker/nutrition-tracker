@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import Home from "@/app/page";
 
 describe("Home page", () => {
-  it("shows the dashboard CTA without checking auth state", async () => {
+  it("shows the diary CTA without checking auth state", async () => {
     render(<Home />);
 
     expect(
@@ -12,8 +12,9 @@ describe("Home page", () => {
         name: "Nutrition Tracker",
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Open dashboard" }),
-    ).toHaveAttribute("href", "/dashboard");
+    expect(screen.getByRole("link", { name: "Open diary" })).toHaveAttribute(
+      "href",
+      "/diary",
+    );
   });
 });

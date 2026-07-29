@@ -1,4 +1,4 @@
-export const DEFAULT_AUTH_REDIRECT = "/dashboard";
+export const DEFAULT_AUTH_REDIRECT = "/diary";
 const RELATIVE_URL_PARSE_BASE = "http://localhost";
 
 type CallbackInput = string | string[] | undefined;

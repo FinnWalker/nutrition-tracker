@@ -1,15 +1,16 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import DashboardPage from "@/app/dashboard/page";
-import DashboardDiarySection from "@/app/dashboard/dashboard-diary-section";
+import DiaryPage from "@/app/diary/page";
+import DiarySection from "@/app/diary/diary-section";
 
 const mockGetCurrentSession = vi.fn();
 const mockGetCachedDailyEntries = vi.fn();
-const mockGetCachedSavedFoods = vi.fn();
+const mockGetCachedSavedFoodSummaries = vi.fn();
 const mockAddDailyEntry = vi.fn();
 const mockDeleteDailyEntry = vi.fn();
 const mockClearDailyEntries = vi.fn();
 const mockRefresh = vi.fn();
+const mockFetch = vi.fn();
 
 vi.mock("@/app/lib/get-current-session", () => ({
   getCurrentSession: (...args: unknown[]) => mockGetCurrentSession(...args),
@@ -20,11 +21,12 @@ vi.mock("@/app/lib/get-cached-daily-entries", () => ({
     mockGetCachedDailyEntries(...args),
 }));
 
-vi.mock("@/app/lib/get-cached-saved-foods", () => ({
-  getCachedSavedFoods: (...args: unknown[]) => mockGetCachedSavedFoods(...args),
+vi.mock("@/app/lib/get-cached-saved-food-summaries", () => ({
+  getCachedSavedFoodSummaries: (...args: unknown[]) =>
+    mockGetCachedSavedFoodSummaries(...args),
 }));
 
-vi.mock("@/app/dashboard/actions", () => ({
+vi.mock("@/app/diary/actions", () => ({
   addDailyEntry: (...args: unknown[]) => mockAddDailyEntry(...args),
   deleteDailyEntry: (...args: unknown[]) => mockDeleteDailyEntry(...args),
   clearDailyEntries: (...args: unknown[]) => mockClearDailyEntries(...args),
@@ -36,30 +38,32 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-describe("DashboardPage", () => {
+describe("DiaryPage", () => {
   beforeEach(() => {
     mockGetCurrentSession.mockReset();
     mockGetCachedDailyEntries.mockReset();
-    mockGetCachedSavedFoods.mockReset();
+    mockGetCachedSavedFoodSummaries.mockReset();
     mockAddDailyEntry.mockReset();
     mockDeleteDailyEntry.mockReset();
     mockClearDailyEntries.mockReset();
     mockRefresh.mockReset();
+    mockFetch.mockReset();
+    vi.stubGlobal("fetch", mockFetch);
     window.localStorage.clear();
     mockGetCachedDailyEntries.mockResolvedValue([]);
-    mockGetCachedSavedFoods.mockResolvedValue([]);
+    mockGetCachedSavedFoodSummaries.mockResolvedValue([]);
     mockAddDailyEntry.mockResolvedValue({ id: "saved-entry" });
   });
 
-  it("lets signed-out visitors explore the dashboard", async () => {
+  it("lets signed-out visitors explore the diary", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await DashboardPage());
+    render(await DiaryPage());
 
-    expect(screen.getByText("Dashboard")).toBeVisible();
+    expect(screen.getByText("Diary")).toBeVisible();
     expect(
       screen.getByText(
-        "Review your daily totals, then pull foods straight from your saved foods into the diary as you log meals.",
+        "Review your daily totals, pull foods straight from your saved foods, and log meals as your diary fills out through the day.",
       ),
     ).toBeVisible();
     expect(screen.getByText("Summary")).toBeVisible();
@@ -67,46 +71,44 @@ describe("DashboardPage", () => {
     expect(screen.getByRole("button", { name: "Loading..." })).toBeDisabled();
   });
 
-  it("lets signed-out visitors explore the resolved dashboard", async () => {
+  it("lets signed-out visitors explore the resolved diary", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await DashboardDiarySection());
+    render(await DiarySection());
 
     expect(screen.getByText("Quick add")).toBeVisible();
     expect(screen.getByText("Diary snapshot")).toBeVisible();
   });
 
-  it("personalizes the dashboard when the user is signed in", async () => {
+  it("personalizes the diary when the user is signed in", async () => {
     mockGetCurrentSession.mockResolvedValue({
       user: {
         name: "Ava Green",
         email: "ava@example.com",
       },
     });
-    mockGetCachedSavedFoods.mockResolvedValue([
+    mockGetCachedSavedFoodSummaries.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
         brand: "Fage",
         servingSize: "170g tub",
-        calories: 140,
-        totalFat: 4,
-        totalCarbohydrate: 6,
-        protein: 15,
+        lastUsedAt: "2026-07-03T10:00:00.000Z",
       },
     ]);
 
-    render(await DashboardDiarySection());
+    render(await DiarySection());
 
     expect(screen.getByText("Summary")).toBeVisible();
     expect(screen.getByText("Today's totals")).toBeVisible();
     expect(screen.getByText("Search your saved foods")).toBeVisible();
+    expect(screen.queryByText("140 cal")).not.toBeInTheDocument();
   });
 
   it("lets visitors build up local diary entries before signing in", async () => {
     mockGetCurrentSession.mockResolvedValue(null);
 
-    render(await DashboardDiarySection());
+    render(await DiarySection());
 
     fireEvent.change(screen.getByLabelText("Food"), {
       target: { value: "Greek yogurt" },
@@ -138,31 +140,48 @@ describe("DashboardPage", () => {
         email: "ava@example.com",
       },
     });
-    mockGetCachedSavedFoods.mockResolvedValue([
+    mockGetCachedSavedFoodSummaries.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
         brand: "Fage",
         servingSize: "170g tub",
+        lastUsedAt: "2026-07-03T10:00:00.000Z",
+      },
+    ]);
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: "pantry-1",
         calories: 140,
         totalFat: 4,
         totalCarbohydrate: 6,
         protein: 15,
-      },
-    ]);
+      }),
+    });
 
-    render(await DashboardDiarySection());
+    render(await DiarySection());
 
     fireEvent.click(screen.getByRole("button", { name: /Greek yogurt/i }));
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        "/api/food-library/pantry-1/diary-details",
+        expect.objectContaining({
+          method: "GET",
+        }),
+      );
+    });
     fireEvent.change(screen.getByLabelText("Portions"), {
       target: { value: "1.5" },
     });
 
     expect(screen.getByLabelText("Portions")).toHaveValue(1.5);
-    expect(screen.getAllByText("210")[0]).toBeVisible();
-    expect(screen.getAllByText("9g")[0]).toBeVisible();
-    expect(screen.getAllByText("6g")[0]).toBeVisible();
-    expect(screen.getAllByText("22.5g")[0]).toBeVisible();
+    await waitFor(() => {
+      expect(screen.getAllByText("210")[0]).toBeVisible();
+      expect(screen.getAllByText("9g")[0]).toBeVisible();
+      expect(screen.getAllByText("6g")[0]).toBeVisible();
+      expect(screen.getAllByText("22.5g")[0]).toBeVisible();
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Add to diary" }));
 
@@ -189,7 +208,7 @@ describe("DashboardPage", () => {
 
   it("ignores browser drafts for signed-in users and shows database entries only", async () => {
     window.localStorage.setItem(
-      "nutrition-tracker-dashboard-draft",
+      "nutrition-tracker-diary-draft",
       JSON.stringify([
         {
           id: "local-entry",
@@ -209,16 +228,13 @@ describe("DashboardPage", () => {
         email: "ava@example.com",
       },
     });
-    mockGetCachedSavedFoods.mockResolvedValue([
+    mockGetCachedSavedFoodSummaries.mockResolvedValue([
       {
         id: "pantry-1",
         name: "Greek yogurt",
         brand: "Fage",
         servingSize: "170g tub",
-        calories: 140,
-        totalFat: 4,
-        totalCarbohydrate: 6,
-        protein: 15,
+        lastUsedAt: null,
       },
     ]);
     mockGetCachedDailyEntries.mockResolvedValue([
@@ -234,12 +250,14 @@ describe("DashboardPage", () => {
       },
     ]);
 
-    render(await DashboardDiarySection());
+    render(await DiarySection());
 
     expect(screen.getByText("Saved omelette")).toBeVisible();
     expect(screen.getAllByText("1")[0]).toBeVisible();
     expect(screen.queryByText("Local granola")).not.toBeInTheDocument();
     expect(mockGetCachedDailyEntries).toHaveBeenCalledWith("ava@example.com");
-    expect(mockGetCachedSavedFoods).toHaveBeenCalledWith("ava@example.com");
+    expect(mockGetCachedSavedFoodSummaries).toHaveBeenCalledWith(
+      "ava@example.com",
+    );
   });
 });

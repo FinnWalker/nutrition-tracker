@@ -4,6 +4,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import {
+  useRef,
   startTransition,
   useDeferredValue,
   useOptimistic,
@@ -15,10 +16,10 @@ import {
   addDailyEntry,
   clearDailyEntries as clearSavedDailyEntries,
   deleteDailyEntry as deleteSavedDailyEntry,
-} from "@/app/dashboard/actions";
+} from "@/app/diary/actions";
 import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 
-type DashboardDiaryProps = {
+type DiaryManagerProps = {
   canPersist: boolean;
   initialEntries: DiaryEntry[];
   initialSavedFoods: SavedFood[];
@@ -41,7 +42,11 @@ type SavedFood = {
   name: string;
   brand: string | null;
   servingSize: string | null;
-  lastUsedAt?: string | null;
+  lastUsedAt: string | null;
+};
+
+type SavedFoodDiaryDetails = {
+  id: string;
   calories: number;
   totalFat: number;
   totalCarbohydrate: number;
@@ -62,8 +67,8 @@ type OptimisticEntryMutation =
   | { type: "remove"; entryId: string }
   | { type: "clear" };
 
-const STORAGE_KEY = "nutrition-tracker-dashboard-draft";
-const STORAGE_EVENT = "nutrition-tracker-dashboard-storage";
+const STORAGE_KEY = "nutrition-tracker-diary-draft";
+const STORAGE_EVENT = "nutrition-tracker-diary-storage";
 const EMPTY_ENTRIES: DiaryEntry[] = [];
 let lastStoredEntriesRaw: string | null = null;
 let lastStoredEntriesSnapshot: DiaryEntry[] = EMPTY_ENTRIES;
@@ -222,6 +227,7 @@ function createManualEntry(draft: DraftEntry): DiaryEntry {
 
 function createSavedFoodEntry(
   item: SavedFood,
+  details: SavedFoodDiaryDetails,
   entryDate: string,
   portions: number,
 ): DiaryEntry {
@@ -232,10 +238,10 @@ function createSavedFoodEntry(
     entryDate,
     foodName: label,
     servings: roundMacro(portions),
-    calories: Math.max(0, Math.round(item.calories * portions)),
-    protein: Math.max(0, roundMacro(item.protein * portions)),
-    carbs: Math.max(0, roundMacro(item.totalCarbohydrate * portions)),
-    fat: Math.max(0, roundMacro(item.totalFat * portions)),
+    calories: Math.max(0, Math.round(details.calories * portions)),
+    protein: Math.max(0, roundMacro(details.protein * portions)),
+    carbs: Math.max(0, roundMacro(details.totalCarbohydrate * portions)),
+    fat: Math.max(0, roundMacro(details.totalFat * portions)),
   };
 }
 
@@ -299,12 +305,12 @@ function DiaryTable({
   );
 }
 
-export default function DashboardDiary({
+export default function DiaryManager({
   canPersist,
   initialEntries,
   initialSavedFoods,
   isLoading = false,
-}: DashboardDiaryProps) {
+}: DiaryManagerProps) {
   const router = useRouter();
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
   const entryDate = getTodayDateInputValue();
@@ -312,7 +318,15 @@ export default function DashboardDiary({
   const [selectedSavedFoodId, setSelectedSavedFoodId] = useState("");
   const [portions, setPortions] = useState("1");
   const [isPersisting, setIsPersisting] = useState(false);
+  const [isLoadingSavedFoodDetails, setIsLoadingSavedFoodDetails] =
+    useState(false);
+  const [savedFoodDetails, setSavedFoodDetails] =
+    useState<SavedFoodDiaryDetails | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedFoodLoadError, setSavedFoodLoadError] = useState<string | null>(
+    null,
+  );
+  const savedFoodRequestIdRef = useRef(0);
   const deferredSavedFoodQuery = useDeferredValue(savedFoodQuery);
   const anonymousEntries = useSyncExternalStore(
     subscribeToAnonymousEntries,
@@ -337,12 +351,7 @@ export default function DashboardDiary({
       return true;
     }
 
-    const haystack = [
-      item.name,
-      item.brand ?? "",
-      item.servingSize ?? "",
-      `${item.calories}`,
-    ]
+    const haystack = [item.name, item.brand ?? "", item.servingSize ?? ""]
       .join(" ")
       .toLowerCase();
 
@@ -352,6 +361,8 @@ export default function DashboardDiary({
     initialSavedFoods.find((item) => item.id === selectedSavedFoodId) ?? null;
   const parsedPortions = parseNumber(portions);
   const hasValidPortions = parsedPortions > 0;
+  const hasLoadedSavedFoodDetails =
+    savedFoodDetails?.id === selectedSavedFoodId && activeSavedFood !== null;
 
   const totals = entries.reduce(
     (runningTotals, entry) => ({
@@ -376,6 +387,56 @@ export default function DashboardDiary({
       ...current,
       [field]: value,
     }));
+  }
+
+  async function selectSavedFood(itemId: string) {
+    if (!canPersist || isDisabled) {
+      return;
+    }
+
+    const requestId = savedFoodRequestIdRef.current + 1;
+    savedFoodRequestIdRef.current = requestId;
+    setSelectedSavedFoodId(itemId);
+    setSavedFoodDetails(null);
+    setSavedFoodLoadError(null);
+    setIsLoadingSavedFoodDetails(true);
+
+    try {
+      const response = await fetch(
+        `/api/food-library/${itemId}/diary-details`,
+        {
+          method: "GET",
+        },
+      );
+      const payload = (await response.json()) as
+        SavedFoodDiaryDetails | { error?: string };
+
+      if (!response.ok || !("id" in payload)) {
+        throw new Error(
+          "error" in payload && payload.error
+            ? payload.error
+            : "We couldn't load that saved food.",
+        );
+      }
+
+      if (savedFoodRequestIdRef.current === requestId) {
+        setSavedFoodDetails(payload);
+      }
+    } catch (error) {
+      if (savedFoodRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setSavedFoodLoadError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't load that saved food.",
+      );
+    } finally {
+      if (savedFoodRequestIdRef.current === requestId) {
+        setIsLoadingSavedFoodDetails(false);
+      }
+    }
   }
 
   async function persistEntry(
@@ -404,9 +465,12 @@ export default function DashboardDiary({
           fat: nextEntry.fat,
         });
         if (canPersist) {
+          savedFoodRequestIdRef.current += 1;
           setSelectedSavedFoodId("");
           setSavedFoodQuery("");
           setPortions("1");
+          setSavedFoodDetails(null);
+          setSavedFoodLoadError(null);
         }
         router.refresh();
       } catch {
@@ -449,12 +513,19 @@ export default function DashboardDiary({
   async function handleSavedFoodSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (isDisabled || !activeSavedFood || !hasValidPortions || !canPersist) {
+    if (
+      isDisabled ||
+      !activeSavedFood ||
+      !savedFoodDetails ||
+      !hasValidPortions ||
+      !canPersist
+    ) {
       return;
     }
 
     const nextEntry = createSavedFoodEntry(
       activeSavedFood,
+      savedFoodDetails,
       entryDate,
       parsedPortions,
     );
@@ -614,7 +685,9 @@ export default function DashboardDiary({
                             <button
                               key={item.id}
                               type="button"
-                              onClick={() => setSelectedSavedFoodId(item.id)}
+                              onClick={() => {
+                                void selectSavedFood(item.id);
+                              }}
                               disabled={isDisabled}
                               className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left ${isSelected ? "bg-brand-muted" : ""}`}
                             >
@@ -632,14 +705,11 @@ export default function DashboardDiary({
                                     {item.servingSize}
                                   </div>
                                 ) : null}
-                              </div>
-                              <div className="shrink-0 text-right text-xs text-foreground-muted">
-                                <div>
-                                  {formatNutritionNumber(item.calories)} cal
-                                </div>
-                                <div className="mt-1">
-                                  P {formatNutritionNumber(item.protein)}g
-                                </div>
+                                {item.lastUsedAt ? (
+                                  <div className="mt-1 text-xs text-foreground-muted">
+                                    Recently used
+                                  </div>
+                                ) : null}
                               </div>
                             </button>
                           );
@@ -686,28 +756,43 @@ export default function DashboardDiary({
                         />
                       </label>
 
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <SummaryCard
-                          label="Calories"
-                          value={`${Math.max(0, Math.round(activeSavedFood.calories * parsedPortions))}`}
-                        />
-                        <SummaryCard
-                          label="Carbs"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.totalCarbohydrate * parsedPortions)))}g`}
-                        />
-                        <SummaryCard
-                          label="Fat"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.totalFat * parsedPortions)))}g`}
-                        />
-                        <SummaryCard
-                          label="Protein"
-                          value={`${formatNutritionNumber(Math.max(0, roundMacro(activeSavedFood.protein * parsedPortions)))}g`}
-                        />
-                      </div>
+                      {isLoadingSavedFoodDetails ? (
+                        <div className="mt-5 border border-dashed border-border bg-background px-4 py-6 text-sm text-foreground-muted">
+                          Loading nutrition details...
+                        </div>
+                      ) : savedFoodLoadError ? (
+                        <p className="mt-5 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+                          {savedFoodLoadError}
+                        </p>
+                      ) : hasLoadedSavedFoodDetails && savedFoodDetails ? (
+                        <div className="mt-5 grid grid-cols-2 gap-3">
+                          <SummaryCard
+                            label="Calories"
+                            value={`${Math.max(0, Math.round(savedFoodDetails.calories * parsedPortions))}`}
+                          />
+                          <SummaryCard
+                            label="Carbs"
+                            value={`${formatNutritionNumber(Math.max(0, roundMacro(savedFoodDetails.totalCarbohydrate * parsedPortions)))}g`}
+                          />
+                          <SummaryCard
+                            label="Fat"
+                            value={`${formatNutritionNumber(Math.max(0, roundMacro(savedFoodDetails.totalFat * parsedPortions)))}g`}
+                          />
+                          <SummaryCard
+                            label="Protein"
+                            value={`${formatNutritionNumber(Math.max(0, roundMacro(savedFoodDetails.protein * parsedPortions)))}g`}
+                          />
+                        </div>
+                      ) : null}
 
                       <button
                         type="submit"
-                        disabled={isDisabled || !hasValidPortions}
+                        disabled={
+                          isDisabled ||
+                          isLoadingSavedFoodDetails ||
+                          !hasLoadedSavedFoodDetails ||
+                          !hasValidPortions
+                        }
                         className="mt-5 bg-brand px-4 py-2 text-sm text-white"
                       >
                         {isLoading
@@ -885,7 +970,7 @@ export default function DashboardDiary({
                 ? "Your diary entries will appear here once we finish loading your session."
                 : canPersist
                   ? "Choose a saved food above and your diary snapshot will start building from there."
-                  : "Add your first meal above and the dashboard will start building a running daily total."}
+                  : "Add your first meal above and the diary will start building a running daily total."}
             </div>
           ) : (
             <DiaryTable
