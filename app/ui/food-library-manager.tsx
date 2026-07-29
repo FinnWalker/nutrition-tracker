@@ -3,7 +3,6 @@
 import type { FormEvent } from "react";
 import { startTransition, useOptimistic, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
-import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import type {
   PantryImportDraft,
@@ -578,13 +577,13 @@ export default function FoodLibraryManager({
               Prepared image
             </p>
             <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start">
-              <NextImage
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={preparedLabelImage.previewUrl}
                 alt="Prepared nutrition label crop"
                 width={preparedLabelImage.width}
                 height={preparedLabelImage.height}
-                unoptimized
-                className="w-full max-w-sm border border-border object-contain"
+                className="block h-auto w-full max-w-sm border border-border"
               />
               <div className="space-y-2 text-sm leading-7 text-foreground-muted">
                 <p>{preparedLabelImage.file.name}</p>
