@@ -36,6 +36,7 @@ const pantryDraftFields = [
 
 type PantryLabelModelOutput = PantryImportDraft & {
   saltGrams: string;
+  visibleZeroFields: Array<keyof PantryImportDraft>;
   warnings: string[];
 };
 
@@ -63,6 +64,12 @@ function isPantryLabelModelOutput(
 
   return (
     typeof candidate.saltGrams === "string" &&
+    Array.isArray(candidate.visibleZeroFields) &&
+    candidate.visibleZeroFields.every(
+      (field) =>
+        typeof field === "string" &&
+        pantryDraftFields.includes(field as keyof PantryImportDraft),
+    ) &&
     pantryDraftFields.every((field) => typeof candidate[field] === "string")
   );
 }
@@ -81,6 +88,12 @@ function normalizeModelOutput(
   draft.name = "";
   draft.brand = "";
   draft.servingsPerContainer = "";
+
+  for (const field of value.visibleZeroFields) {
+    if (!draft[field]) {
+      draft[field] = "0";
+    }
+  }
 
   if (!draft.sodiumMg) {
     const normalizedSalt = value.saltGrams.trim().replace(",", ".");
@@ -129,6 +142,7 @@ export async function extractPantryLabelFromImage(image: File) {
               "Only use values visible in the provided image. Use empty strings for unknown fields. " +
               "This crop is expected to contain only the nutrition panel, so leave name, brand, and servingsPerContainer empty. " +
               "Map 'fibre' to dietaryFiber, 'carbohydrate' or 'carbohydrates' to totalCarbohydrate, and 'of which sugars' to totalSugars. " +
+              "If a nutrient is explicitly shown as zero on the label, return the field value as '0' and also include that field name in visibleZeroFields. " +
               "If sodium is not listed but salt is listed, put the salt amount in saltGrams and leave sodiumMg empty. " +
               "Do not invent product names, brands, serving sizes, or nutrients. " +
               "Put any uncertainty, ambiguity, or missing-label notes into warnings.",
@@ -145,6 +159,7 @@ export async function extractPantryLabelFromImage(image: File) {
               "All nutrient number fields must be strings, not numbers. " +
               "Leave name, brand, and servingsPerContainer as empty strings unless those exact values are explicitly visible in the crop. " +
               "Treat 'fibre' as dietaryFiber, 'carbohydrate' or 'carbohydrates' as totalCarbohydrate, and 'of which sugars' as totalSugars. " +
+              "Whenever the label explicitly shows a nutrient as zero, output '0' for that field and list the field name in visibleZeroFields. " +
               "If the label uses salt instead of sodium, copy the salt amount in grams into saltGrams. " +
               "Warnings should be concise and only mention uncertainty or missing data.",
           },
@@ -169,6 +184,13 @@ export async function extractPantryLabelFromImage(image: File) {
             saltGrams: {
               type: "string",
             },
+            visibleZeroFields: {
+              type: "array",
+              items: {
+                type: "string",
+                enum: [...pantryDraftFields],
+              },
+            },
             warnings: {
               type: "array",
               items: {
@@ -176,7 +198,12 @@ export async function extractPantryLabelFromImage(image: File) {
               },
             },
           },
-          required: [...pantryDraftFields, "saltGrams", "warnings"],
+          required: [
+            ...pantryDraftFields,
+            "saltGrams",
+            "visibleZeroFields",
+            "warnings",
+          ],
         },
       },
     },
