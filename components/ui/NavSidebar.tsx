@@ -26,6 +26,20 @@ const NavSidebar = ({ basePath }: NavSidebarProps) => {
         </p>
       </div>
       <SidebarNavLinks basePath={basePath} />
+      <section className="rounded-[1.4rem] bg-brand-muted p-4">
+        <p className="text-sm font-bold text-brand-foreground">
+          Build your library
+        </p>
+        <p className="mt-1 text-xs leading-5 text-foreground-muted">
+          Save your favorite foods and scan labels with AI.
+        </p>
+        <button
+          type="button"
+          className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-sm"
+        >
+          + Add Food
+        </button>
+      </section>
     </div>
   );
 };
