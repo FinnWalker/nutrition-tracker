@@ -38,9 +38,9 @@ const BottomNav = () => {
     <>
       <nav
         aria-label="Bottom navigation"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 backdrop-blur lg:hidden"
       >
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-4 px-2 pb-2 pt-2">
           {primaryItems.map((item) => {
             const href = item.href || "/";
             const isActive = pathname === href;
@@ -51,9 +51,9 @@ const BottomNav = () => {
                 key={href}
                 href={href}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 px-3 py-2 text-xs font-medium ${
+                className={`flex min-h-16 flex-col items-center justify-center gap-1 px-3 py-2 text-[0.72rem] font-semibold ${
                   isActive
-                    ? "bg-brand-muted text-brand-foreground"
+                    ? "text-brand-foreground"
                     : "text-foreground-muted"
                 }`}
               >
@@ -69,9 +69,9 @@ const BottomNav = () => {
             aria-expanded={isMoreOpen}
             aria-haspopup="dialog"
             aria-label={isMoreOpen ? "Close more navigation" : "Open more navigation"}
-            className={`flex min-h-16 flex-col items-center justify-center gap-1 px-3 py-2 text-xs font-medium ${
+            className={`flex min-h-16 flex-col items-center justify-center gap-1 px-3 py-2 text-[0.72rem] font-semibold ${
               isMoreOpen
-                ? "bg-brand-muted text-brand-foreground"
+                ? "text-brand-foreground"
                 : "text-foreground-muted"
             }`}
             onClick={() => setIsMoreOpen((open) => !open)}
@@ -87,7 +87,7 @@ const BottomNav = () => {
           <button
             type="button"
             aria-label="Close more navigation"
-            className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/24 backdrop-blur-sm"
             onClick={() => setIsMoreOpen(false)}
           />
 
@@ -96,7 +96,7 @@ const BottomNav = () => {
             role="dialog"
             aria-modal="true"
             aria-label="More navigation"
-            className="relative h-full w-full max-w-xs border-r border-slate-200 bg-white shadow-2xl"
+            className="relative h-full w-full max-w-[17rem] border-r border-border bg-white shadow-2xl"
             onClickCapture={(event) => {
               const target = event.target;
 

@@ -14,7 +14,7 @@ export default function SidebarNavLinks({
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Primary" className="flex flex-col gap-1">
+    <nav aria-label="Primary" className="flex flex-col gap-1.5">
       {navigationItems.map((item) => {
         const href = `${basePath}${item.href}` || "/";
         const isActive = pathname === href;
@@ -25,13 +25,13 @@ export default function SidebarNavLinks({
             key={href}
             href={href}
             aria-current={isActive ? "page" : undefined}
-            className={`flex items-center gap-3 border px-3 py-2 text-sm ${
+            className={`flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-[1rem] font-bold transition-colors ${
               isActive
-                ? "border-border bg-brand-muted text-brand-foreground"
-                : "border-transparent text-foreground-muted"
+                ? "bg-brand-muted text-brand-foreground"
+                : "text-foreground-muted hover:bg-surface-elevated hover:text-foreground"
             }`}
           >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <Icon className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
             <span>{item.label}</span>
           </Link>
         );
