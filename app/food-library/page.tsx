@@ -97,7 +97,11 @@ export default function FoodLibraryPage() {
           </label>
 
           <div className="max-w-[10rem]">
-            <FilterSelect options={foodFilters.map((filter) => filter.label)} />
+            <FilterSelect
+              options={foodFilters.map(
+                (filter) => `${filter.label} (${filter.count})`,
+              )}
+            />
           </div>
         </div>
 
@@ -168,8 +172,8 @@ export default function FoodLibraryPage() {
                 {foodLibraryItems.map((item) => (
                   <tr key={item.name} className="group">
                     <td className="border-b border-border px-5 py-4 last:border-b-0">
-                      <div className="flex items-center gap-3.5">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-surface-elevated text-xl shadow-[inset_0_0_0_1px_var(--color-border)]">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-[4.35rem] w-[4.35rem] items-center justify-center rounded-[1rem] bg-surface-elevated text-[2rem] shadow-[inset_0_0_0_1px_var(--color-border)]">
                           <span aria-hidden="true">{item.emoji}</span>
                         </div>
                         <div className="min-w-0">
@@ -202,8 +206,8 @@ export default function FoodLibraryPage() {
 
           <div className="divide-y divide-border lg:hidden">
             {foodLibraryItems.map((item) => (
-              <article key={item.name} className="flex items-center gap-3 px-4 py-3.5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-elevated text-xl shadow-[inset_0_0_0_1px_var(--color-border)]">
+              <article key={item.name} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex h-[4.35rem] w-[4.35rem] shrink-0 items-center justify-center rounded-[1rem] bg-surface-elevated text-[2rem] shadow-[inset_0_0_0_1px_var(--color-border)]">
                   <span aria-hidden="true">{item.emoji}</span>
                 </div>
                 <div className="min-w-0 flex-1">

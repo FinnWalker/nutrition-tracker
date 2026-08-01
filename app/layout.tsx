@@ -36,7 +36,7 @@ export default function RootLayout(props: RootLayoutProps) {
       <body className="min-h-dvh text-foreground">
         <AuthSessionProvider>
           <div className="min-h-dvh lg:h-dvh lg:min-h-0 lg:px-5 lg:py-5">
-            <div className="mx-auto min-h-dvh lg:flex lg:h-[calc(100dvh-2.5rem)] lg:min-h-0 lg:max-w-[1380px] lg:gap-5 lg:overflow-hidden">
+            <div className="mx-auto min-h-dvh lg:flex lg:h-[calc(100dvh-2.5rem)] lg:min-h-0 lg:max-w-[1480px] lg:gap-5 lg:overflow-hidden">
               <div className="hidden w-64 rounded-[1.75rem] border border-border bg-white shadow-sm lg:block lg:h-full lg:overflow-y-auto">
                 <NavSidebar />
               </div>
