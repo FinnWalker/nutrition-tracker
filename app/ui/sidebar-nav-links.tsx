@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const navigationItems = [
   {
-    href: "/",
+    href: "",
     label: "Overview",
     icon: House,
   },
@@ -22,19 +22,26 @@ const navigationItems = [
   },
 ] as const;
 
-export default function SidebarNavLinks() {
+type SidebarNavLinksProps = {
+  basePath?: string;
+};
+
+export default function SidebarNavLinks({
+  basePath = "",
+}: SidebarNavLinksProps) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Primary" className="flex flex-col gap-1">
       {navigationItems.map((item) => {
-        const isActive = pathname === item.href;
+        const href = `${basePath}${item.href}` || "/";
+        const isActive = pathname === href;
         const Icon = item.icon;
 
         return (
           <Link
-            key={item.href}
-            href={item.href}
+            key={href}
+            href={href}
             aria-current={isActive ? "page" : undefined}
             className={`flex items-center gap-3 border px-3 py-2 text-sm ${
               isActive

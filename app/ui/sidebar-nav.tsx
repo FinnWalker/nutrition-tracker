@@ -1,22 +1,22 @@
 import { Suspense } from "react";
 import NavbarAuth from "./navbar-auth";
 import SidebarNavLinks from "./sidebar-nav-links";
-import ThemeToggle from "./theme-toggle";
 
-export default function SidebarNav() {
+type SidebarNavProps = {
+  basePath?: string;
+};
+
+export default function SidebarNav({ basePath }: SidebarNavProps = {}) {
   return (
     <>
       <div className="mb-8 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
-              Wellness
-            </p>
-            <h1 className="mt-2 text-lg font-semibold tracking-tight">
-              Nutrition Tracker
-            </h1>
-          </div>
-          <ThemeToggle />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
+            Wellness
+          </p>
+          <h1 className="mt-2 text-lg font-semibold tracking-tight">
+            Nutrition Tracker
+          </h1>
         </div>
 
         <Suspense fallback={<NavbarAuthFallback />}>
@@ -24,7 +24,7 @@ export default function SidebarNav() {
         </Suspense>
       </div>
 
-      <SidebarNavLinks />
+      <SidebarNavLinks basePath={basePath} />
     </>
   );
 }

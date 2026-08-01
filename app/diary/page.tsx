@@ -1,47 +1,22 @@
-import { Suspense } from "react";
-import { getTodayDiaryDate, normalizeDiaryDate } from "@/app/lib/diary-date";
-import DiaryManager from "@/app/ui/diary-manager";
-import PageContainer from "@/app/ui/page-container";
-import DiarySection from "./diary-section";
+import Link from "next/link";
 
-export const unstable_instant = false;
-
-export default async function DiaryPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ date?: string | string[] }>;
-} = {}) {
-  const resolvedSearchParams = searchParams ? await searchParams : {};
-  const hasExplicitDate = typeof resolvedSearchParams.date === "string";
-  const selectedDate = normalizeDiaryDate(
-    resolvedSearchParams.date,
-    getTodayDiaryDate(),
-  );
-
+export default function DiaryPage() {
   return (
-    <PageContainer>
-      <h1 className="text-4xl font-semibold tracking-tight">Diary</h1>
-      <p className="mt-4 text-lg text-foreground-muted">
-        Review your daily totals, pull foods straight from your saved foods, and
-        log meals as your diary fills out through the day.
-      </p>
-      <Suspense
-        fallback={
-          <DiaryManager
-            canPersist={false}
-            initialEntries={[]}
-            initialSavedFoods={[]}
-            selectedDate={selectedDate}
-            hasExplicitDate={hasExplicitDate}
-            isLoading
-          />
-        }
-      >
-        <DiarySection
-          selectedDate={selectedDate}
-          hasExplicitDate={hasExplicitDate}
-        />
-      </Suspense>
-    </PageContainer>
+    <main className="min-h-dvh px-6 py-10 md:px-10 md:py-14">
+      <section className="mx-auto w-full max-w-5xl border border-dashed border-border bg-surface p-8 md:p-12">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
+          Rebuild mode
+        </p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Diary</h1>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-foreground-muted">
+          This route is intentionally cleared so we can redesign the diary from
+          scratch. The current working diary remains available at{" "}
+          <Link href="/legacy/diary" className="underline">
+            /legacy/diary
+          </Link>
+          .
+        </p>
+      </section>
+    </main>
   );
 }

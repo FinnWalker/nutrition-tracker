@@ -24,9 +24,6 @@ describe("SidebarNav", () => {
 
     expect(screen.getByText("Auth slot")).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeVisible();
-    expect(
-      await screen.findByRole("button", { name: /Switch to .* mode/ }),
-    ).toBeVisible();
     expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "href",
       "/",
@@ -51,6 +48,25 @@ describe("SidebarNav", () => {
     );
     expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute(
       "aria-current",
+    );
+  });
+
+  it("can scope links to the legacy namespace", async () => {
+    mockUsePathname.mockReturnValue("/legacy/diary");
+
+    render(await SidebarNav({ basePath: "/legacy" }));
+
+    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
+      "href",
+      "/legacy",
+    );
+    expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
+      "href",
+      "/legacy/diary",
+    );
+    expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
+      "aria-current",
+      "page",
     );
   });
 });

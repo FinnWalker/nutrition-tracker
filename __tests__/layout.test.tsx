@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import RootLayout from "@/app/layout";
 
@@ -11,60 +11,17 @@ vi.mock("@/app/ui/auth-session-provider", () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-vi.mock("@/app/ui/theme-provider", () => ({
-  default: ({ children }: { children: React.ReactNode }) => children,
-}));
-
-vi.mock("@/app/ui/theme-toggle", () => ({
-  default: () => <button type="button">Theme toggle</button>,
-}));
-
-vi.mock("@/app/ui/sidebar-nav", () => ({
-  default: () => <nav aria-label="Primary">Primary nav</nav>,
-}));
-
 describe("RootLayout", () => {
-  it("keeps the primary navigation in the desktop aside only", () => {
-    render(<RootLayout auth={null}>Page content</RootLayout>);
-
-    const primaryNavs = screen.getAllByRole("navigation", { name: "Primary" });
-    expect(primaryNavs).toHaveLength(1);
-
-    const nav = primaryNavs[0];
-    const aside = document.querySelector("aside");
-    const main = screen.getByRole("main");
-
-    expect(aside).toHaveClass(
-      "hidden",
-      "md:sticky",
-      "md:top-0",
-      "md:flex",
-      "md:h-dvh",
-      "md:self-start",
-      "md:overflow-y-auto",
-    );
-    expect(aside).toContainElement(nav);
-    expect(
-      within(main).queryByRole("navigation", { name: "Primary" }),
-    ).toBeNull();
-  });
-
-  it("opens the primary navigation in a mobile drawer", () => {
-    render(<RootLayout auth={null}>Page content</RootLayout>);
-
-    expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(
-      1,
+  it("renders children and the auth slot without the legacy shell", () => {
+    render(
+      <RootLayout auth={<div>Auth slot</div>}>
+        <div>Page content</div>
+      </RootLayout>,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Open navigation menu" }),
-    );
-
-    expect(screen.getAllByRole("navigation", { name: "Primary" })).toHaveLength(
-      2,
-    );
-    expect(
-      screen.getByRole("dialog", { name: "Navigation menu" }),
-    ).toBeVisible();
+    expect(screen.getByText("Page content")).toBeVisible();
+    expect(screen.getByText("Auth slot")).toBeVisible();
+    expect(screen.queryByRole("navigation", { name: "Primary" })).toBeNull();
+    expect(document.querySelector("aside")).toBeNull();
   });
 });

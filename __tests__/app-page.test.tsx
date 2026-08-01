@@ -3,18 +3,18 @@ import { describe, expect, it } from "vitest";
 import Home from "@/app/page";
 
 describe("Home page", () => {
-  it("shows the diary CTA without checking auth state", async () => {
+  it("shows the blank-canvas reset state and links to the legacy app", async () => {
     render(<Home />);
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Nutrition Tracker",
+        name: "Blank canvas",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open diary" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "/legacy" })).toHaveAttribute(
       "href",
-      "/diary",
+      "/legacy",
     );
   });
 });
