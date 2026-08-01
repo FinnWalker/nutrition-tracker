@@ -40,8 +40,8 @@ export default function RootLayout(props: RootLayoutProps) {
               <div className="hidden w-64 rounded-[1.75rem] border border-border bg-white shadow-sm lg:block lg:h-full lg:overflow-y-auto">
                 <NavSidebar />
               </div>
-              <main className="min-h-dvh pb-24 lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:pb-0">
-                <div className="min-h-dvh bg-white px-6 py-6 lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-border lg:px-3 lg:py-3 lg:shadow-sm">
+              <main className="lg:flex lg:h-full lg:min-h-0 lg:flex-1">
+                <div className="box-border min-h-[calc(100dvh-5rem)] bg-white px-6 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col lg:rounded-[1.75rem] lg:border lg:border-border lg:px-3 lg:py-3 lg:shadow-sm">
                   <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                     <div className="lg:px-9 lg:py-9">{props.children}</div>
                   </div>
