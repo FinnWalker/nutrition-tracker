@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function DiaryPage() {
   return (
-    <main className="min-h-dvh px-6 py-10 md:px-10 md:py-14">
+    <main className="min-h-dvh">
       <section className="mx-auto w-full max-w-5xl border border-dashed border-border bg-surface p-8 md:p-12">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
           Rebuild mode

@@ -1,26 +1,8 @@
 "use client";
 
-import { CalendarDays, ChefHat, House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const navigationItems = [
-  {
-    href: "",
-    label: "Overview",
-    icon: House,
-  },
-  {
-    href: "/diary",
-    label: "Diary",
-    icon: CalendarDays,
-  },
-  {
-    href: "/food-library",
-    label: "Saved Foods",
-    icon: ChefHat,
-  },
-] as const;
+import { navigationItems } from "@/components/ui/navigation-items";
 
 type SidebarNavLinksProps = {
   basePath?: string;
