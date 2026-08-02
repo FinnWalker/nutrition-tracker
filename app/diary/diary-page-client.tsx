@@ -441,12 +441,9 @@ export default function DiaryPageClient({
           </div>
         </div>
         <section className="rounded-[1.6rem] border border-border bg-white p-5 sm:p-6">
-          <div className="grid grid-cols-[minmax(12.5rem,16rem)_minmax(0,1fr)] items-center gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(12.5rem,16rem)_minmax(0,1fr)] md:items-center">
             <div className="flex flex-col justify-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
-                Calories
-              </p>
-              <div className="mt-5 flex items-center justify-center">
+              <div className="flex items-center justify-center">
                 <DiaryMacroPieChart
                   calories={totals.calories}
                   calorieGoal={goals.calories}
