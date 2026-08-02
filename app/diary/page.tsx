@@ -1,22 +1,91 @@
-import Link from "next/link";
+import { Suspense } from "react";
+import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
+import { normalizeDiaryDate } from "@/app/lib/diary-date";
+import { getCachedSavedFoodSummaries } from "@/app/lib/get-cached-saved-food-summaries";
+import { getCurrentSession } from "@/app/lib/get-current-session";
+import DiaryPageClient from "./diary-page-client";
 
-export default function DiaryPage() {
+const SERVER_FALLBACK_DIARY_DATE = "2026-08-02";
+
+export default function DiaryPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ date?: string | string[] }>;
+} = {}) {
   return (
-    <main className="min-h-dvh">
-      <section className="mx-auto w-full max-w-5xl border border-dashed border-border bg-surface p-8 md:p-12">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
-          Rebuild mode
-        </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Diary</h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-foreground-muted">
-          This route is intentionally cleared so we can redesign the diary from
-          scratch. The current working diary remains available at{" "}
-          <Link href="/legacy/diary" className="underline">
-            /legacy/diary
-          </Link>
-          .
-        </p>
-      </section>
-    </main>
+    <Suspense
+      fallback={
+        <DiaryPageClient
+          canPersist={false}
+          selectedDate={SERVER_FALLBACK_DIARY_DATE}
+          initialEntries={[]}
+          initialSavedFoods={[]}
+          isLoading
+        />
+      }
+    >
+      <DiaryPageContent searchParams={searchParams} />
+    </Suspense>
   );
+}
+
+async function DiaryPageContent({
+  searchParams,
+}: {
+  searchParams?: Promise<{ date?: string | string[] }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const selectedDate = normalizeDiaryDate(
+    resolvedSearchParams.date,
+    SERVER_FALLBACK_DIARY_DATE,
+  );
+  const session = await getCurrentSession();
+  const initialEntries = session?.user?.email
+    ? await getCachedDailyEntries(session.user.email, selectedDate)
+    : [];
+  const initialSavedFoods = session?.user?.email
+    ? await getCachedSavedFoodSummaries(session.user.email)
+    : [];
+
+  return (
+    <DiaryPageClient
+      canPersist={Boolean(session?.user)}
+      selectedDate={selectedDate}
+      initialEntries={initialEntries.map((entry) => ({
+        id: entry.id,
+        entryDate: entry.entryDate.toISOString().slice(0, 10),
+        createdAt: entry.createdAt.toISOString(),
+        mealCategory: normalizeMealCategory(entry.mealCategory),
+        foodName: entry.foodName,
+        servings: entry.servings,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+      }))}
+      initialSavedFoods={initialSavedFoods.map((item) => ({
+        id: item.id,
+        name: item.name,
+        brand: item.brand,
+        servingSize: item.servingSize,
+        lastUsedAt:
+          item.lastUsedAt instanceof Date
+            ? item.lastUsedAt.toISOString()
+            : (item.lastUsedAt ?? null),
+      }))}
+    />
+  );
+}
+
+function normalizeMealCategory(value: string) {
+  switch (value) {
+    case "BREAKFAST":
+    case "LUNCH":
+    case "DINNER":
+    case "SNACK":
+    case "DRINK":
+      return value;
+    default:
+      return "SNACK";
+  }
 }
