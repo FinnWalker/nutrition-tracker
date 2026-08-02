@@ -27,7 +27,7 @@ model DailyEntry {
   id           String   @id @default(cuid())
   userId       String
   entryDate    DateTime @db.Date
-  mealCategory String   @default("SNACK")
+  consumedAt   DateTime?
   foodName     String
   servings     Float    @default(1)
   calories     Int
@@ -39,6 +39,7 @@ model DailyEntry {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, entryDate])
+  @@index([userId, entryDate, consumedAt])
 }
 
 model SavedFood {

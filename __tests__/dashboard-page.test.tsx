@@ -8,6 +8,7 @@ const mockGetCachedDailyEntries = vi.fn();
 const mockGetCachedSavedFoodSummaries = vi.fn();
 const mockAddDailyEntry = vi.fn();
 const mockDeleteDailyEntry = vi.fn();
+const mockUpdateDailyEntryTime = vi.fn();
 const mockClearDailyEntries = vi.fn();
 const mockRefresh = vi.fn();
 const mockPush = vi.fn();
@@ -31,6 +32,8 @@ vi.mock("@/app/lib/get-cached-saved-food-summaries", () => ({
 vi.mock("@/app/diary/actions", () => ({
   addDailyEntry: (...args: unknown[]) => mockAddDailyEntry(...args),
   deleteDailyEntry: (...args: unknown[]) => mockDeleteDailyEntry(...args),
+  updateDailyEntryTime: (...args: unknown[]) =>
+    mockUpdateDailyEntryTime(...args),
   clearDailyEntries: (...args: unknown[]) => mockClearDailyEntries(...args),
 }));
 
@@ -61,6 +64,7 @@ describe("DiaryPage", () => {
     mockGetCachedSavedFoodSummaries.mockReset();
     mockAddDailyEntry.mockReset();
     mockDeleteDailyEntry.mockReset();
+    mockUpdateDailyEntryTime.mockReset();
     mockClearDailyEntries.mockReset();
     mockRefresh.mockReset();
     mockPush.mockReset();
@@ -293,6 +297,7 @@ describe("DiaryPage", () => {
       {
         id: "db-entry",
         entryDate: new Date("2026-07-02T00:00:00.000Z"),
+        consumedAt: new Date("2026-07-02T12:30:00.000Z"),
         foodName: "Saved omelette",
         servings: 1,
         calories: 320,

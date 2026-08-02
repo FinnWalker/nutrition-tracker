@@ -1,0 +1,3 @@
+ALTER TABLE "DailyEntry"
+ALTER COLUMN "consumedAt" DROP NOT NULL,
+ALTER COLUMN "consumedAt" DROP DEFAULT;

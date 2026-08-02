@@ -1,12 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { getDefaultConsumedAt } from "@/app/lib/diary-consumed-at";
 import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 import { prisma } from "@/prisma";
 
 type DailyEntryInput = {
   entryDate: string;
-  mealCategory?: string;
+  consumedAt?: string | null;
   foodName: string;
   servings: number;
   savedFoodId?: string;
@@ -35,7 +36,12 @@ export async function addDailyEntry(input: DailyEntryInput) {
         },
       },
       entryDate: new Date(`${input.entryDate}T00:00:00.000Z`),
-      mealCategory: input.mealCategory ?? "SNACK",
+      consumedAt:
+        input.consumedAt === null
+          ? null
+          : input.consumedAt
+            ? new Date(input.consumedAt)
+            : getDefaultConsumedAt(input.entryDate),
       foodName: input.foodName.trim(),
       servings: Math.max(0.1, input.servings),
       calories: Math.max(0, Math.round(input.calories)),
@@ -46,7 +52,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
     select: {
       id: true,
       entryDate: true,
-      mealCategory: true,
+      consumedAt: true,
       foodName: true,
       servings: true,
       calories: true,
@@ -74,6 +80,30 @@ export async function addDailyEntry(input: DailyEntryInput) {
   revalidateDailyEntries(user.email, input.entryDate);
 
   return createdEntry;
+}
+
+export async function updateDailyEntryTime(
+  entryId: string,
+  input: {
+    entryDate: string;
+    consumedAt: string | null;
+  },
+) {
+  const user = await requireCurrentUserRecord();
+
+  await prisma.dailyEntry.updateMany({
+    where: {
+      id: entryId,
+      user: {
+        id: user.id,
+      },
+    },
+    data: {
+      consumedAt: input.consumedAt ? new Date(input.consumedAt) : null,
+    },
+  });
+
+  revalidateDailyEntries(user.email, input.entryDate);
 }
 
 export async function deleteDailyEntry(entryId: string) {
