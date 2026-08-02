@@ -25,6 +25,11 @@ import {
   deleteSavedFood,
   updateSavedFood,
 } from "@/app/food-library/actions";
+import {
+  getMacroCalorieEstimate,
+  getMacroCalorieWarning,
+  parseNutritionNumber,
+} from "@/app/lib/nutrition-validation";
 import FoodLibraryForm, {
   type FoodLibraryDraft,
 } from "@/app/ui/food-library-form";
@@ -722,17 +727,6 @@ function MacroBar({
   );
 }
 
-function parseNumber(value: string) {
-  const trimmed = value.trim();
-
-  if (!trimmed) {
-    return 0;
-  }
-
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
 function createDraftFromItem(item: FoodLibraryItem): FoodLibraryDraft {
   return {
     name: item.name,
@@ -768,25 +762,34 @@ function createSavedFoodInput(draft: FoodLibraryDraft) {
     brand: draft.brand.trim() || undefined,
     servingSize: draft.servingSize.trim() || undefined,
     servingsPerContainer: draft.servingsPerContainer.trim()
-      ? Math.max(0, parseNumber(draft.servingsPerContainer))
+      ? Math.max(0, parseNutritionNumber(draft.servingsPerContainer))
       : undefined,
-    calories: Math.max(0, parseNumber(draft.calories)),
-    totalFat: Math.max(0, parseNumber(draft.totalFat)),
-    saturatedFat: Math.max(0, parseNumber(draft.saturatedFat)),
-    transFat: Math.max(0, parseNumber(draft.transFat)),
-    polyunsaturatedFat: Math.max(0, parseNumber(draft.polyunsaturatedFat)),
-    monounsaturatedFat: Math.max(0, parseNumber(draft.monounsaturatedFat)),
-    cholesterolMg: Math.max(0, parseNumber(draft.cholesterolMg)),
-    sodiumMg: Math.max(0, parseNumber(draft.sodiumMg)),
-    totalCarbohydrate: Math.max(0, parseNumber(draft.totalCarbohydrate)),
-    dietaryFiber: Math.max(0, parseNumber(draft.dietaryFiber)),
-    totalSugars: Math.max(0, parseNumber(draft.totalSugars)),
-    addedSugars: Math.max(0, parseNumber(draft.addedSugars)),
-    protein: Math.max(0, parseNumber(draft.protein)),
-    vitaminDMcg: Math.max(0, parseNumber(draft.vitaminDMcg)),
-    calciumMg: Math.max(0, parseNumber(draft.calciumMg)),
-    ironMg: Math.max(0, parseNumber(draft.ironMg)),
-    potassiumMg: Math.max(0, parseNumber(draft.potassiumMg)),
+    calories: Math.max(0, parseNutritionNumber(draft.calories)),
+    totalFat: Math.max(0, parseNutritionNumber(draft.totalFat)),
+    saturatedFat: Math.max(0, parseNutritionNumber(draft.saturatedFat)),
+    transFat: Math.max(0, parseNutritionNumber(draft.transFat)),
+    polyunsaturatedFat: Math.max(
+      0,
+      parseNutritionNumber(draft.polyunsaturatedFat),
+    ),
+    monounsaturatedFat: Math.max(
+      0,
+      parseNutritionNumber(draft.monounsaturatedFat),
+    ),
+    cholesterolMg: Math.max(0, parseNutritionNumber(draft.cholesterolMg)),
+    sodiumMg: Math.max(0, parseNutritionNumber(draft.sodiumMg)),
+    totalCarbohydrate: Math.max(
+      0,
+      parseNutritionNumber(draft.totalCarbohydrate),
+    ),
+    dietaryFiber: Math.max(0, parseNutritionNumber(draft.dietaryFiber)),
+    totalSugars: Math.max(0, parseNutritionNumber(draft.totalSugars)),
+    addedSugars: Math.max(0, parseNutritionNumber(draft.addedSugars)),
+    protein: Math.max(0, parseNutritionNumber(draft.protein)),
+    vitaminDMcg: Math.max(0, parseNutritionNumber(draft.vitaminDMcg)),
+    calciumMg: Math.max(0, parseNutritionNumber(draft.calciumMg)),
+    ironMg: Math.max(0, parseNutritionNumber(draft.ironMg)),
+    potassiumMg: Math.max(0, parseNutritionNumber(draft.potassiumMg)),
   };
 }
 
@@ -800,25 +803,31 @@ function createItemFromDraft(
     brand: draft.brand.trim() || null,
     serving: draft.servingSize.trim() || null,
     servingsPerContainer: draft.servingsPerContainer.trim()
-      ? Math.max(0, parseNumber(draft.servingsPerContainer))
+      ? Math.max(0, parseNutritionNumber(draft.servingsPerContainer))
       : null,
-    calories: Math.max(0, parseNumber(draft.calories)),
-    saturatedFat: Math.max(0, parseNumber(draft.saturatedFat)),
-    transFat: Math.max(0, parseNumber(draft.transFat)),
-    polyunsaturatedFat: Math.max(0, parseNumber(draft.polyunsaturatedFat)),
-    monounsaturatedFat: Math.max(0, parseNumber(draft.monounsaturatedFat)),
-    cholesterolMg: Math.max(0, parseNumber(draft.cholesterolMg)),
-    sodiumMg: Math.max(0, parseNumber(draft.sodiumMg)),
-    protein: Math.max(0, parseNumber(draft.protein)),
-    carbs: Math.max(0, parseNumber(draft.totalCarbohydrate)),
-    dietaryFiber: Math.max(0, parseNumber(draft.dietaryFiber)),
-    totalSugars: Math.max(0, parseNumber(draft.totalSugars)),
-    addedSugars: Math.max(0, parseNumber(draft.addedSugars)),
-    fat: Math.max(0, parseNumber(draft.totalFat)),
-    vitaminDMcg: Math.max(0, parseNumber(draft.vitaminDMcg)),
-    calciumMg: Math.max(0, parseNumber(draft.calciumMg)),
-    ironMg: Math.max(0, parseNumber(draft.ironMg)),
-    potassiumMg: Math.max(0, parseNumber(draft.potassiumMg)),
+    calories: Math.max(0, parseNutritionNumber(draft.calories)),
+    saturatedFat: Math.max(0, parseNutritionNumber(draft.saturatedFat)),
+    transFat: Math.max(0, parseNutritionNumber(draft.transFat)),
+    polyunsaturatedFat: Math.max(
+      0,
+      parseNutritionNumber(draft.polyunsaturatedFat),
+    ),
+    monounsaturatedFat: Math.max(
+      0,
+      parseNutritionNumber(draft.monounsaturatedFat),
+    ),
+    cholesterolMg: Math.max(0, parseNutritionNumber(draft.cholesterolMg)),
+    sodiumMg: Math.max(0, parseNutritionNumber(draft.sodiumMg)),
+    protein: Math.max(0, parseNutritionNumber(draft.protein)),
+    carbs: Math.max(0, parseNutritionNumber(draft.totalCarbohydrate)),
+    dietaryFiber: Math.max(0, parseNutritionNumber(draft.dietaryFiber)),
+    totalSugars: Math.max(0, parseNutritionNumber(draft.totalSugars)),
+    addedSugars: Math.max(0, parseNutritionNumber(draft.addedSugars)),
+    fat: Math.max(0, parseNutritionNumber(draft.totalFat)),
+    vitaminDMcg: Math.max(0, parseNutritionNumber(draft.vitaminDMcg)),
+    calciumMg: Math.max(0, parseNutritionNumber(draft.calciumMg)),
+    ironMg: Math.max(0, parseNutritionNumber(draft.ironMg)),
+    potassiumMg: Math.max(0, parseNutritionNumber(draft.potassiumMg)),
   };
 }
 
@@ -850,12 +859,16 @@ function getSingleCharacterMatches(items: FoodLibraryItem[], searchTerm: string)
 }
 
 function getNutritionSnapshot(draft: FoodLibraryDraft) {
-  const calories = parseNumber(draft.calories);
-  const protein = parseNumber(draft.protein);
-  const carbs = parseNumber(draft.totalCarbohydrate);
-  const fat = parseNumber(draft.totalFat);
-  const estimatedCalories = protein * 4 + carbs * 4 + fat * 9;
-  const calorieGap = Math.round(calories - estimatedCalories);
+  const calories = parseNutritionNumber(draft.calories);
+  const protein = parseNutritionNumber(draft.protein);
+  const carbs = parseNutritionNumber(draft.totalCarbohydrate);
+  const fat = parseNutritionNumber(draft.totalFat);
+  const { estimatedCalories } = getMacroCalorieEstimate({
+    calories,
+    protein,
+    carbs,
+    fat,
+  });
   const totalMacros = protein + carbs + fat;
   const macroPercentBase = totalMacros > 0 ? totalMacros : 1;
 
@@ -865,22 +878,29 @@ function getNutritionSnapshot(draft: FoodLibraryDraft) {
     warnings.push("Add a product name so this food is easy to find later.");
   }
 
-  if (calories > 0 && Math.abs(calorieGap) > 20) {
-    warnings.push(
-      `Macro calories estimate ${estimatedCalories} kcal, which is ${Math.abs(calorieGap)} kcal ${calorieGap > 0 ? "below" : "above"} the entered calories.`,
-    );
+  const macroCalorieWarning = getMacroCalorieWarning({
+    calories,
+    protein,
+    carbs,
+    fat,
+  });
+
+  if (macroCalorieWarning) {
+    warnings.push(macroCalorieWarning);
   }
 
   if (
-    parseNumber(draft.addedSugars) > parseNumber(draft.totalSugars) &&
-    parseNumber(draft.totalSugars) > 0
+    parseNutritionNumber(draft.addedSugars) >
+      parseNutritionNumber(draft.totalSugars) &&
+    parseNutritionNumber(draft.totalSugars) > 0
   ) {
     warnings.push("Added sugars should not be greater than total sugars.");
   }
 
   if (
-    parseNumber(draft.dietaryFiber) > parseNumber(draft.totalCarbohydrate) &&
-    parseNumber(draft.totalCarbohydrate) > 0
+    parseNutritionNumber(draft.dietaryFiber) >
+      parseNutritionNumber(draft.totalCarbohydrate) &&
+    parseNutritionNumber(draft.totalCarbohydrate) > 0
   ) {
     warnings.push("Dietary fiber should not be greater than total carbohydrate.");
   }

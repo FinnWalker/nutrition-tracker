@@ -1,4 +1,4 @@
-import { CalendarDays, ChefHat, House } from "lucide-react";
+import { CalendarDays, ChefHat, House, Target } from "lucide-react";
 
 export const navigationItems = [
   {
@@ -15,5 +15,10 @@ export const navigationItems = [
     href: "/food-library",
     label: "Saved Foods",
     icon: ChefHat,
+  },
+  {
+    href: "/goals",
+    label: "Goals",
+    icon: Target,
   },
 ] as const;

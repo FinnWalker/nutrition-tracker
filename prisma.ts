@@ -54,8 +54,15 @@ function hasSavedFoodDelegate(
     }
   )._runtimeDataModel;
   const dailyEntryFields = runtimeDataModel?.models?.DailyEntry?.fields ?? [];
+  const userFields = runtimeDataModel?.models?.User?.fields ?? [];
 
-  return dailyEntryFields.some((field) => field.name === "mealCategory");
+  return (
+    dailyEntryFields.some((field) => field.name === "mealCategory") &&
+    userFields.some((field) => field.name === "dailyCalorieGoal") &&
+    userFields.some((field) => field.name === "dailyProteinGoal") &&
+    userFields.some((field) => field.name === "dailyCarbsGoal") &&
+    userFields.some((field) => field.name === "dailyFatGoal")
+  );
 }
 
 const cachedPrisma = globalForPrisma.prisma;

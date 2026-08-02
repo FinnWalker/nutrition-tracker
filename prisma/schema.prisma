@@ -7,16 +7,20 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  name           String?
-  email          String          @unique
-  emailVerified  DateTime?
-  image          String?
-  dailyEntries   DailyEntry[]
-  savedFoods     SavedFood[]
-  accounts       Account[]
-  sessions       Session[]
-  authenticators Authenticator[]
+  id                String          @id @default(cuid())
+  name              String?
+  email             String          @unique
+  emailVerified     DateTime?
+  image             String?
+  dailyCalorieGoal  Int?
+  dailyProteinGoal  Float?
+  dailyCarbsGoal    Float?
+  dailyFatGoal      Float?
+  dailyEntries      DailyEntry[]
+  savedFoods        SavedFood[]
+  accounts          Account[]
+  sessions          Session[]
+  authenticators    Authenticator[]
 }
 
 model DailyEntry {
