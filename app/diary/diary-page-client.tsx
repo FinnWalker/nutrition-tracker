@@ -535,33 +535,18 @@ export default function DiaryPageClient({
           </div>
         </section>
 
-        <section className="rounded-[1.6rem] border border-border bg-white p-5 sm:p-6">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-foreground">
-                Timeline
-              </h2>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="text-sm text-foreground-muted">
-                {formatDiaryDateLabel(selectedDate)}
-              </div>
-              {canPersist ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIsSavedFoodPickerOpen((current) => !current)
-                  }
-                  disabled={isLoading || isPersisting}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-brand-muted disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  <span>Add saved food</span>
-                </button>
-              ) : null}
-            </div>
-          </div>
+        <section>
+          {canPersist ? (
+            <button
+              type="button"
+              onClick={() => setIsSavedFoodPickerOpen((current) => !current)}
+              disabled={isLoading || isPersisting}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-brand-muted disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              <span>Add saved food</span>
+            </button>
+          ) : null}
 
           {saveError ? (
             <p className="mt-4 rounded-[1.2rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
