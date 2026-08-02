@@ -72,7 +72,6 @@ async function DiaryPageContent({
         entryDate: entry.entryDate.toISOString().slice(0, 10),
         consumedAt: entry.consumedAt.toISOString(),
         createdAt: entry.createdAt.toISOString(),
-        mealCategory: normalizeMealCategory(entry.mealCategory),
         foodName: entry.foodName,
         servings: entry.servings,
         calories: entry.calories,
@@ -92,17 +91,4 @@ async function DiaryPageContent({
       }))}
     />
   );
-}
-
-function normalizeMealCategory(value: string) {
-  switch (value) {
-    case "BREAKFAST":
-    case "LUNCH":
-    case "DINNER":
-    case "SNACK":
-    case "DRINK":
-      return value;
-    default:
-      return "SNACK";
-  }
 }

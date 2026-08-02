@@ -1,10 +1,12 @@
 const DEFAULT_GROUPING_WINDOW_MINUTES = 45;
+const FALLBACK_CONSUMED_TIME_VALUE = "12:00";
 
-export function getDefaultConsumedAt(entryDate: string, now = new Date()) {
+export function getDefaultConsumedAt(entryDate: string, now?: Date) {
+  const resolvedNow = now ?? new Date();
   const [year, month, day] = entryDate.split("-").map(Number);
 
   if (!year || !month || !day) {
-    return now;
+    return resolvedNow;
   }
 
   return new Date(
@@ -12,17 +14,18 @@ export function getDefaultConsumedAt(entryDate: string, now = new Date()) {
       year,
       month - 1,
       day,
-      now.getUTCHours(),
-      now.getUTCMinutes(),
-      now.getUTCSeconds(),
-      now.getUTCMilliseconds(),
+      resolvedNow.getUTCHours(),
+      resolvedNow.getUTCMinutes(),
+      resolvedNow.getUTCSeconds(),
+      resolvedNow.getUTCMilliseconds(),
     ),
   );
 }
 
-export function getDefaultConsumedTimeValue(now = new Date()) {
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
+export function getDefaultConsumedTimeValue(now?: Date) {
+  const resolvedNow = now ?? new Date();
+  const hours = String(resolvedNow.getHours()).padStart(2, "0");
+  const minutes = String(resolvedNow.getMinutes()).padStart(2, "0");
 
   return `${hours}:${minutes}`;
 }
@@ -30,8 +33,9 @@ export function getDefaultConsumedTimeValue(now = new Date()) {
 export function getConsumedAtFromTimeValue(
   entryDate: string,
   timeValue: string,
-  fallback = getDefaultConsumedAt(entryDate),
+  fallback?: Date,
 ) {
+  const resolvedFallback = fallback ?? getDefaultConsumedAt(entryDate);
   const [year, month, day] = entryDate.split("-").map(Number);
   const [hours, minutes] = timeValue.split(":").map(Number);
 
@@ -42,7 +46,7 @@ export function getConsumedAtFromTimeValue(
     !Number.isInteger(hours) ||
     !Number.isInteger(minutes)
   ) {
-    return fallback;
+    return resolvedFallback;
   }
 
   return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
@@ -50,4 +54,8 @@ export function getConsumedAtFromTimeValue(
 
 export function getDiaryTimelineGroupingWindowMinutes() {
   return DEFAULT_GROUPING_WINDOW_MINUTES;
+}
+
+export function getFallbackConsumedTimeValue() {
+  return FALLBACK_CONSUMED_TIME_VALUE;
 }
