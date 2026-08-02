@@ -1,20 +1,16 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Home from "@/app/page";
 
-describe("Home page", () => {
-  it("shows the blank-canvas reset state and links to the legacy app", async () => {
-    render(<Home />);
+const mockRedirect = vi.fn();
 
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: "Blank canvas",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "/legacy" })).toHaveAttribute(
-      "href",
-      "/legacy",
-    );
+vi.mock("next/navigation", () => ({
+  redirect: (...args: unknown[]) => mockRedirect(...args),
+}));
+
+describe("Home page", () => {
+  it("redirects visitors to the diary", () => {
+    Home();
+
+    expect(mockRedirect).toHaveBeenCalledWith("/diary");
   });
 });

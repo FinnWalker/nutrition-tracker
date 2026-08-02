@@ -7,6 +7,7 @@ import {
   useDeferredValue,
   useMemo,
   useOptimistic,
+  useRef,
   useState,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -129,6 +130,7 @@ export default function DiaryPageClient({
     useState<QuickAddDraft>(initialQuickAddDraft);
   const [isPersisting, setIsPersisting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const optimisticEntryCountRef = useRef(0);
   const deferredSavedFoodQuery = useDeferredValue(savedFoodQuery);
   const [optimisticEntries, applyOptimisticEntry] = useOptimistic(
     initialEntries,
@@ -243,7 +245,12 @@ export default function DiaryPageClient({
 
     try {
       const details = await loadSavedFoodDetails(item.id);
+      const optimisticEntryId = createOptimisticEntryId(
+        selectedDate,
+        optimisticEntryCountRef.current++,
+      );
       const nextEntry = createSavedFoodEntry(
+        optimisticEntryId,
         item,
         details,
         selectedDate,
@@ -298,7 +305,15 @@ export default function DiaryPageClient({
       return;
     }
 
-    const nextEntry = createQuickAddEntry(quickAddDraft, selectedDate);
+    const optimisticEntryId = createOptimisticEntryId(
+      selectedDate,
+      optimisticEntryCountRef.current++,
+    );
+    const nextEntry = createQuickAddEntry(
+      optimisticEntryId,
+      quickAddDraft,
+      selectedDate,
+    );
 
     setIsPersisting(true);
     setSaveError(null);
@@ -858,13 +873,14 @@ function applyEntryMutation(
 }
 
 function createSavedFoodEntry(
+  id: string,
   item: SavedFood,
   details: SavedFoodDiaryDetails,
   selectedDate: string,
   mealCategory: MealCategory,
 ): DiaryEntry {
   return {
-    id: crypto.randomUUID(),
+    id,
     entryDate: selectedDate,
     createdAt: new Date().toISOString(),
     mealCategory,
@@ -878,11 +894,12 @@ function createSavedFoodEntry(
 }
 
 function createQuickAddEntry(
+  id: string,
   draft: QuickAddDraft,
   selectedDate: string,
 ): DiaryEntry {
   return {
-    id: crypto.randomUUID(),
+    id,
     entryDate: selectedDate,
     createdAt: new Date().toISOString(),
     mealCategory: draft.mealCategory,
@@ -893,6 +910,10 @@ function createQuickAddEntry(
     carbs: Math.max(0, parseNumber(draft.carbs)),
     fat: Math.max(0, parseNumber(draft.fat)),
   };
+}
+
+function createOptimisticEntryId(selectedDate: string, count: number) {
+  return `optimistic-${selectedDate}-${count}`;
 }
 
 function parseNumber(value: string) {

@@ -17,27 +17,31 @@ describe("SidebarNav", () => {
     mockUsePathname.mockReset();
   });
 
-  it("lets signed-out users open the diary from primary navigation", async () => {
+  it("renders the primary navigation links", () => {
     mockUsePathname.mockReturnValue("/");
 
-    render(await SidebarNav());
+    render(<SidebarNav />);
 
     expect(screen.getByText("Auth slot")).toBeVisible();
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
-      "href",
-      "/",
-    );
     expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
       "href",
       "/diary",
     );
+    expect(screen.getByRole("link", { name: "Saved Foods" })).toHaveAttribute(
+      "href",
+      "/food-library",
+    );
+    expect(screen.getByRole("link", { name: "Goals" })).toHaveAttribute(
+      "href",
+      "/goals",
+    );
   });
 
-  it("marks the current page link", async () => {
+  it("marks the current page link", () => {
     mockUsePathname.mockReturnValue("/diary");
 
-    render(await SidebarNav());
+    render(<SidebarNav />);
 
     expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
       "aria-current",
@@ -46,23 +50,27 @@ describe("SidebarNav", () => {
     expect(screen.getByRole("link", { name: "Diary" })).toHaveClass(
       "bg-brand-muted",
     );
-    expect(screen.getByRole("link", { name: "Overview" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(
+      screen.getByRole("link", { name: "Saved Foods" }),
+    ).not.toHaveAttribute("aria-current");
   });
 
-  it("can scope links to the legacy namespace", async () => {
+  it("can scope links to the legacy namespace", () => {
     mockUsePathname.mockReturnValue("/legacy/diary");
 
-    render(await SidebarNav({ basePath: "/legacy" }));
+    render(<SidebarNav basePath="/legacy" />);
 
-    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
-      "href",
-      "/legacy",
-    );
     expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
       "href",
       "/legacy/diary",
+    );
+    expect(screen.getByRole("link", { name: "Saved Foods" })).toHaveAttribute(
+      "href",
+      "/legacy/food-library",
+    );
+    expect(screen.getByRole("link", { name: "Goals" })).toHaveAttribute(
+      "href",
+      "/legacy/goals",
     );
     expect(screen.getByRole("link", { name: "Diary" })).toHaveAttribute(
       "aria-current",
