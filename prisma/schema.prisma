@@ -7,31 +7,36 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  name           String?
-  email          String          @unique
-  emailVerified  DateTime?
-  image          String?
-  dailyEntries   DailyEntry[]
-  savedFoods     SavedFood[]
-  accounts       Account[]
-  sessions       Session[]
-  authenticators Authenticator[]
+  id                String          @id @default(cuid())
+  name              String?
+  email             String          @unique
+  emailVerified     DateTime?
+  image             String?
+  dailyCalorieGoal  Int?
+  dailyProteinGoal  Float?
+  dailyCarbsGoal    Float?
+  dailyFatGoal      Float?
+  dailyEntries      DailyEntry[]
+  savedFoods        SavedFood[]
+  accounts          Account[]
+  sessions          Session[]
+  authenticators    Authenticator[]
 }
 
 model DailyEntry {
-  id        String   @id @default(cuid())
-  userId    String
-  entryDate DateTime @db.Date
-  foodName  String
-  servings  Float    @default(1)
-  calories  Int
-  protein   Float
-  carbs     Float
-  fat       Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String
+  entryDate    DateTime @db.Date
+  mealCategory String   @default("SNACK")
+  foodName     String
+  servings     Float    @default(1)
+  calories     Int
+  protein      Float
+  carbs        Float
+  fat          Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, entryDate])
 }

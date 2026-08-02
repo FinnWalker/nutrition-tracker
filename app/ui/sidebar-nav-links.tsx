@@ -1,48 +1,37 @@
 "use client";
 
-import { CalendarDays, ChefHat, House } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { navigationItems } from "@/components/ui/navigation-items";
 
-const navigationItems = [
-  {
-    href: "/",
-    label: "Overview",
-    icon: House,
-  },
-  {
-    href: "/diary",
-    label: "Diary",
-    icon: CalendarDays,
-  },
-  {
-    href: "/food-library",
-    label: "Saved Foods",
-    icon: ChefHat,
-  },
-] as const;
+type SidebarNavLinksProps = {
+  basePath?: string;
+};
 
-export default function SidebarNavLinks() {
+export default function SidebarNavLinks({
+  basePath = "",
+}: SidebarNavLinksProps) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Primary" className="flex flex-col gap-1">
+    <nav aria-label="Primary" className="flex flex-col gap-1.5">
       {navigationItems.map((item) => {
-        const isActive = pathname === item.href;
+        const href = `${basePath}${item.href}` || "/";
+        const isActive = pathname === href;
         const Icon = item.icon;
 
         return (
           <Link
-            key={item.href}
-            href={item.href}
+            key={href}
+            href={href}
             aria-current={isActive ? "page" : undefined}
-            className={`flex items-center gap-3 border px-3 py-2 text-sm ${
+            className={`flex items-center gap-3.5 rounded-2xl px-4 py-3.5 text-[1rem] font-bold transition-colors ${
               isActive
-                ? "border-border bg-brand-muted text-brand-foreground"
-                : "border-transparent text-foreground-muted"
+                ? "bg-brand-muted text-brand-foreground"
+                : "text-foreground-muted hover:bg-surface-elevated hover:text-foreground"
             }`}
           >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <Icon className="h-5.5 w-5.5 shrink-0" aria-hidden="true" />
             <span>{item.label}</span>
           </Link>
         );

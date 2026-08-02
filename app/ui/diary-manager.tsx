@@ -319,6 +319,9 @@ export default function DiaryManager({
 }: DiaryManagerProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const foodLibraryHref = pathname.startsWith("/legacy")
+    ? "/legacy/food-library"
+    : "/food-library";
   const [draft, setDraft] = useState<DraftEntry>(initialDraft);
   const [savedFoodQuery, setSavedFoodQuery] = useState("");
   const [selectedSavedFoodId, setSelectedSavedFoodId] = useState("");
@@ -886,7 +889,7 @@ export default function DiaryManager({
             <div className="mt-6 border border-dashed border-border bg-background p-6 text-sm leading-7 text-foreground-muted">
               Add foods to{" "}
               <Link
-                href="/food-library"
+                href={foodLibraryHref}
                 className="font-medium text-foreground underline underline-offset-4"
               >
                 Food Library

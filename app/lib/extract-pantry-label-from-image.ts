@@ -5,14 +5,16 @@ import type {
   PantryImportResponse,
 } from "@/app/lib/pantry-label-import";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 0,
-  timeout: 20000,
-});
-
 const OPENAI_LABEL_MODEL = "gpt-5-mini";
 const OPENAI_LABEL_MAX_OUTPUT_TOKENS = 1200;
+
+function createOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    maxRetries: 0,
+    timeout: 20000,
+  });
+}
 
 const pantryDraftFields = [
   "name",
@@ -429,17 +431,74 @@ function hasAnyNonEmptyValue(record: NutritionValueRecord) {
   return extractedValueFields.some((field) => record[field].trim() !== "");
 }
 
-function normalizeModelOutput(
-  value: PantryLabelDualColumnModelOutput,
-): PantryImportResponse {
+function classifyNutritionHeading(heading: string) {
+  const normalized = normalizeColumnHeading(heading).toLowerCase();
+
+  if (!normalized) {
+    return "empty" as const;
+  }
+
+  if (
+    /\b(per|for)\s+(serving|portion)\b/.test(normalized) ||
+    /\b(serving|portion)\s+size\b/.test(normalized)
+  ) {
+    return "serving" as const;
+  }
+
+  if (/\b(per|for)\s+container\b/.test(normalized)) {
+    return "container" as const;
+  }
+
+  return "other" as const;
+}
+
+function selectNutritionColumn(value: PantryLabelDualColumnModelOutput) {
   const perServingHeading = normalizeColumnHeading(value.perServingHeading);
   const per100Heading = normalizeColumnHeading(value.per100Heading);
-  const usePerServing =
-    perServingHeading && hasAnyNonEmptyValue(value.perServing);
-  const selectedColumnHeading = usePerServing
-    ? perServingHeading
-    : per100Heading;
-  const selectedValues = usePerServing ? value.perServing : value.per100;
+  const candidates = [
+    {
+      heading: perServingHeading,
+      values: value.perServing,
+      source: "perServing" as const,
+    },
+    {
+      heading: per100Heading,
+      values: value.per100,
+      source: "per100" as const,
+    },
+  ].filter((candidate) => hasAnyNonEmptyValue(candidate.values));
+
+  const servingCandidate = candidates.find(
+    (candidate) => classifyNutritionHeading(candidate.heading) === "serving",
+  );
+
+  if (servingCandidate) {
+    return servingCandidate;
+  }
+
+  const nonContainerCandidate = candidates.find(
+    (candidate) => classifyNutritionHeading(candidate.heading) !== "container",
+  );
+
+  if (nonContainerCandidate) {
+    return nonContainerCandidate;
+  }
+
+  return (
+    candidates[0] ?? {
+      heading: perServingHeading,
+      values: value.perServing,
+      source: "perServing" as const,
+    }
+  );
+}
+
+export function normalizeModelOutput(
+  value: PantryLabelDualColumnModelOutput,
+): PantryImportResponse {
+  const selectedColumn = selectNutritionColumn(value);
+  const selectedColumnHeading = selectedColumn.heading;
+  const selectedValues = selectedColumn.values;
 
   const draft = createEmptyDraft();
   draft.servingSize = inferServingSizeFromHeading(selectedColumnHeading);
@@ -525,6 +584,8 @@ export async function extractPantryLabelFromImage(image: File) {
     throw new Error("OPENAI_API_KEY is not configured on the server.");
   }
 
+  const openai = createOpenAIClient();
+
   const base64Image = Buffer.from(await image.arrayBuffer()).toString("base64");
   const imageUrl = `data:${image.type};base64,${base64Image}`;
 
@@ -542,6 +603,7 @@ export async function extractPantryLabelFromImage(image: File) {
             type: "input_text",
             text:
               "Extract up to two nutrition columns from the cropped nutrition panel only: one per-100 column and one serving or portion column. " +
+              "If both per-serving and per-container columns are present, use the per-serving or per-portion column for perServing and ignore the per-container column. " +
               "If a column is missing, return an empty heading and empty values for that column. " +
               "Use empty strings for missing or unreadable cells. " +
               "Do not include per-column wording inside the cell value if it only comes from the heading. " +

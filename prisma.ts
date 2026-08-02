@@ -35,7 +35,34 @@ function createPrismaClient() {
 function hasSavedFoodDelegate(
   client: PrismaClient | undefined,
 ): client is PrismaClient {
-  return Boolean(client && "savedFood" in client);
+  if (!client || !("savedFood" in client) || !("dailyEntry" in client)) {
+    return false;
+  }
+
+  const runtimeDataModel = (
+    client as PrismaClient & {
+      _runtimeDataModel?: {
+        models?: Record<
+          string,
+          {
+            fields?: Array<{
+              name?: string;
+            }>;
+          }
+        >;
+      };
+    }
+  )._runtimeDataModel;
+  const dailyEntryFields = runtimeDataModel?.models?.DailyEntry?.fields ?? [];
+  const userFields = runtimeDataModel?.models?.User?.fields ?? [];
+
+  return (
+    dailyEntryFields.some((field) => field.name === "mealCategory") &&
+    userFields.some((field) => field.name === "dailyCalorieGoal") &&
+    userFields.some((field) => field.name === "dailyProteinGoal") &&
+    userFields.some((field) => field.name === "dailyCarbsGoal") &&
+    userFields.some((field) => field.name === "dailyFatGoal")
+  );
 }
 
 const cachedPrisma = globalForPrisma.prisma;

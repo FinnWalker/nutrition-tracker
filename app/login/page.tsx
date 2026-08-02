@@ -1,11 +1,10 @@
 import { Suspense } from "react";
-import { auth } from "@/auth";
+import Link from "next/link";
+import { auth, signIn } from "@/auth";
 import {
   DEFAULT_AUTH_REDIRECT,
   getSafeCallbackPath,
 } from "@/app/lib/auth-redirect";
-import LoginPanel from "@/app/ui/login-panel";
-import PageContainer from "@/app/ui/page-container";
 import { redirect } from "next/navigation";
 
 type LoginPageProps = {
@@ -14,11 +13,11 @@ type LoginPageProps = {
 
 export default function LoginPage(props: LoginPageProps) {
   return (
-    <PageContainer width="narrow" className="flex min-h-full items-center py-4">
+    <main className="min-h-dvh px-6 py-10 md:px-10 md:py-14">
       <Suspense fallback={<LoginPageFallback />}>
         <LoginPageContent searchParams={props.searchParams} />
       </Suspense>
-    </PageContainer>
+    </main>
   );
 }
 
@@ -34,18 +33,43 @@ async function LoginPageContent({ searchParams }: LoginPageProps) {
     redirect(callbackUrl);
   }
 
-  return <LoginPanel callbackUrl={callbackUrl} />;
+  return (
+    <section className="mx-auto w-full max-w-xl border border-dashed border-border bg-surface p-8 md:p-12">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
+        Rebuild mode
+      </p>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Sign in</h1>
+      <p className="mt-4 text-base leading-7 text-foreground-muted">
+        This page has been reduced to a minimal flow while the new UI is
+        rebuilt. The previous sign-in screen still lives at{" "}
+        <Link href="/legacy/login" className="underline">
+          /legacy/login
+        </Link>
+        .
+      </p>
+
+      <form
+        className="mt-6"
+        action={async () => {
+          "use server";
+          await signIn("google", { redirectTo: callbackUrl });
+        }}
+      >
+        <button type="submit" className="bg-brand px-4 py-2 text-sm text-white">
+          Continue with Google
+        </button>
+      </form>
+    </section>
+  );
 }
 
 function LoginPageFallback() {
   return (
-    <section className="w-full border border-border bg-surface p-6 md:p-8">
+    <section className="mx-auto w-full max-w-xl border border-dashed border-border bg-surface p-8 md:p-12">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted">
-        Sign in
+        Rebuild mode
       </p>
-      <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-        Connect your Google account
-      </h1>
+      <h1 className="mt-3 text-3xl font-semibold tracking-tight">Sign in</h1>
       <p className="mt-3 text-base leading-7 text-foreground-muted">
         Preparing your sign-in flow...
       </p>

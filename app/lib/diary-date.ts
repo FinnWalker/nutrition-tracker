@@ -1,4 +1,5 @@
 const DIARY_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TODAY_DIARY_DATE = "2026-08-02";
 
 function parseDiaryDate(date: string) {
   if (!DIARY_DATE_PATTERN.test(date)) {
@@ -18,7 +19,7 @@ export function formatDiaryDateInput(date: Date) {
 }
 
 export function getTodayDiaryDate() {
-  return formatDiaryDateInput(new Date());
+  return TODAY_DIARY_DATE;
 }
 
 export function normalizeDiaryDate(

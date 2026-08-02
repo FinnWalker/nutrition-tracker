@@ -1,20 +1,16 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import Home from "@/app/page";
 
-describe("Home page", () => {
-  it("shows the diary CTA without checking auth state", async () => {
-    render(<Home />);
+const mockRedirect = vi.fn();
 
-    expect(
-      screen.getByRole("heading", {
-        level: 1,
-        name: "Nutrition Tracker",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open diary" })).toHaveAttribute(
-      "href",
-      "/diary",
-    );
+vi.mock("next/navigation", () => ({
+  redirect: (...args: unknown[]) => mockRedirect(...args),
+}));
+
+describe("Home page", () => {
+  it("redirects visitors to the diary", () => {
+    Home();
+
+    expect(mockRedirect).toHaveBeenCalledWith("/diary");
   });
 });

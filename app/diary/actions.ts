@@ -6,6 +6,7 @@ import { prisma } from "@/prisma";
 
 type DailyEntryInput = {
   entryDate: string;
+  mealCategory?: string;
   foodName: string;
   servings: number;
   savedFoodId?: string;
@@ -34,6 +35,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
         },
       },
       entryDate: new Date(`${input.entryDate}T00:00:00.000Z`),
+      mealCategory: input.mealCategory ?? "SNACK",
       foodName: input.foodName.trim(),
       servings: Math.max(0.1, input.servings),
       calories: Math.max(0, Math.round(input.calories)),
@@ -44,6 +46,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
     select: {
       id: true,
       entryDate: true,
+      mealCategory: true,
       foodName: true,
       servings: true,
       calories: true,

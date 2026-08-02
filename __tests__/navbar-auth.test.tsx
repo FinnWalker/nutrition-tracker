@@ -1,12 +1,23 @@
+import { createElement } from "react";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import NavbarAuth from "@/app/ui/navbar-auth";
 
-const mockGetCurrentUserProfile = vi.fn();
+const mockSignOut = vi.fn();
+const mockUseSession = vi.fn();
 
-vi.mock("@/app/lib/get-current-user-profile", () => ({
-  getCurrentUserProfile: (...args: unknown[]) =>
-    mockGetCurrentUserProfile(...args),
+vi.mock("next/image", () => ({
+  default: ({
+    alt,
+    src,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement>) =>
+    createElement("img", { alt, src, ...props }),
+}));
+
+vi.mock("next-auth/react", () => ({
+  signOut: (...args: unknown[]) => mockSignOut(...args),
+  useSession: () => mockUseSession(),
 }));
 
 vi.mock("@/app/ui/google-sign-in-button", () => ({
@@ -15,42 +26,47 @@ vi.mock("@/app/ui/google-sign-in-button", () => ({
   ),
 }));
 
-vi.mock("@/app/ui/sign-out-button", () => ({
-  default: () => <button type="button">Sign out</button>,
-}));
-
 describe("NavbarAuth", () => {
   beforeEach(() => {
-    mockGetCurrentUserProfile.mockReset();
+    mockSignOut.mockReset();
+    mockUseSession.mockReset();
   });
 
-  it("renders the sign-in CTA for signed-out visitors", async () => {
-    mockGetCurrentUserProfile.mockResolvedValue(null);
+  it("renders the sign-in CTA for signed-out visitors", () => {
+    mockUseSession.mockReturnValue({
+      data: null,
+      status: "unauthenticated",
+    });
 
-    render(await NavbarAuth());
+    render(<NavbarAuth />);
 
     expect(
       screen.getByRole("button", { name: "Sign in with Google" }),
     ).toBeVisible();
   });
 
-  it("renders the signed-in user profile when user data is provided", async () => {
-    mockGetCurrentUserProfile.mockResolvedValue({
-      name: "Ava Green",
-      email: "ava@example.com",
-      image: "https://example.com/avatar.png",
+  it("renders the signed-in user profile when user data is provided", () => {
+    mockUseSession.mockReturnValue({
+      data: {
+        user: {
+          name: "Ava Green",
+          email: "ava@example.com",
+          image: "https://example.com/avatar.png",
+        },
+      },
+      status: "authenticated",
     });
 
-    render(await NavbarAuth());
+    render(<NavbarAuth />);
 
     expect(screen.getByText("Ava Green")).toBeVisible();
-    expect(screen.getByText("ava@example.com")).toBeVisible();
+    expect(screen.getByText("Free plan")).toBeVisible();
     expect(screen.getByRole("img", { name: "Ava Green" })).toHaveAttribute(
       "src",
-      expect.stringContaining(
-        encodeURIComponent("https://example.com/avatar.png"),
-      ),
+      "https://example.com/avatar.png",
     );
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Sign out" }),
+    ).not.toBeInTheDocument();
   });
 });

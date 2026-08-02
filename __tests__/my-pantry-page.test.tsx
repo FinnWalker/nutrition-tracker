@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import FoodLibraryPage from "@/app/food-library/page";
+import FoodLibraryPage from "@/app/legacy/food-library/page";
 import FoodLibrarySection from "@/app/food-library/food-library-section";
 
 const mockGetCurrentSession = vi.fn();

@@ -183,7 +183,8 @@ export default function NutritionLabelImporter({
   disabled,
   onPrepared,
 }: NutritionLabelImporterProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const libraryInputRef = useRef<HTMLInputElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const preparedPreviewUrlRef = useRef<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -216,8 +217,12 @@ export default function NutritionLabelImporter({
     setCompletedCrop(null);
     setError(null);
 
-    if (inputRef.current) {
-      inputRef.current.value = "";
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = "";
+    }
+
+    if (libraryInputRef.current) {
+      libraryInputRef.current.value = "";
     }
   }
 
@@ -425,9 +430,9 @@ export default function NutritionLabelImporter({
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <label className="cursor-pointer bg-brand px-4 py-2 text-sm text-white">
+          <label className="hidden cursor-pointer bg-brand px-4 py-2 text-sm text-white md:inline-flex">
             <input
-              ref={inputRef}
+              ref={libraryInputRef}
               type="file"
               accept="image/*"
               disabled={disabled || isPreparing || isRotating}
@@ -435,6 +440,29 @@ export default function NutritionLabelImporter({
               className="sr-only"
             />
             Choose image
+          </label>
+          <label className="cursor-pointer bg-brand px-4 py-2 text-sm text-white md:hidden">
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              disabled={disabled || isPreparing || isRotating}
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+            Take photo
+          </label>
+          <label className="cursor-pointer border border-border px-4 py-2 text-sm text-foreground md:hidden">
+            <input
+              ref={libraryInputRef}
+              type="file"
+              accept="image/*"
+              disabled={disabled || isPreparing || isRotating}
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+            Choose from library
           </label>
           <button
             type="button"

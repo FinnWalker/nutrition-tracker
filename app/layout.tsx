@@ -3,10 +3,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "react-image-crop/dist/ReactCrop.css";
 import AuthSessionProvider from "./ui/auth-session-provider";
-import MobileNavDrawer from "./ui/mobile-nav-drawer";
-import SidebarNav from "./ui/sidebar-nav";
-import ThemeProvider from "./ui/theme-provider";
 import "./globals.css";
+import NavSidebar from "@/components/ui/NavSidebar";
+import BottomNav from "@/components/ui/BottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,27 +31,27 @@ export default function RootLayout(props: RootLayoutProps) {
   return (
     <html
       lang="en"
-      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-dvh bg-background text-foreground">
-        <ThemeProvider>
-          <AuthSessionProvider>
-            <div className="min-h-dvh md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
-              <aside className="hidden border-r border-border bg-surface px-5 py-6 md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:self-start md:overflow-y-auto">
-                <SidebarNav />
-              </aside>
-
-              <main className="flex min-h-dvh flex-col px-4 py-6 md:px-8 md:py-8">
-                <MobileNavDrawer>
-                  <SidebarNav />
-                </MobileNavDrawer>
-                {props.children}
+      <body className="min-h-dvh text-foreground">
+        <AuthSessionProvider>
+          <div className="min-h-dvh lg:h-dvh lg:min-h-0 lg:px-5">
+            <div className="mx-auto min-h-dvh lg:flex lg:h-dvh lg:min-h-0 lg:max-w-[1480px] lg:gap-5">
+              <div className="hidden lg:my-5 lg:block lg:h-[calc(100dvh-2.5rem)] lg:w-64 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white lg:shadow-sm">
+                <NavSidebar />
+              </div>
+              <main className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                <div className="box-border min-h-[calc(100dvh-5rem)] bg-white px-6 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:bg-transparent lg:px-0 lg:py-5">
+                  <div className="lg:min-h-[calc(100dvh-2.5rem)] lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white lg:shadow-sm">
+                    <div className="lg:px-9 lg:py-9">{props.children}</div>
+                  </div>
+                </div>
               </main>
             </div>
-            <Suspense fallback={null}>{props.auth}</Suspense>
-          </AuthSessionProvider>
-        </ThemeProvider>
+          </div>
+          <BottomNav />
+          <Suspense fallback={null}>{props.auth}</Suspense>
+        </AuthSessionProvider>
       </body>
     </html>
   );

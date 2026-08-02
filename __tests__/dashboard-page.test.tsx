@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import DiaryPage from "@/app/diary/page";
+import DiaryPage from "@/app/legacy/diary/page";
 import DiarySection from "@/app/diary/diary-section";
 
 const mockGetCurrentSession = vi.fn();
