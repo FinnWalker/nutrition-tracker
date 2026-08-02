@@ -1,4 +1,5 @@
 import { Leaf } from "lucide-react";
+import Link from "next/link";
 import SidebarNavLinks from "@/app/ui/sidebar-nav-links";
 
 type NavSidebarProps = {
@@ -33,12 +34,12 @@ const NavSidebar = ({ basePath }: NavSidebarProps) => {
         <p className="mt-1 text-xs leading-5 text-foreground-muted">
           Save your favorite foods and scan labels with AI.
         </p>
-        <button
-          type="button"
+        <Link
+          href="/add-food"
           className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-sm"
         >
           + Add Food
-        </button>
+        </Link>
       </section>
     </div>
   );

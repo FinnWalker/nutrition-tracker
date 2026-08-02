@@ -64,13 +64,13 @@ const BottomNav = () => {
             );
           })}
 
-          <button
-            type="button"
+          <Link
+            href="/add-food"
             aria-label="Add food"
             className="mx-auto flex h-13 w-13 items-center justify-center rounded-full bg-brand text-white shadow-lg"
           >
             <Plus className="h-6 w-6" aria-hidden="true" />
-          </button>
+          </Link>
 
           {rightItems.map((item) => {
             const href = item.href || "/";
