@@ -1,18 +1,58 @@
 "use client";
 
 import Fuse from "fuse.js";
-import { useDeferredValue, useId, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import type { FormEvent } from "react";
+import {
+  startTransition,
+  useDeferredValue,
+  useId,
+  useMemo,
+  useOptimistic,
+  useState,
+} from "react";
+import { useRouter } from "next/navigation";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Ellipsis,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  deleteSavedFood,
+  updateSavedFood,
+} from "@/app/food-library/actions";
+import FoodLibraryForm, {
+  type FoodLibraryDraft,
+} from "@/app/ui/food-library-form";
+import { SummaryCard, formatNutritionNumber } from "@/app/ui/nutrition-display";
 
 type FoodLibraryItem = {
   id: string;
   name: string;
   brand: string | null;
   serving: string | null;
+  servingsPerContainer: number | null;
   calories: number;
+  saturatedFat: number;
+  transFat: number;
+  polyunsaturatedFat: number;
+  monounsaturatedFat: number;
+  cholesterolMg: number;
+  sodiumMg: number;
   protein: number;
   carbs: number;
+  dietaryFiber: number;
+  totalSugars: number;
+  addedSugars: number;
   fat: number;
+  vitaminDMcg: number;
+  calciumMg: number;
+  ironMg: number;
+  potassiumMg: number;
 };
 
 type FoodFilter = {
@@ -37,35 +77,132 @@ export default function FoodLibraryPageClient({
   canBrowse,
   items,
 }: FoodLibraryPageClientProps) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<FoodLibraryDraft | null>(null);
+  const [isPersisting, setIsPersisting] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const mobileFilterId = useId();
   const deferredQuery = useDeferredValue(query);
   const searchTerm = deferredQuery.trim();
+  const [optimisticItems, applyOptimisticItems] = useOptimistic(
+    items,
+    applyFoodLibraryMutation,
+  );
 
   const filters: FoodFilter[] = [
-    { label: "All", count: items.length },
+    { label: "All", count: optimisticItems.length },
     ...placeholderFilters.map((label) => ({ label, count: 0 })),
   ];
 
-  const visibleItems =
-    selectedFilter === "All"
-      ? searchTerm
-        ? searchTerm.length === 1
-          ? getSingleCharacterMatches(items, searchTerm)
-          : new Fuse(items, {
-              threshold: 0.6,
-              ignoreLocation: true,
-              keys: [
-                { name: "name", weight: 0.7 },
-                { name: "brand", weight: 0.2 },
-                { name: "serving", weight: 0.1 },
-              ],
-            })
-              .search(searchTerm)
-              .map((result) => result.item)
-        : items
-      : [];
+  const visibleItems = useMemo(
+    () =>
+      selectedFilter === "All"
+        ? searchTerm
+          ? searchTerm.length === 1
+            ? getSingleCharacterMatches(optimisticItems, searchTerm)
+            : new Fuse(optimisticItems, {
+                threshold: 0.6,
+                ignoreLocation: true,
+                keys: [
+                  { name: "name", weight: 0.7 },
+                  { name: "brand", weight: 0.2 },
+                  { name: "serving", weight: 0.1 },
+                ],
+                })
+                .search(searchTerm)
+                .map((result) => result.item)
+          : optimisticItems
+        : [],
+    [optimisticItems, searchTerm, selectedFilter],
+  );
+  const nutritionSnapshot = useMemo(
+    () => (draft ? getNutritionSnapshot(draft) : null),
+    [draft],
+  );
+
+  function updateDraft(field: keyof FoodLibraryDraft, value: string) {
+    setDraft((current) => (current ? { ...current, [field]: value } : current));
+  }
+
+  function openEdit(item: FoodLibraryItem) {
+    setEditingItemId(item.id);
+    setDraft(createDraftFromItem(item));
+    setOpenMenuId(null);
+    setSaveError(null);
+  }
+
+  function closeEdit() {
+    setEditingItemId(null);
+    setDraft(null);
+    setSaveError(null);
+  }
+
+  async function handleDelete(itemId: string) {
+    if (!canBrowse || isPersisting) {
+      return;
+    }
+
+    setOpenMenuId(null);
+    setIsPersisting(true);
+
+    startTransition(async () => {
+      applyOptimisticItems({
+        type: "remove",
+        itemId,
+      });
+
+      try {
+        await deleteSavedFood(itemId);
+        if (editingItemId === itemId) {
+          closeEdit();
+        }
+        router.refresh();
+      } catch {
+        router.refresh();
+      } finally {
+        setIsPersisting(false);
+      }
+    });
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingItemId || !draft || isPersisting) {
+      return;
+    }
+
+    const nextItem = createItemFromDraft(draft, editingItemId);
+
+    setIsPersisting(true);
+    setSaveError(null);
+
+    startTransition(async () => {
+      applyOptimisticItems({
+        type: "update",
+        item: nextItem,
+      });
+
+      try {
+        await updateSavedFood(editingItemId, createSavedFoodInput(draft));
+        closeEdit();
+        router.refresh();
+      } catch (error) {
+        router.refresh();
+        setSaveError(
+          error instanceof Error
+            ? error.message
+            : "We couldn't save that food. Please try again.",
+        );
+      } finally {
+        setIsPersisting(false);
+      }
+    });
+  }
 
   return (
     <main className="mx-auto w-full max-w-7xl">
@@ -163,6 +300,9 @@ export default function FoodLibraryPageClient({
                   <th className="border-b border-border px-5 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
                     Fat
                   </th>
+                  <th className="border-b border-border px-5 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -193,6 +333,16 @@ export default function FoodLibraryPageClient({
                     <td className="border-b border-border px-5 py-4 text-sm font-medium text-foreground last:border-b-0">
                       {formatNumber(item.fat)}g
                     </td>
+                    <td className="border-b border-border px-5 py-4 text-right last:border-b-0">
+                      <ItemMenu
+                        isOpen={openMenuId === item.id}
+                        onOpenChange={(isOpen) =>
+                          setOpenMenuId(isOpen ? item.id : null)
+                        }
+                        onEdit={() => openEdit(item)}
+                        onDelete={() => void handleDelete(item.id)}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -216,6 +366,14 @@ export default function FoodLibraryPageClient({
                     {formatNumber(item.calories)} kcal
                   </p>
                 </div>
+                <ItemMenu
+                  isOpen={openMenuId === item.id}
+                  onOpenChange={(isOpen) =>
+                    setOpenMenuId(isOpen ? item.id : null)
+                  }
+                  onEdit={() => openEdit(item)}
+                  onDelete={() => void handleDelete(item.id)}
+                />
               </article>
             ))}
           </div>
@@ -224,8 +382,233 @@ export default function FoodLibraryPageClient({
             <EmptyState canBrowse={canBrowse} hasQuery={searchTerm.length > 0} />
           ) : null}
         </div>
+
+        {editingItemId && draft ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4 backdrop-blur-sm">
+            <div className="max-h-[90dvh] w-full max-w-5xl overflow-y-auto rounded-[1.75rem] border border-border bg-white shadow-2xl">
+              <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-border bg-white px-6 py-5">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground-muted">
+                    Edit food
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+                    Update saved food
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeEdit}
+                  className="rounded-xl p-2 text-foreground-muted transition-colors hover:bg-surface"
+                  aria-label="Close edit food dialog"
+                >
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="grid gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+                <div className="space-y-5">
+                  <FoodLibraryForm
+                    draft={draft}
+                    disabled={isPersisting}
+                    onChange={updateDraft}
+                  />
+
+                  {saveError ? (
+                    <div className="rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                      {saveError}
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="submit"
+                      disabled={isPersisting || !draft.name.trim()}
+                      className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isPersisting ? "Saving..." : "Save changes"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeEdit}
+                      disabled={isPersisting}
+                      className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+
+                {nutritionSnapshot ? (
+                  <aside className="space-y-5">
+                    <div className="rounded-[1.5rem] border border-border bg-surface p-5">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground-muted">
+                        Nutrition snapshot
+                      </p>
+                      <div className="mt-4 grid grid-cols-2 gap-3">
+                        <SummaryCard
+                          label="Calories"
+                          value={`${formatNutritionNumber(nutritionSnapshot.calories)} kcal`}
+                        />
+                        <SummaryCard
+                          label="Macro estimate"
+                          value={`${formatNutritionNumber(nutritionSnapshot.estimatedCalories)} kcal`}
+                        />
+                      </div>
+                      <div className="mt-5 space-y-4">
+                        <MacroBar
+                          label="Protein"
+                          value={nutritionSnapshot.protein}
+                          colorClass="text-emerald-600"
+                          fillClass="bg-emerald-500"
+                        />
+                        <MacroBar
+                          label="Carbs"
+                          value={nutritionSnapshot.carbs}
+                          colorClass="text-sky-600"
+                          fillClass="bg-sky-500"
+                        />
+                        <MacroBar
+                          label="Fat"
+                          value={nutritionSnapshot.fat}
+                          colorClass="text-amber-600"
+                          fillClass="bg-amber-500"
+                        />
+                      </div>
+                      <p className="mt-5 text-sm text-foreground-muted">
+                        Protein{" "}
+                        {formatNutritionNumber(
+                          nutritionSnapshot.macroPercentages.protein,
+                        )}
+                        %, Carbs{" "}
+                        {formatNutritionNumber(
+                          nutritionSnapshot.macroPercentages.carbs,
+                        )}
+                        %, Fat{" "}
+                        {formatNutritionNumber(
+                          nutritionSnapshot.macroPercentages.fat,
+                        )}
+                        %
+                      </p>
+                    </div>
+
+                    <div className="rounded-[1.5rem] border border-border bg-surface p-5">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-foreground-muted">
+                        Validation
+                      </p>
+
+                      {nutritionSnapshot.warnings.length > 0 ? (
+                        <div className="mt-4 space-y-3">
+                          {nutritionSnapshot.warnings.map((warning) => (
+                            <div
+                              key={warning}
+                              className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                            >
+                              <AlertTriangle
+                                className="mt-0.5 h-4 w-4 shrink-0"
+                                aria-hidden="true"
+                              />
+                              <p>{warning}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="mt-4 space-y-3">
+                          {nutritionSnapshot.checks.map((check) => (
+                            <div
+                              key={check}
+                              className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+                            >
+                              <CheckCircle2
+                                className="mt-0.5 h-4 w-4 shrink-0"
+                                aria-hidden="true"
+                              />
+                              <p>{check}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </aside>
+                ) : null}
+              </form>
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
+  );
+}
+
+type FoodLibraryMutation =
+  | { type: "update"; item: FoodLibraryItem }
+  | { type: "remove"; itemId: string };
+
+function applyFoodLibraryMutation(
+  currentItems: FoodLibraryItem[],
+  mutation: FoodLibraryMutation,
+) {
+  switch (mutation.type) {
+    case "update":
+      return currentItems.map((item) =>
+        item.id === mutation.item.id ? mutation.item : item,
+      );
+    case "remove":
+      return currentItems.filter((item) => item.id !== mutation.itemId);
+    default:
+      return currentItems;
+  }
+}
+
+function ItemMenu({
+  isOpen,
+  onOpenChange,
+  onEdit,
+  onDelete,
+}: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-label="Open food actions"
+        className="rounded-xl p-2 text-foreground-muted transition-colors hover:bg-surface"
+        onClick={() => onOpenChange(!isOpen)}
+      >
+        <Ellipsis className="h-5 w-5" aria-hidden="true" />
+      </button>
+
+      {isOpen ? (
+        <div
+          role="menu"
+          className="absolute top-full right-0 z-20 mt-2 w-36 rounded-[1.1rem] border border-border bg-white p-1.5 shadow-lg"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-surface"
+            onClick={onEdit}
+          >
+            <Pencil className="h-4 w-4 text-foreground-muted" aria-hidden="true" />
+            <span>Edit</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+            onClick={onDelete}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            <span>Delete</span>
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -310,6 +693,135 @@ function formatNumber(value: number) {
   return rounded.replace(/\.0$/, "");
 }
 
+function MacroBar({
+  label,
+  value,
+  colorClass,
+  fillClass,
+}: {
+  label: string;
+  value: number;
+  colorClass: string;
+  fillClass: string;
+}) {
+  const clampedWidth = Math.max(0, Math.min(100, value));
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className={`font-semibold ${colorClass}`}>{label}</span>
+        <span className="text-foreground">{formatNutritionNumber(value)}g</span>
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-surface-elevated">
+        <div
+          className={`h-full rounded-full ${fillClass}`}
+          style={{ width: `${clampedWidth}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function parseNumber(value: string) {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return 0;
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function createDraftFromItem(item: FoodLibraryItem): FoodLibraryDraft {
+  return {
+    name: item.name,
+    brand: item.brand ?? "",
+    servingSize: item.serving ?? "",
+    servingsPerContainer:
+      item.servingsPerContainer === null ? "" : `${item.servingsPerContainer}`,
+    calories: `${item.calories}`,
+    totalFat: item.fat === 0 ? "" : `${item.fat}`,
+    saturatedFat: item.saturatedFat === 0 ? "" : `${item.saturatedFat}`,
+    transFat: item.transFat === 0 ? "" : `${item.transFat}`,
+    polyunsaturatedFat:
+      item.polyunsaturatedFat === 0 ? "" : `${item.polyunsaturatedFat}`,
+    monounsaturatedFat:
+      item.monounsaturatedFat === 0 ? "" : `${item.monounsaturatedFat}`,
+    cholesterolMg: item.cholesterolMg === 0 ? "" : `${item.cholesterolMg}`,
+    sodiumMg: item.sodiumMg === 0 ? "" : `${item.sodiumMg}`,
+    totalCarbohydrate: item.carbs === 0 ? "" : `${item.carbs}`,
+    dietaryFiber: item.dietaryFiber === 0 ? "" : `${item.dietaryFiber}`,
+    totalSugars: item.totalSugars === 0 ? "" : `${item.totalSugars}`,
+    addedSugars: item.addedSugars === 0 ? "" : `${item.addedSugars}`,
+    protein: item.protein === 0 ? "" : `${item.protein}`,
+    vitaminDMcg: item.vitaminDMcg === 0 ? "" : `${item.vitaminDMcg}`,
+    calciumMg: item.calciumMg === 0 ? "" : `${item.calciumMg}`,
+    ironMg: item.ironMg === 0 ? "" : `${item.ironMg}`,
+    potassiumMg: item.potassiumMg === 0 ? "" : `${item.potassiumMg}`,
+  };
+}
+
+function createSavedFoodInput(draft: FoodLibraryDraft) {
+  return {
+    name: draft.name.trim(),
+    brand: draft.brand.trim() || undefined,
+    servingSize: draft.servingSize.trim() || undefined,
+    servingsPerContainer: draft.servingsPerContainer.trim()
+      ? Math.max(0, parseNumber(draft.servingsPerContainer))
+      : undefined,
+    calories: Math.max(0, parseNumber(draft.calories)),
+    totalFat: Math.max(0, parseNumber(draft.totalFat)),
+    saturatedFat: Math.max(0, parseNumber(draft.saturatedFat)),
+    transFat: Math.max(0, parseNumber(draft.transFat)),
+    polyunsaturatedFat: Math.max(0, parseNumber(draft.polyunsaturatedFat)),
+    monounsaturatedFat: Math.max(0, parseNumber(draft.monounsaturatedFat)),
+    cholesterolMg: Math.max(0, parseNumber(draft.cholesterolMg)),
+    sodiumMg: Math.max(0, parseNumber(draft.sodiumMg)),
+    totalCarbohydrate: Math.max(0, parseNumber(draft.totalCarbohydrate)),
+    dietaryFiber: Math.max(0, parseNumber(draft.dietaryFiber)),
+    totalSugars: Math.max(0, parseNumber(draft.totalSugars)),
+    addedSugars: Math.max(0, parseNumber(draft.addedSugars)),
+    protein: Math.max(0, parseNumber(draft.protein)),
+    vitaminDMcg: Math.max(0, parseNumber(draft.vitaminDMcg)),
+    calciumMg: Math.max(0, parseNumber(draft.calciumMg)),
+    ironMg: Math.max(0, parseNumber(draft.ironMg)),
+    potassiumMg: Math.max(0, parseNumber(draft.potassiumMg)),
+  };
+}
+
+function createItemFromDraft(
+  draft: FoodLibraryDraft,
+  itemId: string,
+): FoodLibraryItem {
+  return {
+    id: itemId,
+    name: draft.name.trim(),
+    brand: draft.brand.trim() || null,
+    serving: draft.servingSize.trim() || null,
+    servingsPerContainer: draft.servingsPerContainer.trim()
+      ? Math.max(0, parseNumber(draft.servingsPerContainer))
+      : null,
+    calories: Math.max(0, parseNumber(draft.calories)),
+    saturatedFat: Math.max(0, parseNumber(draft.saturatedFat)),
+    transFat: Math.max(0, parseNumber(draft.transFat)),
+    polyunsaturatedFat: Math.max(0, parseNumber(draft.polyunsaturatedFat)),
+    monounsaturatedFat: Math.max(0, parseNumber(draft.monounsaturatedFat)),
+    cholesterolMg: Math.max(0, parseNumber(draft.cholesterolMg)),
+    sodiumMg: Math.max(0, parseNumber(draft.sodiumMg)),
+    protein: Math.max(0, parseNumber(draft.protein)),
+    carbs: Math.max(0, parseNumber(draft.totalCarbohydrate)),
+    dietaryFiber: Math.max(0, parseNumber(draft.dietaryFiber)),
+    totalSugars: Math.max(0, parseNumber(draft.totalSugars)),
+    addedSugars: Math.max(0, parseNumber(draft.addedSugars)),
+    fat: Math.max(0, parseNumber(draft.totalFat)),
+    vitaminDMcg: Math.max(0, parseNumber(draft.vitaminDMcg)),
+    calciumMg: Math.max(0, parseNumber(draft.calciumMg)),
+    ironMg: Math.max(0, parseNumber(draft.ironMg)),
+    potassiumMg: Math.max(0, parseNumber(draft.potassiumMg)),
+  };
+}
+
 function getSingleCharacterMatches(items: FoodLibraryItem[], searchTerm: string) {
   const normalizedSearchTerm = searchTerm.toLowerCase();
 
@@ -335,4 +847,64 @@ function getSingleCharacterMatches(items: FoodLibraryItem[], searchTerm: string)
 
       return leftItem.name.localeCompare(rightItem.name);
     });
+}
+
+function getNutritionSnapshot(draft: FoodLibraryDraft) {
+  const calories = parseNumber(draft.calories);
+  const protein = parseNumber(draft.protein);
+  const carbs = parseNumber(draft.totalCarbohydrate);
+  const fat = parseNumber(draft.totalFat);
+  const estimatedCalories = protein * 4 + carbs * 4 + fat * 9;
+  const calorieGap = Math.round(calories - estimatedCalories);
+  const totalMacros = protein + carbs + fat;
+  const macroPercentBase = totalMacros > 0 ? totalMacros : 1;
+
+  const warnings: string[] = [];
+
+  if (!draft.name.trim()) {
+    warnings.push("Add a product name so this food is easy to find later.");
+  }
+
+  if (calories > 0 && Math.abs(calorieGap) > 20) {
+    warnings.push(
+      `Macro calories estimate ${estimatedCalories} kcal, which is ${Math.abs(calorieGap)} kcal ${calorieGap > 0 ? "below" : "above"} the entered calories.`,
+    );
+  }
+
+  if (
+    parseNumber(draft.addedSugars) > parseNumber(draft.totalSugars) &&
+    parseNumber(draft.totalSugars) > 0
+  ) {
+    warnings.push("Added sugars should not be greater than total sugars.");
+  }
+
+  if (
+    parseNumber(draft.dietaryFiber) > parseNumber(draft.totalCarbohydrate) &&
+    parseNumber(draft.totalCarbohydrate) > 0
+  ) {
+    warnings.push("Dietary fiber should not be greater than total carbohydrate.");
+  }
+
+  const checks =
+    warnings.length === 0
+      ? [
+          "Calories and macros look internally consistent.",
+          "This entry is ready to save.",
+        ]
+      : [];
+
+  return {
+    calories,
+    protein,
+    carbs,
+    fat,
+    estimatedCalories,
+    macroPercentages: {
+      protein: (protein / macroPercentBase) * 100,
+      carbs: (carbs / macroPercentBase) * 100,
+      fat: (fat / macroPercentBase) * 100,
+    },
+    warnings,
+    checks,
+  };
 }
