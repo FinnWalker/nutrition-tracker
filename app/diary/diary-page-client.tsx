@@ -23,6 +23,7 @@ import {
   addDailyEntry,
   deleteDailyEntry,
 } from "@/app/diary/actions";
+import DiaryMacroPieChart from "@/app/diary/diary-macro-pie-chart";
 import {
   addDaysToDiaryDate,
   formatDiaryDateLabel,
@@ -73,6 +74,12 @@ type QuickAddDraft = {
 type DiaryPageClientProps = {
   canPersist: boolean;
   selectedDate: string;
+  goals: {
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+  };
   initialEntries: DiaryEntry[];
   initialSavedFoods: SavedFood[];
   isLoading?: boolean;
@@ -107,6 +114,7 @@ const mealSections: Array<{
 export default function DiaryPageClient({
   canPersist,
   selectedDate,
+  goals,
   initialEntries,
   initialSavedFoods,
   isLoading = false,
@@ -169,8 +177,6 @@ export default function DiaryPageClient({
       fat: 0,
     },
   );
-  const totalMacroGrams = totals.protein + totals.carbs + totals.fat;
-  const macroPercentBase = totalMacroGrams > 0 ? totalMacroGrams : 1;
   const isToday = selectedDate === getTodayDiaryDate();
   const groupedEntries = useMemo(
     () =>
@@ -355,9 +361,16 @@ export default function DiaryPageClient({
       <section className="space-y-5 lg:space-y-7">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              {isToday ? "Today" : formatDiaryDateLabel(selectedDate)}
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                {isToday ? "Today" : formatDiaryDateLabel(selectedDate)}
+              </h1>
+              {isToday ? (
+                <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  • {formatDiaryDateLabel(selectedDate)}
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -405,55 +418,68 @@ export default function DiaryPageClient({
             </button>
           </div>
         </div>
-
         <section className="rounded-[1.6rem] border border-border bg-white p-5 sm:p-6">
-          <div className="grid gap-6 xl:grid-cols-[18rem_minmax(0,1fr)]">
-            <div className="rounded-[1.5rem] border border-border bg-surface p-5">
+          <div className="grid grid-cols-[minmax(12.5rem,16rem)_minmax(0,1fr)] items-center gap-6">
+            <div className="flex flex-col justify-center">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground-muted">
                 Calories
               </p>
               <div className="mt-5 flex items-center justify-center">
-                <div
-                  className="flex h-40 w-40 items-center justify-center rounded-full"
-                  style={{
-                    background:
-                      "conic-gradient(var(--color-brand) 0deg 300deg, var(--color-brand-muted) 300deg 360deg)",
-                  }}
-                >
-                  <div className="flex h-[7.65rem] w-[7.65rem] flex-col items-center justify-center rounded-full bg-white text-center">
-                    <span className="text-[2rem] font-bold tracking-tight text-foreground">
-                      {totals.calories}
-                    </span>
-                    <span className="mt-1 text-sm font-medium text-foreground-muted">
-                      kcal
-                    </span>
-                  </div>
-                </div>
+                <DiaryMacroPieChart
+                  calories={totals.calories}
+                  calorieGoal={goals.calories}
+                  protein={totals.protein}
+                  carbs={totals.carbs}
+                  fat={totals.fat}
+                />
               </div>
-              <p className="mt-5 text-center text-sm text-foreground-muted">
-                {formatDiaryDateLabel(selectedDate)}
-              </p>
+              <div className="mt-5 text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  {goals.calories
+                    ? `${formatNutritionNumber(totals.calories)} / ${formatNutritionNumber(goals.calories)} kcal`
+                    : `${formatNutritionNumber(totals.calories)} kcal`}
+                </p>
+                <p className="mt-1 text-xs font-medium text-foreground-muted">
+                  {goals.calories
+                    ? totals.calories > goals.calories
+                      ? `${formatNutritionNumber(totals.calories - goals.calories)} kcal over`
+                      : `${formatNutritionNumber(goals.calories - totals.calories)} kcal left`
+                    : "Set a calorie goal on Goals"}
+                </p>
+              </div>
             </div>
 
-            <div className="rounded-[1.5rem] border border-border bg-surface p-5">
-              <div className="space-y-5">
+            <div className="flex min-w-0 items-center">
+              <div className="w-full space-y-4 xl:grid xl:grid-cols-3 xl:gap-0 xl:space-y-0">
                 <MacroProgress
                   label="Protein"
                   value={totals.protein}
-                  percentage={(totals.protein / macroPercentBase) * 100}
+                  target={goals.protein}
+                  unit="g"
                   barClass="bg-emerald-500"
+                  accentClass="text-emerald-600"
+                  trackClass="bg-emerald-100"
+                  cardClass="xl:pr-5"
                 />
                 <MacroProgress
                   label="Carbs"
                   value={totals.carbs}
-                  percentage={(totals.carbs / macroPercentBase) * 100}
+                  target={goals.carbs}
+                  unit="g"
                   barClass="bg-sky-500"
+                  accentClass="text-sky-600"
+                  trackClass="bg-sky-100"
+                  cardClass="xl:px-5"
                 />
                 <MacroProgress
                   label="Fat"
                   value={totals.fat}
-                  percentage={(totals.fat / macroPercentBase) * 100}
+                  target={goals.fat}
+                  unit="g"
                   barClass="bg-amber-500"
+                  accentClass="text-amber-600"
+                  trackClass="bg-amber-100"
+                  cardClass="xl:pl-5"
                 />
               </div>
             </div>
@@ -733,32 +759,53 @@ export default function DiaryPageClient({
 function MacroProgress({
   label,
   value,
-  percentage,
+  target,
+  unit,
   barClass,
+  accentClass,
+  trackClass,
+  cardClass,
 }: {
   label: string;
   value: number;
-  percentage: number;
+  target: number | null;
+  unit: string;
   barClass: string;
+  accentClass: string;
+  trackClass: string;
+  cardClass?: string;
 }) {
+  const percentage =
+    target && target > 0 ? Math.round((value / target) * 100) : null;
+  const progress =
+    target && target > 0 ? Math.max(0, Math.min(100, (value / target) * 100)) : 0;
+
   return (
-    <div className="space-y-2.5">
+    <div className={`w-full space-y-3 rounded-[1.1rem] md:rounded-none ${cardClass ?? ""}`}>
       <div className="flex items-center justify-between gap-4">
-        <span className="text-sm font-semibold text-foreground">{label}</span>
-        <span className="text-sm font-medium text-foreground-muted">
-          {formatNutritionNumber(value)}g
-        </span>
+        <span className={`text-sm font-semibold ${accentClass}`}>{label}</span>
+        {percentage !== null ? (
+          <span className="text-xs font-semibold text-foreground-muted">
+            {percentage}%
+          </span>
+        ) : null}
       </div>
-      <div className="flex items-center gap-3">
-        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-brand-muted">
+      <div className="space-y-2.5">
+        <span className="block text-2xl font-bold tracking-tight text-foreground">
+          {formatNutritionNumber(value)}
+          {unit}
+        </span>
+        <p className="text-xs font-medium text-foreground-muted">
+          {target && target > 0
+            ? `Goal: ${formatNutritionNumber(target)}${unit}`
+            : "No goal set"}
+        </p>
+        <div className={`h-2.5 overflow-hidden rounded-full ${trackClass}`}>
           <div
             className={`h-full rounded-full ${barClass}`}
-            style={{ width: `${Math.max(0, Math.min(100, percentage))}%` }}
+            style={{ width: `${progress}%` }}
           />
         </div>
-        <span className="w-10 shrink-0 text-right text-xs font-semibold text-foreground-muted">
-          {Math.round(percentage)}%
-        </span>
       </div>
     </div>
   );

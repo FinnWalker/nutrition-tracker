@@ -3,6 +3,7 @@ import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
 import { normalizeDiaryDate } from "@/app/lib/diary-date";
 import { getCachedSavedFoodSummaries } from "@/app/lib/get-cached-saved-food-summaries";
 import { getCurrentSession } from "@/app/lib/get-current-session";
+import { getCachedUserGoals } from "@/app/lib/get-cached-user-goals";
 import DiaryPageClient from "./diary-page-client";
 
 const SERVER_FALLBACK_DIARY_DATE = "2026-08-02";
@@ -18,6 +19,12 @@ export default function DiaryPage({
         <DiaryPageClient
           canPersist={false}
           selectedDate={SERVER_FALLBACK_DIARY_DATE}
+          goals={{
+            calories: null,
+            protein: null,
+            carbs: null,
+            fat: null,
+          }}
           initialEntries={[]}
           initialSavedFoods={[]}
           isLoading
@@ -46,11 +53,20 @@ async function DiaryPageContent({
   const initialSavedFoods = session?.user?.email
     ? await getCachedSavedFoodSummaries(session.user.email)
     : [];
+  const userGoals = session?.user?.email
+    ? await getCachedUserGoals(session.user.email)
+    : null;
 
   return (
     <DiaryPageClient
       canPersist={Boolean(session?.user)}
       selectedDate={selectedDate}
+      goals={{
+        calories: userGoals?.dailyCalorieGoal ?? null,
+        protein: userGoals?.dailyProteinGoal ?? null,
+        carbs: userGoals?.dailyCarbsGoal ?? null,
+        fat: userGoals?.dailyFatGoal ?? null,
+      }}
       initialEntries={initialEntries.map((entry) => ({
         id: entry.id,
         entryDate: entry.entryDate.toISOString().slice(0, 10),
