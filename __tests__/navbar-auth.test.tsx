@@ -6,7 +6,11 @@ const mockSignOut = vi.fn();
 const mockUseSession = vi.fn();
 
 vi.mock("next/image", () => ({
-  default: ({ alt, src, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+  default: ({
+    alt,
+    src,
+    ...props
+  }: React.ImgHTMLAttributes<HTMLImageElement>) => (
     <img alt={alt} src={src} {...props} />
   ),
 }));
