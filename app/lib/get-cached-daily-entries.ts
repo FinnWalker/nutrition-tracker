@@ -18,10 +18,11 @@ export async function getCachedDailyEntries(email: string, entryDate: string) {
         email,
       },
     },
-    orderBy: [{ entryDate: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ consumedAt: "asc" }, { createdAt: "asc" }],
     select: {
       id: true,
       entryDate: true,
+      consumedAt: true,
       createdAt: true,
       mealCategory: true,
       foodName: true,

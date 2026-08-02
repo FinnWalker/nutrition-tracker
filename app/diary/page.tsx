@@ -70,6 +70,7 @@ async function DiaryPageContent({
       initialEntries={initialEntries.map((entry) => ({
         id: entry.id,
         entryDate: entry.entryDate.toISOString().slice(0, 10),
+        consumedAt: entry.consumedAt.toISOString(),
         createdAt: entry.createdAt.toISOString(),
         mealCategory: normalizeMealCategory(entry.mealCategory),
         foodName: entry.foodName,

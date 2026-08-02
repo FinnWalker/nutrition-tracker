@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import { addDailyEntry, deleteDailyEntry } from "@/app/diary/actions";
+import { getDefaultConsumedAt } from "@/app/lib/diary-consumed-at";
 import DiaryMacroPieChart from "@/app/diary/diary-macro-pie-chart";
 import {
   addDaysToDiaryDate,
@@ -32,6 +33,7 @@ import { formatNutritionNumber } from "@/app/ui/nutrition-display";
 type DiaryEntry = {
   id: string;
   entryDate: string;
+  consumedAt: string;
   createdAt: string;
   mealCategory: MealCategory;
   foodName: string;
@@ -141,8 +143,8 @@ export default function DiaryPageClient({
     () =>
       [...optimisticEntries].sort(
         (leftEntry, rightEntry) =>
-          new Date(leftEntry.createdAt).getTime() -
-          new Date(rightEntry.createdAt).getTime(),
+          new Date(leftEntry.consumedAt).getTime() -
+          new Date(rightEntry.consumedAt).getTime(),
       ),
     [optimisticEntries],
   );
@@ -266,6 +268,7 @@ export default function DiaryPageClient({
         try {
           await addDailyEntry({
             entryDate: selectedDate,
+            consumedAt: nextEntry.consumedAt,
             mealCategory,
             foodName: nextEntry.foodName,
             servings: nextEntry.servings,
@@ -328,6 +331,7 @@ export default function DiaryPageClient({
       try {
         await addDailyEntry({
           entryDate: selectedDate,
+          consumedAt: nextEntry.consumedAt,
           mealCategory: nextEntry.mealCategory,
           foodName: nextEntry.foodName,
           servings: nextEntry.servings,
@@ -879,6 +883,7 @@ function createSavedFoodEntry(
   return {
     id,
     entryDate: selectedDate,
+    consumedAt: getDefaultConsumedAt(selectedDate).toISOString(),
     createdAt: new Date().toISOString(),
     mealCategory,
     foodName: item.name,
@@ -898,6 +903,7 @@ function createQuickAddEntry(
   return {
     id,
     entryDate: selectedDate,
+    consumedAt: getDefaultConsumedAt(selectedDate).toISOString(),
     createdAt: new Date().toISOString(),
     mealCategory: draft.mealCategory,
     foodName: draft.foodName.trim(),

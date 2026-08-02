@@ -7,6 +7,7 @@ import DiaryManager from "@/app/ui/diary-manager";
 type DiaryEntry = {
   id: string;
   entryDate: string;
+  consumedAt: string;
   foodName: string;
   servings: number;
   calories: number;
@@ -26,6 +27,7 @@ type SavedFoodListItem = {
 function mapEntryToDiaryEntry(entry: {
   id: string;
   entryDate: Date;
+  consumedAt: Date;
   foodName: string;
   servings: number;
   calories: number;
@@ -36,6 +38,7 @@ function mapEntryToDiaryEntry(entry: {
   return {
     id: entry.id,
     entryDate: entry.entryDate.toISOString().slice(0, 10),
+    consumedAt: entry.consumedAt.toISOString(),
     foodName: entry.foodName,
     servings: entry.servings,
     calories: entry.calories,

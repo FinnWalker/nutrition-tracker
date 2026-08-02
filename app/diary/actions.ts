@@ -1,11 +1,13 @@
 "use server";
 
 import { updateTag } from "next/cache";
+import { getDefaultConsumedAt } from "@/app/lib/diary-consumed-at";
 import { requireCurrentUserRecord } from "@/app/lib/require-current-user-record";
 import { prisma } from "@/prisma";
 
 type DailyEntryInput = {
   entryDate: string;
+  consumedAt?: string;
   mealCategory?: string;
   foodName: string;
   servings: number;
@@ -35,6 +37,9 @@ export async function addDailyEntry(input: DailyEntryInput) {
         },
       },
       entryDate: new Date(`${input.entryDate}T00:00:00.000Z`),
+      consumedAt: input.consumedAt
+        ? new Date(input.consumedAt)
+        : getDefaultConsumedAt(input.entryDate),
       mealCategory: input.mealCategory ?? "SNACK",
       foodName: input.foodName.trim(),
       servings: Math.max(0.1, input.servings),
@@ -46,6 +51,7 @@ export async function addDailyEntry(input: DailyEntryInput) {
     select: {
       id: true,
       entryDate: true,
+      consumedAt: true,
       mealCategory: true,
       foodName: true,
       servings: true,

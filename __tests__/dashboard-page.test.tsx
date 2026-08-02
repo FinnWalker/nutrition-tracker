@@ -293,6 +293,7 @@ describe("DiaryPage", () => {
       {
         id: "db-entry",
         entryDate: new Date("2026-07-02T00:00:00.000Z"),
+        consumedAt: new Date("2026-07-02T12:30:00.000Z"),
         foodName: "Saved omelette",
         servings: 1,
         calories: 320,
