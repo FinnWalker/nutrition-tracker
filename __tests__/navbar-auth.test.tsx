@@ -11,9 +11,8 @@ vi.mock("next/image", () => ({
     alt,
     src,
     ...props
-  }: React.ImgHTMLAttributes<HTMLImageElement>) => (
-    createElement("img", { alt, src, ...props })
-  ),
+  }: React.ImgHTMLAttributes<HTMLImageElement>) =>
+    createElement("img", { alt, src, ...props }),
 }));
 
 vi.mock("next-auth/react", () => ({
