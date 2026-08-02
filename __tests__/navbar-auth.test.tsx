@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import NavbarAuth from "@/app/ui/navbar-auth";
@@ -11,7 +12,7 @@ vi.mock("next/image", () => ({
     src,
     ...props
   }: React.ImgHTMLAttributes<HTMLImageElement>) => (
-    <img alt={alt} src={src} {...props} />
+    createElement("img", { alt, src, ...props })
   ),
 }));
 
