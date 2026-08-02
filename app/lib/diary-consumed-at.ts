@@ -10,15 +10,13 @@ export function getDefaultConsumedAt(entryDate: string, now?: Date) {
   }
 
   return new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day,
-      resolvedNow.getUTCHours(),
-      resolvedNow.getUTCMinutes(),
-      resolvedNow.getUTCSeconds(),
-      resolvedNow.getUTCMilliseconds(),
-    ),
+    year,
+    month - 1,
+    day,
+    resolvedNow.getHours(),
+    resolvedNow.getMinutes(),
+    resolvedNow.getSeconds(),
+    resolvedNow.getMilliseconds(),
   );
 }
 
@@ -49,7 +47,7 @@ export function getConsumedAtFromTimeValue(
     return resolvedFallback;
   }
 
-  return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
+  return new Date(year, month - 1, day, hours, minutes, 0, 0);
 }
 
 export function getDiaryTimelineGroupingWindowMinutes() {
