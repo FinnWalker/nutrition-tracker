@@ -57,7 +57,7 @@ function hasSavedFoodDelegate(
   const userFields = runtimeDataModel?.models?.User?.fields ?? [];
 
   return (
-    dailyEntryFields.some((field) => field.name === "mealCategory") &&
+    dailyEntryFields.some((field) => field.name === "consumedAt") &&
     userFields.some((field) => field.name === "dailyCalorieGoal") &&
     userFields.some((field) => field.name === "dailyProteinGoal") &&
     userFields.some((field) => field.name === "dailyCarbsGoal") &&

@@ -38,6 +38,7 @@ import {
   getTodayDiaryDate,
 } from "@/app/lib/diary-date";
 import { groupDiaryEntries } from "@/app/lib/group-diary-entries";
+import { getMacroCalorieEstimate } from "@/app/lib/nutrition-validation";
 import { formatNutritionNumber } from "@/app/ui/nutrition-display";
 
 type DiaryEntry = {
@@ -169,6 +170,7 @@ export default function DiaryPageClient({
       fat: 0,
     },
   );
+  const macroCalorieInsight = getMacroCalorieInsight(totals);
   const timelineGroups = useMemo(() => groupDiaryEntries(entries), [entries]);
   const isToday = selectedDate === getTodayDiaryDate();
 
@@ -489,6 +491,11 @@ export default function DiaryPageClient({
                     : "Set a calorie goal on Goals"}
                 </p>
               </div>
+              {macroCalorieInsight ? (
+                <p className="mt-4 rounded-[1rem] border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
+                  {macroCalorieInsight}
+                </p>
+              ) : null}
             </div>
 
             <div className="flex min-w-0 items-center">
@@ -1083,6 +1090,35 @@ function formatEntryTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function getMacroCalorieInsight({
+  calories,
+  protein,
+  carbs,
+  fat,
+}: {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}) {
+  const { estimatedCalories, calorieGap } = getMacroCalorieEstimate({
+    calories,
+    protein,
+    carbs,
+    fat,
+  });
+
+  if (calories <= 0 || Math.abs(calorieGap) <= 20) {
+    return null;
+  }
+
+  if (calorieGap > 0) {
+    return `${formatNutritionNumber(calorieGap)} kcal unaccounted for based on the logged macros.`;
+  }
+
+  return `Macros estimate ${formatNutritionNumber(estimatedCalories)} kcal, which is ${formatNutritionNumber(Math.abs(calorieGap))} kcal above the logged calories.`;
 }
 
 function formatTimelineGroupLabel(
