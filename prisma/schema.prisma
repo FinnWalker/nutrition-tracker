@@ -28,7 +28,6 @@ model DailyEntry {
   userId       String
   entryDate    DateTime @db.Date
   consumedAt   DateTime @default(now())
-  mealCategory String   @default("SNACK")
   foodName     String
   servings     Float    @default(1)
   calories     Int

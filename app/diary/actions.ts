@@ -8,7 +8,6 @@ import { prisma } from "@/prisma";
 type DailyEntryInput = {
   entryDate: string;
   consumedAt?: string;
-  mealCategory?: string;
   foodName: string;
   servings: number;
   savedFoodId?: string;
@@ -40,7 +39,6 @@ export async function addDailyEntry(input: DailyEntryInput) {
       consumedAt: input.consumedAt
         ? new Date(input.consumedAt)
         : getDefaultConsumedAt(input.entryDate),
-      mealCategory: input.mealCategory ?? "SNACK",
       foodName: input.foodName.trim(),
       servings: Math.max(0.1, input.servings),
       calories: Math.max(0, Math.round(input.calories)),
@@ -52,7 +50,6 @@ export async function addDailyEntry(input: DailyEntryInput) {
       id: true,
       entryDate: true,
       consumedAt: true,
-      mealCategory: true,
       foodName: true,
       servings: true,
       calories: true,

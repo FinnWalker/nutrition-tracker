@@ -24,7 +24,6 @@ export async function getCachedDailyEntries(email: string, entryDate: string) {
       entryDate: true,
       consumedAt: true,
       createdAt: true,
-      mealCategory: true,
       foodName: true,
       servings: true,
       calories: true,
