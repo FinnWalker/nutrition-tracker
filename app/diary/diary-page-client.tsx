@@ -4,8 +4,8 @@ import Fuse from "fuse.js";
 import type { FormEvent } from "react";
 import {
   startTransition,
-  useEffect,
   useDeferredValue,
+  useEffect,
   useMemo,
   useOptimistic,
   useRef,
@@ -16,11 +16,17 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   Plus,
   Search,
   Trash2,
 } from "lucide-react";
-import { addDailyEntry, deleteDailyEntry } from "@/app/diary/actions";
+import {
+  addDailyEntry,
+  deleteDailyEntry,
+  updateDailyEntryTime,
+} from "@/app/diary/actions";
+import DiaryMacroPieChart from "@/app/diary/diary-macro-pie-chart";
 import {
   getFallbackConsumedTimeValue,
   getConsumedAtFromTimeValue,
@@ -31,14 +37,13 @@ import {
   formatDiaryDateLabel,
   getTodayDiaryDate,
 } from "@/app/lib/diary-date";
-import DiaryMacroPieChart from "@/app/diary/diary-macro-pie-chart";
 import { groupDiaryEntries } from "@/app/lib/group-diary-entries";
 import { formatNutritionNumber } from "@/app/ui/nutrition-display";
 
 type DiaryEntry = {
   id: string;
   entryDate: string;
-  consumedAt: string;
+  consumedAt: string | null;
   createdAt: string;
   foodName: string;
   servings: number;
@@ -65,7 +70,7 @@ type SavedFoodDiaryDetails = {
 };
 
 type QuickAddDraft = {
-  consumedTime: string;
+  consumedTime: string | null;
   foodName: string;
   calories: string;
   protein: string;
@@ -88,7 +93,9 @@ type DiaryPageClientProps = {
 };
 
 type EntryMutation =
-  { type: "add"; entry: DiaryEntry } | { type: "remove"; entryId: string };
+  | { type: "add"; entry: DiaryEntry }
+  | { type: "remove"; entryId: string }
+  | { type: "update-time"; entryId: string; consumedAt: string | null };
 
 export default function DiaryPageClient({
   canPersist,
@@ -101,15 +108,19 @@ export default function DiaryPageClient({
   const router = useRouter();
   const pathname = usePathname();
   const [isSavedFoodPickerOpen, setIsSavedFoodPickerOpen] = useState(false);
-  const [savedFoodConsumedTime, setSavedFoodConsumedTime] = useState(
-    getFallbackConsumedTimeValue(),
-  );
+  const [savedFoodConsumedTime, setSavedFoodConsumedTime] = useState<
+    string | null
+  >(getFallbackConsumedTimeValue());
   const [savedFoodQuery, setSavedFoodQuery] = useState("");
   const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(
     createInitialQuickAddDraft(),
   );
   const [isPersisting, setIsPersisting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editingTimeEntryId, setEditingTimeEntryId] = useState<string | null>(
+    null,
+  );
+  const [editingTimeValue, setEditingTimeValue] = useState<string | null>(null);
   const optimisticEntryCountRef = useRef(0);
   const deferredSavedFoodQuery = useDeferredValue(savedFoodQuery);
   const [optimisticEntries, applyOptimisticEntry] = useOptimistic(
@@ -121,8 +132,8 @@ export default function DiaryPageClient({
     () =>
       [...optimisticEntries].sort(
         (leftEntry, rightEntry) =>
-          new Date(leftEntry.consumedAt).getTime() -
-          new Date(rightEntry.consumedAt).getTime(),
+          getConsumedAtSortValue(leftEntry.consumedAt) -
+          getConsumedAtSortValue(rightEntry.consumedAt),
       ),
     [optimisticEntries],
   );
@@ -349,6 +360,42 @@ export default function DiaryPageClient({
     });
   }
 
+  async function saveEntryTime(entryId: string) {
+    if (!canPersist || isLoading || isPersisting) {
+      return;
+    }
+
+    setIsPersisting(true);
+    setSaveError(null);
+
+    const nextConsumedAt = editingTimeValue
+      ? getConsumedAtFromTimeValue(selectedDate, editingTimeValue).toISOString()
+      : null;
+
+    startTransition(async () => {
+      applyOptimisticEntry({
+        type: "update-time",
+        entryId,
+        consumedAt: nextConsumedAt,
+      });
+
+      try {
+        await updateDailyEntryTime(entryId, {
+          entryDate: selectedDate,
+          consumedAt: nextConsumedAt,
+        });
+        setEditingTimeEntryId(null);
+        setEditingTimeValue(null);
+        router.refresh();
+      } catch {
+        setSaveError("We couldn't update that time. Please try again.");
+        router.refresh();
+      } finally {
+        setIsPersisting(false);
+      }
+    });
+  }
+
   return (
     <main className="mx-auto w-full max-w-7xl">
       <section className="space-y-5 lg:space-y-7">
@@ -536,14 +583,26 @@ export default function DiaryPageClient({
                   <span className="sr-only">Saved food time</span>
                   <input
                     type="time"
-                    value={savedFoodConsumedTime}
+                    value={savedFoodConsumedTime ?? ""}
                     onChange={(event) =>
-                      setSavedFoodConsumedTime(event.target.value)
+                      setSavedFoodConsumedTime(event.target.value || null)
                     }
                     disabled={isLoading || isPersisting}
                     className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
+                <button
+                  type="button"
+                  onClick={() => setSavedFoodConsumedTime(null)}
+                  disabled={isLoading || isPersisting}
+                  className={`inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                    savedFoodConsumedTime === null
+                      ? "border-brand bg-brand-muted text-brand-foreground"
+                      : "border-border bg-white text-foreground hover:bg-surface"
+                  }`}
+                >
+                  Any time
+                </button>
               </div>
 
               <div className="mt-3 overflow-hidden rounded-[1.2rem] border border-border bg-white">
@@ -576,7 +635,7 @@ export default function DiaryPageClient({
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-xs font-medium text-foreground-muted">
-                            {savedFoodConsumedTime}
+                            {savedFoodConsumedTime ?? "Any time"}
                           </span>
                           <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white">
                             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -608,6 +667,7 @@ export default function DiaryPageClient({
                           {formatTimelineGroupLabel(
                             group.startTime,
                             group.endTime,
+                            group.isAnyTime,
                           )}
                         </h3>
                         <p className="mt-0.5 text-xs text-foreground-muted">
@@ -631,7 +691,9 @@ export default function DiaryPageClient({
                               {formatDiaryFoodName(entry.foodName)}
                             </p>
                             <p className="mt-1 text-xs text-foreground-muted">
-                              {formatEntryTime(entry.consumedAt)}
+                              {entry.consumedAt
+                                ? formatEntryTime(entry.consumedAt)
+                                : "Any time"}
                               <span className="mx-2">•</span>
                               {formatNutritionNumber(entry.servings)} serving
                               {entry.servings === 1 ? "" : "s"}
@@ -641,26 +703,111 @@ export default function DiaryPageClient({
                           </div>
                           <div className="flex items-center gap-3">
                             {canPersist ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  void removeEntry(entry.id);
-                                }}
-                                disabled={isLoading || isPersisting}
-                                className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                                aria-label={`Delete ${entry.foodName}`}
-                                title={`Consumed at ${formatEntryTime(entry.consumedAt)}`}
-                              >
-                                <Trash2
-                                  className="h-4 w-4"
-                                  aria-hidden="true"
-                                />
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingTimeEntryId(entry.id);
+                                    setEditingTimeValue(
+                                      entry.consumedAt
+                                        ? formatTimeInputValue(entry.consumedAt)
+                                        : null,
+                                    );
+                                  }}
+                                  disabled={isLoading || isPersisting}
+                                  className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                                  aria-label={`Edit time for ${entry.foodName}`}
+                                  title={
+                                    entry.consumedAt
+                                      ? `Consumed at ${formatEntryTime(entry.consumedAt)}`
+                                      : "Any time"
+                                  }
+                                >
+                                  <Clock3
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                  />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void removeEntry(entry.id);
+                                  }}
+                                  disabled={isLoading || isPersisting}
+                                  className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                                  aria-label={`Delete ${entry.foodName}`}
+                                  title={
+                                    entry.consumedAt
+                                      ? `Consumed at ${formatEntryTime(entry.consumedAt)}`
+                                      : "Any time"
+                                  }
+                                >
+                                  <Trash2
+                                    className="h-4 w-4"
+                                    aria-hidden="true"
+                                  />
+                                </button>
+                              </>
                             ) : null}
                           </div>
                         </article>
                       ))}
                     </div>
+
+                    {editingTimeEntryId &&
+                    group.entries.some(
+                      (entry) => entry.id === editingTimeEntryId,
+                    ) ? (
+                      <div className="border-t border-border px-4 py-4 sm:px-5">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                          <label className="min-w-[8rem]">
+                            <span className="sr-only">Entry time</span>
+                            <input
+                              type="time"
+                              value={editingTimeValue ?? ""}
+                              onChange={(event) =>
+                                setEditingTimeValue(event.target.value || null)
+                              }
+                              disabled={isLoading || isPersisting}
+                              className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setEditingTimeValue(null)}
+                            disabled={isLoading || isPersisting}
+                            className={`inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                              editingTimeValue === null
+                                ? "border-brand bg-brand-muted text-brand-foreground"
+                                : "border-border bg-white text-foreground hover:bg-surface"
+                            }`}
+                          >
+                            Any time
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingTimeEntryId(null);
+                              setEditingTimeValue(null);
+                            }}
+                            disabled={isLoading || isPersisting}
+                            className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-white px-4 text-sm font-semibold text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void saveEntryTime(editingTimeEntryId);
+                            }}
+                            disabled={isLoading || isPersisting}
+                            className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Save time
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </section>
                 ))
               )}
@@ -684,13 +831,28 @@ export default function DiaryPageClient({
               />
               <input
                 type="time"
-                value={quickAddDraft.consumedTime}
+                value={quickAddDraft.consumedTime ?? ""}
                 onChange={(event) =>
-                  updateQuickAddDraft("consumedTime", event.target.value)
+                  updateQuickAddDraft(
+                    "consumedTime",
+                    event.target.value || null,
+                  )
                 }
                 disabled={!canPersist || isLoading || isPersisting}
                 className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-36"
               />
+              <button
+                type="button"
+                onClick={() => updateQuickAddDraft("consumedTime", null)}
+                disabled={!canPersist || isLoading || isPersisting}
+                className={`inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  quickAddDraft.consumedTime === null
+                    ? "border-brand bg-brand-muted text-brand-foreground"
+                    : "border-border bg-white text-foreground hover:bg-surface"
+                }`}
+              >
+                Any time
+              </button>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <input
@@ -829,6 +991,15 @@ function applyEntryMutation(
       return [...currentEntries, mutation.entry];
     case "remove":
       return currentEntries.filter((entry) => entry.id !== mutation.entryId);
+    case "update-time":
+      return currentEntries.map((entry) =>
+        entry.id === mutation.entryId
+          ? {
+              ...entry,
+              consumedAt: mutation.consumedAt,
+            }
+          : entry,
+      );
     default:
       return currentEntries;
   }
@@ -839,15 +1010,14 @@ function createSavedFoodEntry(
   item: SavedFood,
   details: SavedFoodDiaryDetails,
   selectedDate: string,
-  consumedTime: string,
+  consumedTime: string | null,
 ): DiaryEntry {
   return {
     id,
     entryDate: selectedDate,
-    consumedAt: getConsumedAtFromTimeValue(
-      selectedDate,
-      consumedTime,
-    ).toISOString(),
+    consumedAt: consumedTime
+      ? getConsumedAtFromTimeValue(selectedDate, consumedTime).toISOString()
+      : null,
     createdAt: new Date().toISOString(),
     foodName: item.name,
     servings: 1,
@@ -866,10 +1036,12 @@ function createQuickAddEntry(
   return {
     id,
     entryDate: selectedDate,
-    consumedAt: getConsumedAtFromTimeValue(
-      selectedDate,
-      draft.consumedTime,
-    ).toISOString(),
+    consumedAt: draft.consumedTime
+      ? getConsumedAtFromTimeValue(
+          selectedDate,
+          draft.consumedTime,
+        ).toISOString()
+      : null,
     createdAt: new Date().toISOString(),
     foodName: draft.foodName.trim(),
     servings: 1,
@@ -913,13 +1085,33 @@ function formatEntryTime(value: string) {
   }).format(new Date(value));
 }
 
-function formatTimelineGroupLabel(startTime: string, endTime: string) {
+function formatTimelineGroupLabel(
+  startTime: string | null,
+  endTime: string | null,
+  isAnyTime: boolean,
+) {
+  if (isAnyTime || !startTime || !endTime) {
+    return "Any time";
+  }
+
   const formattedStartTime = formatEntryTime(startTime);
   const formattedEndTime = formatEntryTime(endTime);
 
   return formattedStartTime === formattedEndTime
     ? formattedStartTime
     : `${formattedStartTime} - ${formattedEndTime}`;
+}
+
+function formatTimeInputValue(value: string) {
+  const date = new Date(value);
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${hours}:${minutes}`;
+}
+
+function getConsumedAtSortValue(consumedAt: string | null) {
+  return consumedAt ? new Date(consumedAt).getTime() : Number.POSITIVE_INFINITY;
 }
 
 function formatDiaryFoodName(value: string) {
