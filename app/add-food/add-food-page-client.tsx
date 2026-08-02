@@ -218,8 +218,7 @@ export default function AddFoodPageClient() {
       body: formData,
     });
     const payload = (await response.json()) as
-      | PantryImportResponse
-      | { error?: string };
+      PantryImportResponse | { error?: string };
 
     if (!response.ok || !("draft" in payload)) {
       throw new Error(
@@ -371,7 +370,9 @@ export default function AddFoodPageClient() {
               <div className="flex flex-wrap gap-3">
                 <button
                   type="submit"
-                  disabled={isPersisting || isAnalyzingLabel || !draft.name.trim()}
+                  disabled={
+                    isPersisting || isAnalyzingLabel || !draft.name.trim()
+                  }
                   className="inline-flex items-center justify-center rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isAnalyzingLabel
@@ -434,10 +435,19 @@ export default function AddFoodPageClient() {
                   />
                 </div>
                 <p className="mt-5 text-sm text-foreground-muted">
-                  Protein {formatNutritionNumber(nutritionSnapshot.macroPercentages.protein)}
+                  Protein{" "}
+                  {formatNutritionNumber(
+                    nutritionSnapshot.macroPercentages.protein,
+                  )}
                   %, Carbs{" "}
-                  {formatNutritionNumber(nutritionSnapshot.macroPercentages.carbs)}
-                  %, Fat {formatNutritionNumber(nutritionSnapshot.macroPercentages.fat)}%
+                  {formatNutritionNumber(
+                    nutritionSnapshot.macroPercentages.carbs,
+                  )}
+                  %, Fat{" "}
+                  {formatNutritionNumber(
+                    nutritionSnapshot.macroPercentages.fat,
+                  )}
+                  %
                 </p>
               </div>
 

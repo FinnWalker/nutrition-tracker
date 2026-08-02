@@ -22,9 +22,7 @@ export default function LegacyLoginPage(props: LegacyLoginPageProps) {
   );
 }
 
-async function LegacyLoginPageContent({
-  searchParams,
-}: LegacyLoginPageProps) {
+async function LegacyLoginPageContent({ searchParams }: LegacyLoginPageProps) {
   const session = await auth();
   const query = await searchParams;
   const callbackUrl = getSafeCallbackPath(

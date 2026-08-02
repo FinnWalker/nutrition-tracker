@@ -45,7 +45,9 @@ export default function GoalsPageClient({
         ? ""
         : `${initialGoals.dailyProteinGoal}`,
     dailyCarbsGoal:
-      initialGoals.dailyCarbsGoal === null ? "" : `${initialGoals.dailyCarbsGoal}`,
+      initialGoals.dailyCarbsGoal === null
+        ? ""
+        : `${initialGoals.dailyCarbsGoal}`,
     dailyFatGoal:
       initialGoals.dailyFatGoal === null ? "" : `${initialGoals.dailyFatGoal}`,
   });
@@ -79,11 +81,7 @@ export default function GoalsPageClient({
       fat,
     });
 
-    if (
-      hasCalorieGoal &&
-      allMacroGoalsProvided &&
-      macroCalorieWarning
-    ) {
+    if (hasCalorieGoal && allMacroGoalsProvided && macroCalorieWarning) {
       warnings.push(macroCalorieWarning);
     }
 

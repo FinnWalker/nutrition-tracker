@@ -19,10 +19,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  addDailyEntry,
-  deleteDailyEntry,
-} from "@/app/diary/actions";
+import { addDailyEntry, deleteDailyEntry } from "@/app/diary/actions";
 import DiaryMacroPieChart from "@/app/diary/diary-macro-pie-chart";
 import {
   addDaysToDiaryDate,
@@ -86,8 +83,7 @@ type DiaryPageClientProps = {
 };
 
 type EntryMutation =
-  | { type: "add"; entry: DiaryEntry }
-  | { type: "remove"; entryId: string };
+  { type: "add"; entry: DiaryEntry } | { type: "remove"; entryId: string };
 
 const initialQuickAddDraft: QuickAddDraft = {
   mealCategory: "SNACK",
@@ -104,7 +100,12 @@ const mealSections: Array<{
   icon: string;
   addLabel: string;
 }> = [
-  { category: "BREAKFAST", label: "Breakfast", icon: "☀️", addLabel: "Add breakfast" },
+  {
+    category: "BREAKFAST",
+    label: "Breakfast",
+    icon: "☀️",
+    addLabel: "Add breakfast",
+  },
   { category: "LUNCH", label: "Lunch", icon: "🍽️", addLabel: "Add lunch" },
   { category: "SNACK", label: "Snack", icon: "🍎", addLabel: "Add snack" },
   { category: "DINNER", label: "Dinner", icon: "🌙", addLabel: "Add dinner" },
@@ -121,13 +122,11 @@ export default function DiaryPageClient({
 }: DiaryPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [activeAddCategory, setActiveAddCategory] = useState<MealCategory | null>(
-    null,
-  );
+  const [activeAddCategory, setActiveAddCategory] =
+    useState<MealCategory | null>(null);
   const [savedFoodQuery, setSavedFoodQuery] = useState("");
-  const [quickAddDraft, setQuickAddDraft] = useState<QuickAddDraft>(
-    initialQuickAddDraft,
-  );
+  const [quickAddDraft, setQuickAddDraft] =
+    useState<QuickAddDraft>(initialQuickAddDraft);
   const [isPersisting, setIsPersisting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const deferredSavedFoodQuery = useDeferredValue(savedFoodQuery);
@@ -221,8 +220,7 @@ export default function DiaryPageClient({
       method: "GET",
     });
     const payload = (await response.json()) as
-      | SavedFoodDiaryDetails
-      | { error?: string };
+      SavedFoodDiaryDetails | { error?: string };
 
     if (!response.ok || !("id" in payload)) {
       throw new Error(
@@ -291,7 +289,12 @@ export default function DiaryPageClient({
   async function handleQuickAddSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!canPersist || isLoading || isPersisting || !quickAddDraft.foodName.trim()) {
+    if (
+      !canPersist ||
+      isLoading ||
+      isPersisting ||
+      !quickAddDraft.foodName.trim()
+    ) {
       return;
     }
 
@@ -376,7 +379,9 @@ export default function DiaryPageClient({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
-              onClick={() => navigateToDate(addDaysToDiaryDate(selectedDate, -1))}
+              onClick={() =>
+                navigateToDate(addDaysToDiaryDate(selectedDate, -1))
+              }
               disabled={isLoading || isPersisting}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-foreground-muted transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Previous day"
@@ -400,7 +405,9 @@ export default function DiaryPageClient({
 
             <button
               type="button"
-              onClick={() => navigateToDate(addDaysToDiaryDate(selectedDate, 1))}
+              onClick={() =>
+                navigateToDate(addDaysToDiaryDate(selectedDate, 1))
+              }
               disabled={isLoading || isPersisting}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-foreground-muted transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
               aria-label="Next day"
@@ -532,7 +539,9 @@ export default function DiaryPageClient({
                         type="button"
                         onClick={() =>
                           setActiveAddCategory((current) =>
-                            current === section.category ? null : section.category,
+                            current === section.category
+                              ? null
+                              : section.category,
                           )
                         }
                         disabled={isLoading || isPersisting}
@@ -555,7 +564,9 @@ export default function DiaryPageClient({
                           <input
                             type="search"
                             value={savedFoodQuery}
-                            onChange={(event) => setSavedFoodQuery(event.target.value)}
+                            onChange={(event) =>
+                              setSavedFoodQuery(event.target.value)
+                            }
                             placeholder={`Search foods for ${section.label.toLowerCase()}...`}
                             disabled={isLoading || isPersisting}
                             className="h-11 w-full rounded-xl border border-border bg-white px-10 pr-10 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
@@ -585,7 +596,10 @@ export default function DiaryPageClient({
                                   key={item.id}
                                   type="button"
                                   onClick={() => {
-                                    void addSavedFoodItem(item, section.category);
+                                    void addSavedFoodItem(
+                                      item,
+                                      section.category,
+                                    );
                                   }}
                                   disabled={isLoading || isPersisting}
                                   className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
@@ -597,12 +611,17 @@ export default function DiaryPageClient({
                                         {item.name}
                                       </p>
                                       <p className="mt-0.5 truncate text-xs text-foreground-muted">
-                                        {item.servingSize || item.brand || "Saved food"}
+                                        {item.servingSize ||
+                                          item.brand ||
+                                          "Saved food"}
                                       </p>
                                     </div>
                                   </div>
                                   <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white">
-                                    <Plus className="h-4 w-4" aria-hidden="true" />
+                                    <Plus
+                                      className="h-4 w-4"
+                                      aria-hidden="true"
+                                    />
                                   </span>
                                 </button>
                               ))}
@@ -647,7 +666,10 @@ export default function DiaryPageClient({
                                 aria-label={`Delete ${entry.foodName}`}
                                 title={`Added at ${formatEntryTime(entry.createdAt)}`}
                               >
-                                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                <Trash2
+                                  className="h-4 w-4"
+                                  aria-hidden="true"
+                                />
                               </button>
                             ) : null}
                           </div>
@@ -662,10 +684,7 @@ export default function DiaryPageClient({
         </section>
 
         <section className="rounded-[1.6rem] border border-border bg-white p-5 sm:p-6">
-          <form
-            onSubmit={handleQuickAddSubmit}
-            className="space-y-3"
-          >
+          <form onSubmit={handleQuickAddSubmit} className="space-y-3">
             <div className="flex flex-wrap items-center gap-3">
               <input
                 type="text"
@@ -747,7 +766,12 @@ export default function DiaryPageClient({
               />
               <button
                 type="submit"
-                disabled={!canPersist || isLoading || isPersisting || !quickAddDraft.foodName.trim()}
+                disabled={
+                  !canPersist ||
+                  isLoading ||
+                  isPersisting ||
+                  !quickAddDraft.foodName.trim()
+                }
                 className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Add
@@ -782,10 +806,14 @@ function MacroProgress({
   const percentage =
     target && target > 0 ? Math.round((value / target) * 100) : null;
   const progress =
-    target && target > 0 ? Math.max(0, Math.min(100, (value / target) * 100)) : 0;
+    target && target > 0
+      ? Math.max(0, Math.min(100, (value / target) * 100))
+      : 0;
 
   return (
-    <div className={`w-full space-y-3 rounded-[1.1rem] md:rounded-none ${cardClass ?? ""}`}>
+    <div
+      className={`w-full space-y-3 rounded-[1.1rem] md:rounded-none ${cardClass ?? ""}`}
+    >
       <div className="flex items-center justify-between gap-4">
         <span className={`text-sm font-semibold ${accentClass}`}>{label}</span>
         {percentage !== null ? (
@@ -815,7 +843,10 @@ function MacroProgress({
   );
 }
 
-function applyEntryMutation(currentEntries: DiaryEntry[], mutation: EntryMutation) {
+function applyEntryMutation(
+  currentEntries: DiaryEntry[],
+  mutation: EntryMutation,
+) {
   switch (mutation.type) {
     case "add":
       return [...currentEntries, mutation.entry];

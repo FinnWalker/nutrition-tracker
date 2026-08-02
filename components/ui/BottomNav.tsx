@@ -53,13 +53,13 @@ const BottomNav = () => {
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-2 text-[0.68rem] font-semibold ${
-                  isActive
-                    ? "text-brand-foreground"
-                    : "text-foreground-muted"
+                  isActive ? "text-brand-foreground" : "text-foreground-muted"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                <span className="w-full truncate text-center">{item.label}</span>
+                <span className="w-full truncate text-center">
+                  {item.label}
+                </span>
               </Link>
             );
           })}
@@ -83,13 +83,13 @@ const BottomNav = () => {
                 href={href}
                 aria-current={isActive ? "page" : undefined}
                 className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-2 text-[0.68rem] font-semibold ${
-                  isActive
-                    ? "text-brand-foreground"
-                    : "text-foreground-muted"
+                  isActive ? "text-brand-foreground" : "text-foreground-muted"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                <span className="w-full truncate text-center">{item.label}</span>
+                <span className="w-full truncate text-center">
+                  {item.label}
+                </span>
               </Link>
             );
           })}
@@ -99,11 +99,11 @@ const BottomNav = () => {
             aria-controls={drawerId}
             aria-expanded={isMoreOpen}
             aria-haspopup="dialog"
-            aria-label={isMoreOpen ? "Close more navigation" : "Open more navigation"}
+            aria-label={
+              isMoreOpen ? "Close more navigation" : "Open more navigation"
+            }
             className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-2 text-[0.68rem] font-semibold ${
-              isMoreOpen
-                ? "text-brand-foreground"
-                : "text-foreground-muted"
+              isMoreOpen ? "text-brand-foreground" : "text-foreground-muted"
             }`}
             onClick={() => setIsMoreOpen((open) => !open)}
           >

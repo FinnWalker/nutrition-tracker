@@ -21,10 +21,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  deleteSavedFood,
-  updateSavedFood,
-} from "@/app/food-library/actions";
+import { deleteSavedFood, updateSavedFood } from "@/app/food-library/actions";
 import {
   getMacroCalorieEstimate,
   getMacroCalorieWarning,
@@ -117,7 +114,7 @@ export default function FoodLibraryPageClient({
                   { name: "brand", weight: 0.2 },
                   { name: "serving", weight: 0.1 },
                 ],
-                })
+              })
                 .search(searchTerm)
                 .map((result) => result.item)
           : optimisticItems
@@ -274,7 +271,9 @@ export default function FoodLibraryPageClient({
                   <span>{filter.label}</span>
                   <span
                     className={`text-xs font-semibold ${
-                      isActive ? "text-brand-foreground/80" : "text-foreground-muted"
+                      isActive
+                        ? "text-brand-foreground/80"
+                        : "text-foreground-muted"
                     }`}
                   >
                     {filter.count}
@@ -356,7 +355,10 @@ export default function FoodLibraryPageClient({
 
           <div className="divide-y divide-border lg:hidden">
             {visibleItems.map((item) => (
-              <article key={item.id} className="flex items-center gap-3 px-4 py-3">
+              <article
+                key={item.id}
+                className="flex items-center gap-3 px-4 py-3"
+              >
                 <FoodPlaceholder name={item.name} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">
@@ -384,7 +386,10 @@ export default function FoodLibraryPageClient({
           </div>
 
           {visibleItems.length === 0 ? (
-            <EmptyState canBrowse={canBrowse} hasQuery={searchTerm.length > 0} />
+            <EmptyState
+              canBrowse={canBrowse}
+              hasQuery={searchTerm.length > 0}
+            />
           ) : null}
         </div>
 
@@ -410,7 +415,10 @@ export default function FoodLibraryPageClient({
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="grid gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+              <form
+                onSubmit={handleSubmit}
+                className="grid gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]"
+              >
                 <div className="space-y-5">
                   <FoodLibraryForm
                     draft={draft}
@@ -599,7 +607,10 @@ function ItemMenu({
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-surface"
             onClick={onEdit}
           >
-            <Pencil className="h-4 w-4 text-foreground-muted" aria-hidden="true" />
+            <Pencil
+              className="h-4 w-4 text-foreground-muted"
+              aria-hidden="true"
+            />
             <span>Edit</span>
           </button>
           <button
@@ -831,14 +842,19 @@ function createItemFromDraft(
   };
 }
 
-function getSingleCharacterMatches(items: FoodLibraryItem[], searchTerm: string) {
+function getSingleCharacterMatches(
+  items: FoodLibraryItem[],
+  searchTerm: string,
+) {
   const normalizedSearchTerm = searchTerm.toLowerCase();
 
   return items
     .filter((item) => {
-      const searchableText = [item.name, item.brand ?? "", item.serving ?? ""].join(
-        " ",
-      );
+      const searchableText = [
+        item.name,
+        item.brand ?? "",
+        item.serving ?? "",
+      ].join(" ");
 
       return searchableText.toLowerCase().includes(normalizedSearchTerm);
     })
@@ -902,7 +918,9 @@ function getNutritionSnapshot(draft: FoodLibraryDraft) {
       parseNutritionNumber(draft.totalCarbohydrate) &&
     parseNutritionNumber(draft.totalCarbohydrate) > 0
   ) {
-    warnings.push("Dietary fiber should not be greater than total carbohydrate.");
+    warnings.push(
+      "Dietary fiber should not be greater than total carbohydrate.",
+    );
   }
 
   const checks =

@@ -40,8 +40,8 @@ async function LoginPageContent({ searchParams }: LoginPageProps) {
       </p>
       <h1 className="mt-3 text-3xl font-semibold tracking-tight">Sign in</h1>
       <p className="mt-4 text-base leading-7 text-foreground-muted">
-        This page has been reduced to a minimal flow while the new UI is rebuilt.
-        The previous sign-in screen still lives at{" "}
+        This page has been reduced to a minimal flow while the new UI is
+        rebuilt. The previous sign-in screen still lives at{" "}
         <Link href="/legacy/login" className="underline">
           /legacy/login
         </Link>

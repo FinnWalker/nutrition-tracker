@@ -33,11 +33,7 @@ export default function GoogleSignInButton({
 
 function GoogleMark() {
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0"
-    >
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 shrink-0">
       <path
         d="M21.805 12.225c0-.728-.065-1.427-.186-2.1H12.24v3.973h5.36a4.59 4.59 0 0 1-1.99 3.013v2.5h3.222c1.885-1.736 2.973-4.295 2.973-7.386Z"
         fill="#4285F4"
