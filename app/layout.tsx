@@ -35,12 +35,12 @@ export default function RootLayout(props: RootLayoutProps) {
     >
       <body className="min-h-dvh text-foreground">
         <AuthSessionProvider>
-          <div className="min-h-dvh lg:h-dvh lg:min-h-0 lg:px-5">
-            <div className="mx-auto min-h-dvh lg:flex lg:h-dvh lg:min-h-0 lg:max-w-[1480px] lg:gap-5">
-              <div className="hidden lg:my-5 lg:block lg:h-[calc(100dvh-2.5rem)] lg:w-64 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white lg:shadow-sm">
+          <div className="min-h-dvh lg:px-5">
+            <div className="mx-auto min-h-dvh lg:flex lg:max-w-[1480px] lg:items-start lg:gap-5">
+              <div className="hidden lg:sticky lg:top-5 lg:my-5 lg:block lg:max-h-[calc(100dvh-2.5rem)] lg:w-64 lg:overflow-y-auto lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white lg:shadow-sm">
                 <NavSidebar />
               </div>
-              <main className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+              <main className="lg:flex-1">
                 <div className="box-border min-h-[calc(100dvh-5rem)] bg-white px-6 py-6 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:bg-transparent lg:px-0 lg:py-5">
                   <div className="lg:min-h-[calc(100dvh-2.5rem)] lg:rounded-[1.75rem] lg:border lg:border-border lg:bg-white lg:shadow-sm">
                     <div className="lg:px-9 lg:py-9">{props.children}</div>
