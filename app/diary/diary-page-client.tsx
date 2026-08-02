@@ -5,7 +5,6 @@ import type { FormEvent } from "react";
 import {
   startTransition,
   useDeferredValue,
-  useEffect,
   useMemo,
   useOptimistic,
   useRef,
@@ -174,22 +173,6 @@ export default function DiaryPageClient({
   const timelineGroups = useMemo(() => groupDiaryEntries(entries), [entries]);
   const isToday = selectedDate === getTodayDiaryDate();
 
-  useEffect(() => {
-    const currentTime = getDefaultConsumedTimeValue();
-
-    setSavedFoodConsumedTime((current) =>
-      current === getFallbackConsumedTimeValue() ? currentTime : current,
-    );
-    setQuickAddDraft((current) =>
-      current.consumedTime === getFallbackConsumedTimeValue()
-        ? {
-            ...current,
-            consumedTime: currentTime,
-          }
-        : current,
-    );
-  }, []);
-
   function navigateToDate(nextDate: string) {
     router.push(`${pathname}?date=${nextDate}`);
   }
@@ -202,6 +185,25 @@ export default function DiaryPageClient({
       ...current,
       [field]: value,
     }));
+  }
+
+  function ensureSavedFoodConsumedTime() {
+    setSavedFoodConsumedTime((current) =>
+      current === getFallbackConsumedTimeValue()
+        ? getDefaultConsumedTimeValue()
+        : current,
+    );
+  }
+
+  function ensureQuickAddConsumedTime() {
+    setQuickAddDraft((current) =>
+      current.consumedTime === getFallbackConsumedTimeValue()
+        ? {
+            ...current,
+            consumedTime: getDefaultConsumedTimeValue(),
+          }
+        : current,
+    );
   }
 
   async function loadSavedFoodDetails(itemId: string) {
@@ -539,7 +541,10 @@ export default function DiaryPageClient({
           {canPersist ? (
             <button
               type="button"
-              onClick={() => setIsSavedFoodPickerOpen((current) => !current)}
+              onClick={() => {
+                ensureSavedFoodConsumedTime();
+                setIsSavedFoodPickerOpen((current) => !current);
+              }}
               disabled={isLoading || isPersisting}
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-brand-muted disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -576,6 +581,7 @@ export default function DiaryPageClient({
                   <input
                     type="time"
                     value={savedFoodConsumedTime ?? ""}
+                    onFocus={ensureSavedFoodConsumedTime}
                     onChange={(event) =>
                       setSavedFoodConsumedTime(event.target.value || null)
                     }
@@ -824,6 +830,7 @@ export default function DiaryPageClient({
               <input
                 type="time"
                 value={quickAddDraft.consumedTime ?? ""}
+                onFocus={ensureQuickAddConsumedTime}
                 onChange={(event) =>
                   updateQuickAddDraft(
                     "consumedTime",
