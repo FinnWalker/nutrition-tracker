@@ -66,7 +66,7 @@ export default function NavbarAuth() {
   }
 
   const displayName = user.name || user.email || "Signed in";
-  const secondaryLabel = "Personal plan";
+  const secondaryLabel = "Free plan";
 
   return (
     <div
@@ -134,7 +134,10 @@ export default function NavbarAuth() {
             className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:bg-surface"
             onClick={() => signOut({ callbackUrl: "/" })}
           >
-            <LogOut className="h-4 w-4 text-foreground-muted" aria-hidden="true" />
+            <LogOut
+              className="h-4 w-4 text-foreground-muted"
+              aria-hidden="true"
+            />
             <span>Sign out</span>
           </button>
         </div>

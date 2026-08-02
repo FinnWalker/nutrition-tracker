@@ -1,11 +1,6 @@
-import { CalendarDays, ChefHat, House, Target } from "lucide-react";
+import { CalendarDays, ChefHat, Target } from "lucide-react";
 
 export const navigationItems = [
-  {
-    href: "",
-    label: "Overview",
-    icon: House,
-  },
   {
     href: "/diary",
     label: "Diary",

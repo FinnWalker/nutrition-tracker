@@ -664,91 +664,95 @@ export default function DiaryPageClient({
         <section className="rounded-[1.6rem] border border-border bg-white p-5 sm:p-6">
           <form
             onSubmit={handleQuickAddSubmit}
-            className="flex flex-col gap-3 xl:flex-row xl:items-center"
+            className="space-y-3"
           >
-            <input
-              type="text"
-              value={quickAddDraft.foodName}
-              onChange={(event) =>
-                updateQuickAddDraft("foodName", event.target.value)
-              }
-              placeholder="Quick add custom food..."
-              disabled={!canPersist || isLoading || isPersisting}
-              className="h-11 min-w-0 flex-1 rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60"
-              required
-            />
-            <select
-              value={quickAddDraft.mealCategory}
-              onChange={(event) =>
-                updateQuickAddDraft(
-                  "mealCategory",
-                  event.target.value as MealCategory,
-                )
-              }
-              disabled={!canPersist || isLoading || isPersisting}
-              className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-36"
-            >
-              {mealSections.map((section) => (
-                <option key={section.category} value={section.category}>
-                  {section.label}
-                </option>
-              ))}
-            </select>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={quickAddDraft.calories}
-              onChange={(event) =>
-                updateQuickAddDraft("calories", event.target.value)
-              }
-              placeholder="Calories"
-              disabled={!canPersist || isLoading || isPersisting}
-              className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
-            />
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={quickAddDraft.protein}
-              onChange={(event) =>
-                updateQuickAddDraft("protein", event.target.value)
-              }
-              placeholder="Protein"
-              disabled={!canPersist || isLoading || isPersisting}
-              className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
-            />
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={quickAddDraft.carbs}
-              onChange={(event) =>
-                updateQuickAddDraft("carbs", event.target.value)
-              }
-              placeholder="Carbs"
-              disabled={!canPersist || isLoading || isPersisting}
-              className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
-            />
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={quickAddDraft.fat}
-              onChange={(event) =>
-                updateQuickAddDraft("fat", event.target.value)
-              }
-              placeholder="Fat"
-              disabled={!canPersist || isLoading || isPersisting}
-              className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
-            />
-            <button
-              type="submit"
-              disabled={!canPersist || isLoading || isPersisting || !quickAddDraft.foodName.trim()}
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Add
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="text"
+                value={quickAddDraft.foodName}
+                onChange={(event) =>
+                  updateQuickAddDraft("foodName", event.target.value)
+                }
+                placeholder="Quick add custom food..."
+                disabled={!canPersist || isLoading || isPersisting}
+                className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:min-w-[16rem] sm:flex-[1_1_18rem]"
+                required
+              />
+              <select
+                value={quickAddDraft.mealCategory}
+                onChange={(event) =>
+                  updateQuickAddDraft(
+                    "mealCategory",
+                    event.target.value as MealCategory,
+                  )
+                }
+                disabled={!canPersist || isLoading || isPersisting}
+                className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm font-medium text-foreground outline-none transition-colors focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-36"
+              >
+                {mealSections.map((section) => (
+                  <option key={section.category} value={section.category}>
+                    {section.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={quickAddDraft.calories}
+                onChange={(event) =>
+                  updateQuickAddDraft("calories", event.target.value)
+                }
+                placeholder="Calories"
+                disabled={!canPersist || isLoading || isPersisting}
+                className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={quickAddDraft.protein}
+                onChange={(event) =>
+                  updateQuickAddDraft("protein", event.target.value)
+                }
+                placeholder="Protein"
+                disabled={!canPersist || isLoading || isPersisting}
+                className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={quickAddDraft.carbs}
+                onChange={(event) =>
+                  updateQuickAddDraft("carbs", event.target.value)
+                }
+                placeholder="Carbs"
+                disabled={!canPersist || isLoading || isPersisting}
+                className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={quickAddDraft.fat}
+                onChange={(event) =>
+                  updateQuickAddDraft("fat", event.target.value)
+                }
+                placeholder="Fat"
+                disabled={!canPersist || isLoading || isPersisting}
+                className="h-11 w-full rounded-xl border border-border bg-white px-4 text-sm text-foreground outline-none transition-colors placeholder:text-foreground-muted focus:border-brand disabled:cursor-not-allowed disabled:opacity-60 sm:w-32"
+              />
+              <button
+                type="submit"
+                disabled={!canPersist || isLoading || isPersisting || !quickAddDraft.foodName.trim()}
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Add
+              </button>
+            </div>
           </form>
         </section>
       </section>
