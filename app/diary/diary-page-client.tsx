@@ -679,11 +679,11 @@ export default function DiaryPageClient({
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3 px-4 py-4 sm:px-5">
+                    <div className="space-y-3 px-4 py-4 sm:px-5">
                       {group.entries.map((entry) => (
                         <article
                           key={entry.id}
-                          className="flex min-w-[16rem] max-w-full flex-1 items-center gap-3 rounded-[1.2rem] border border-border bg-white px-3 py-3 sm:flex-none sm:px-3.5"
+                          className="flex items-center gap-3"
                         >
                           <FoodThumb name={entry.foodName} />
                           <div className="min-w-0 flex-1">
@@ -715,7 +715,7 @@ export default function DiaryPageClient({
                                     );
                                   }}
                                   disabled={isLoading || isPersisting}
-                                  className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
                                   aria-label={`Edit time for ${entry.foodName}`}
                                   title={
                                     entry.consumedAt
@@ -734,7 +734,7 @@ export default function DiaryPageClient({
                                     void removeEntry(entry.id);
                                   }}
                                   disabled={isLoading || isPersisting}
-                                  className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                                  className="rounded-lg p-2 text-foreground-muted transition-colors hover:bg-white/70 disabled:cursor-not-allowed disabled:opacity-60"
                                   aria-label={`Delete ${entry.foodName}`}
                                   title={
                                     entry.consumedAt
