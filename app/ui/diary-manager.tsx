@@ -19,11 +19,7 @@ import {
   clearDailyEntries as clearSavedDailyEntries,
   deleteDailyEntry as deleteSavedDailyEntry,
 } from "@/app/diary/actions";
-import {
-  addDaysToDiaryDate,
-  formatDiaryDateLabel,
-  getTodayDiaryDate,
-} from "@/app/lib/diary-date";
+import { addDaysToDiaryDate, formatDiaryDateLabel } from "@/app/lib/diary-date";
 import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 
 type DiaryManagerProps = {
@@ -31,6 +27,7 @@ type DiaryManagerProps = {
   initialEntries: DiaryEntry[];
   initialSavedFoods: SavedFood[];
   selectedDate: string;
+  todayDate: string;
   hasExplicitDate: boolean;
   isLoading?: boolean;
 };
@@ -82,12 +79,8 @@ const EMPTY_ENTRIES: DiaryEntry[] = [];
 let lastStoredEntriesRaw: string | null = null;
 let lastStoredEntriesSnapshot: DiaryEntry[] = EMPTY_ENTRIES;
 
-function getTodayDateInputValue() {
-  return getTodayDiaryDate();
-}
-
 const initialDraft = (): DraftEntry => ({
-  entryDate: getTodayDateInputValue(),
+  entryDate: "",
   foodName: "",
   calories: "",
   protein: "",
@@ -98,7 +91,7 @@ const initialDraft = (): DraftEntry => ({
 function normalizeDiaryEntry(entry: Partial<DiaryEntry>): DiaryEntry {
   return {
     id: entry.id ?? crypto.randomUUID(),
-    entryDate: entry.entryDate ?? getTodayDateInputValue(),
+    entryDate: entry.entryDate ?? "",
     foodName: entry.foodName ?? "",
     servings:
       typeof entry.servings === "number" && Number.isFinite(entry.servings)
@@ -314,6 +307,7 @@ export default function DiaryManager({
   initialEntries,
   initialSavedFoods,
   selectedDate,
+  todayDate,
   hasExplicitDate,
   isLoading = false,
 }: DiaryManagerProps) {
@@ -346,7 +340,7 @@ export default function DiaryManager({
     initialEntries,
     applyEntryMutation,
   );
-  const isViewingToday = selectedDate === getTodayDateInputValue();
+  const isViewingToday = selectedDate === todayDate;
 
   const isDisabled = isLoading || isPersisting;
   const entries = isLoading
@@ -397,10 +391,8 @@ export default function DiaryManager({
     }
 
     didNormalizeInitialDateRef.current = true;
-    const clientToday = getTodayDiaryDate();
-
-    router.replace(`${pathname}?date=${clientToday}`);
-  }, [hasExplicitDate, pathname, router]);
+    router.replace(`${pathname}?date=${todayDate}`);
+  }, [hasExplicitDate, pathname, router, todayDate]);
 
   function updateDraft<K extends keyof DraftEntry>(
     field: K,
