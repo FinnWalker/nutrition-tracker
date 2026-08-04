@@ -31,10 +31,7 @@ import {
   getConsumedAtFromTimeValue,
   getDefaultConsumedTimeValue,
 } from "@/app/lib/diary-consumed-at";
-import {
-  addDaysToDiaryDate,
-  formatDiaryDateLabel,
-} from "@/app/lib/diary-date";
+import { addDaysToDiaryDate, formatDiaryDateLabel } from "@/app/lib/diary-date";
 import { groupDiaryEntries } from "@/app/lib/group-diary-entries";
 import { getMacroCalorieEstimate } from "@/app/lib/nutrition-validation";
 import { formatNutritionNumber } from "@/app/ui/nutrition-display";

@@ -19,10 +19,7 @@ import {
   clearDailyEntries as clearSavedDailyEntries,
   deleteDailyEntry as deleteSavedDailyEntry,
 } from "@/app/diary/actions";
-import {
-  addDaysToDiaryDate,
-  formatDiaryDateLabel,
-} from "@/app/lib/diary-date";
+import { addDaysToDiaryDate, formatDiaryDateLabel } from "@/app/lib/diary-date";
 import { formatNutritionNumber, SummaryCard } from "@/app/ui/nutrition-display";
 
 type DiaryManagerProps = {
