@@ -17,6 +17,7 @@ export default async function LegacyDiaryPage({
     resolvedSearchParams.date,
     getTodayDiaryDate(),
   );
+  const todayDate = getTodayDiaryDate();
 
   return (
     <PageContainer>
@@ -32,6 +33,7 @@ export default async function LegacyDiaryPage({
             initialEntries={[]}
             initialSavedFoods={[]}
             selectedDate={selectedDate}
+            todayDate={todayDate}
             hasExplicitDate={hasExplicitDate}
             isLoading
           />
