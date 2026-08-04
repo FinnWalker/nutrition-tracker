@@ -13,10 +13,8 @@ export default async function LegacyDiaryPage({
 } = {}) {
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const hasExplicitDate = typeof resolvedSearchParams.date === "string";
-  const selectedDate = normalizeDiaryDate(
-    resolvedSearchParams.date,
-    getTodayDiaryDate(),
-  );
+  const todayDate = getTodayDiaryDate();
+  const selectedDate = normalizeDiaryDate(resolvedSearchParams.date, todayDate);
 
   return (
     <PageContainer>
@@ -32,6 +30,7 @@ export default async function LegacyDiaryPage({
             initialEntries={[]}
             initialSavedFoods={[]}
             selectedDate={selectedDate}
+            todayDate={todayDate}
             hasExplicitDate={hasExplicitDate}
             isLoading
           />

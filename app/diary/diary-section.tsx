@@ -1,5 +1,5 @@
 import { getCachedDailyEntries } from "@/app/lib/get-cached-daily-entries";
-import { normalizeDiaryDate } from "@/app/lib/diary-date";
+import { getTodayDiaryDate, normalizeDiaryDate } from "@/app/lib/diary-date";
 import { getCachedSavedFoodSummaries } from "@/app/lib/get-cached-saved-food-summaries";
 import { getCurrentSession } from "@/app/lib/get-current-session";
 import DiaryManager from "@/app/ui/diary-manager";
@@ -81,6 +81,7 @@ export default async function DiarySection({
       initialEntries={initialEntries}
       initialSavedFoods={initialSavedFoods}
       selectedDate={resolvedSelectedDate}
+      todayDate={getTodayDiaryDate()}
       hasExplicitDate={hasExplicitDate}
     />
   );

@@ -31,11 +31,7 @@ import {
   getConsumedAtFromTimeValue,
   getDefaultConsumedTimeValue,
 } from "@/app/lib/diary-consumed-at";
-import {
-  addDaysToDiaryDate,
-  formatDiaryDateLabel,
-  getTodayDiaryDate,
-} from "@/app/lib/diary-date";
+import { addDaysToDiaryDate, formatDiaryDateLabel } from "@/app/lib/diary-date";
 import { groupDiaryEntries } from "@/app/lib/group-diary-entries";
 import { getMacroCalorieEstimate } from "@/app/lib/nutrition-validation";
 import { formatNutritionNumber } from "@/app/ui/nutrition-display";
@@ -81,6 +77,7 @@ type QuickAddDraft = {
 type DiaryPageClientProps = {
   canPersist: boolean;
   selectedDate: string;
+  todayDate: string;
   goals: {
     calories: number | null;
     protein: number | null;
@@ -100,6 +97,7 @@ type EntryMutation =
 export default function DiaryPageClient({
   canPersist,
   selectedDate,
+  todayDate,
   goals,
   initialEntries,
   initialSavedFoods,
@@ -171,7 +169,7 @@ export default function DiaryPageClient({
   );
   const macroCalorieInsight = getMacroCalorieInsight(totals);
   const timelineGroups = useMemo(() => groupDiaryEntries(entries), [entries]);
-  const isToday = selectedDate === getTodayDiaryDate();
+  const isToday = selectedDate === todayDate;
 
   function navigateToDate(nextDate: string) {
     router.push(`${pathname}?date=${nextDate}`);
@@ -458,7 +456,7 @@ export default function DiaryPageClient({
 
             <button
               type="button"
-              onClick={() => navigateToDate(getTodayDiaryDate())}
+              onClick={() => navigateToDate(todayDate)}
               disabled={isLoading || isPersisting}
               className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-white px-4 text-sm font-semibold text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-60"
             >
